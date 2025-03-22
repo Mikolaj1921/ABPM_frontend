@@ -1,0 +1,30 @@
+/frontend/node_modules
+node_modules/
+
+frontend/.env
+
+.env
+*.env
+
+.expo/
+.expo-shared/
+
+# files tymczasowe i logi
+*.log
+npm-debug.log
+
+# files generowane przez build
+dist/
+build/
+*.apk
+*.ipa
+*.aab
+
+# cache
+.cache/
+
+# files systemowe i edytorów
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
