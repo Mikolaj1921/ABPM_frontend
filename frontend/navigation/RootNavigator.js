@@ -1,11 +1,11 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native'; // Dodaj NavigationContainer
-import AuthNavigator from './AuthNavigator'; // Nawigacja logowania
-import AppNavigator from './AppNavigator'; // Nawigacja główna po zalogowaniu
+import React, { useContext } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { AuthContext } from '../contexts/AuthContext';
+import AppNavigator from './AppNavigator';
+import AuthNavigator from './AuthNavigator';
 
 const RootNavigator = () => {
-  // Tymczasowo ustawiamy isLoggedIn na true, by pominąć logowanie
-  const isLoggedIn = true; // Możesz później to dynamicznie ustawiać z kontekstu lub logiki
+  const { isLoggedIn } = useContext(AuthContext);
 
   return (
     <NavigationContainer>

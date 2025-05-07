@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "960068924047",
+    "project_id": "abpm-458513",
+    "storage_bucket": "abpm-458513.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960068924047:android:44cf4deb1651709ad2f6fa",
+        "android_client_info": {
+          "package_name": "com.abpm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "960068924047-tbr08ihcqivnhcmdr39q7in9iug002jj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.abpm",
+            "certificate_hash": "05d4953109bc7d7ea4c8fa8a0c6b87db46702433"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgDHB_zbxQT_NDljRdh2bIFMXkhqOh6YA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

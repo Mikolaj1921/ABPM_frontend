@@ -1,107 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, BackHandler } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, BackHandler } from 'react-native';
+import { Button } from 'react-native-paper';
 
 export default function OfertaHandlowaScreen({ navigation, route }) {
-  const { category, document } = route.params;
+  const category = route.params?.category;
+  const template = route.params?.template;
 
-  const [formData, setFormData] = useState({
-    clientName: '',
-    product: '',
-    price: '',
-    offerDate: '',
-  });
-
-  // Obsługa sprzętowego przycisku "Wróć"
   useEffect(() => {
     const backAction = () => {
-      navigation.navigate('Home'); // Wracamy do HomeScreen
-      return true; // Zwracamy true, aby potwierdzić obsłużenie zdarzenia
+      navigation.navigate('Home');
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       backAction,
     );
-
-    return () => backHandler.remove(); // Usuwamy listener przy odmontowaniu komponentu
+    return () => backHandler.remove();
   }, [navigation]);
 
-  const handleInputChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
-
-  const handleSave = () => {
-    console.log('Saving Oferta Handlowa:', { category, document, formData });
-    navigation.navigate('Home'); // Wracamy do HomeScreen
-  };
-
-  const handleCancel = () => {
-    navigation.navigate('Home'); // Wracamy do HomeScreen
-  };
+  if (!category || !template) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Błąd</Text>
+        <Text style={styles.subtitle}>Brak kategorii lub szablonu</Text>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('Home')}
+          style={styles.cancelButton}
+        >
+          Wróć
+        </Button>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Oferta Handlowa</Text>
       <Text style={styles.subtitle}>Category: {category.name}</Text>
-
-      <TextInput
-        label="Client Name"
-        value={formData.clientName}
-        onChangeText={(text) => handleInputChange('clientName', text)}
-        mode="outlined"
-        style={styles.input}
-        theme={{ colors: { primary: '#001426FF' } }}
-      />
-      <TextInput
-        label="Product/Service"
-        value={formData.product}
-        onChangeText={(text) => handleInputChange('product', text)}
-        mode="outlined"
-        style={styles.input}
-        theme={{ colors: { primary: '#001426FF' } }}
-      />
-      <TextInput
-        label="Price"
-        value={formData.price}
-        onChangeText={(text) => handleInputChange('price', text)}
-        mode="outlined"
-        keyboardType="numeric"
-        style={styles.input}
-        theme={{ colors: { primary: '#001426FF' } }}
-      />
-      <TextInput
-        label="Offer Date (DD/MM/YYYY)"
-        value={formData.offerDate}
-        onChangeText={(text) => handleInputChange('offerDate', text)}
-        mode="outlined"
-        style={styles.input}
-        theme={{ colors: { primary: '#001426FF' } }}
-      />
-
+      <Text style={styles.subtitle}>Template: {template.name}</Text>
       <Button
         mode="contained"
-        onPress={handleSave}
-        style={styles.saveButton}
+        onPress={() =>
+          navigation.navigate('GenerateScreen', { category, template })
+        }
+        style={styles.button}
         labelStyle={styles.buttonText}
       >
-        Save
+        Generuj Dokument
       </Button>
       <Button
         mode="outlined"
-        onPress={handleCancel}
+        onPress={() => navigation.navigate('Home')}
         style={styles.cancelButton}
         labelStyle={styles.buttonText}
       >
-        Cancel
+        Anuluj
       </Button>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     padding: 20,
     backgroundColor: '#F5F5F5',
   },
@@ -116,10 +79,7 @@ const styles = StyleSheet.create({
     color: '#424242',
     marginBottom: 20,
   },
-  input: {
-    marginBottom: 15,
-  },
-  saveButton: {
+  button: {
     marginVertical: 10,
     backgroundColor: '#001426FF',
   },

@@ -7,9 +7,11 @@ import KadroweNavigator from './KadroweNavigator';
 
 const Stack = createStackNavigator();
 
-const DocumentNavigator = () => {
+const DocumentNavigator = ({ route }) => {
+  const { navigator } = route.params || {};
+
   return (
-    <Stack.Navigator initialRouteName="Handlowe">
+    <Stack.Navigator initialRouteName={navigator || 'Handlowe'}>
       <Stack.Screen
         name="Handlowe"
         component={HandloweNavigator}

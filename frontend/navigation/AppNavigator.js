@@ -1,16 +1,13 @@
-// navigation/AppNavigator.js
-
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import DocumentNavigator from './DocumentNavigator'; // Importuj DocumentNavigator
+import DocumentNavigator from './DocumentNavigator';
 
 const Tab = createBottomTabNavigator();
 
-// Komponenty ikon zdefiniowane poza AppNavigator
 const HomeIcon = ({ color, size }) => (
   <MaterialCommunityIcons name="home-outline" color={color} size={size} />
 );

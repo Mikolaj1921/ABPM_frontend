@@ -5,8 +5,8 @@ import OfertaHandlowaScreen from '../screens/documentScreens/handloweiOfertowe/O
 import UmowaSprzedazyScreen from '../screens/documentScreens/handloweiOfertowe/UmowaSprzedazyScreen';
 import ZapytanieOfertoweScreen from '../screens/documentScreens/handloweiOfertowe/ZapytanieOfertoweScreen';
 import EditScreen from '../screens/documentScreens/EditScreen';
-import PreviewScreen from '../screens/documentScreens/PreviewScreen';
 import GenerateScreen from '../screens/documentScreens/GenerateScreen';
+import PreviewScreen from '../screens/documentScreens/PreviewScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,9 +28,21 @@ const HandloweNavigator = () => {
         component={ZapytanieOfertoweScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="Edit" component={EditScreen} />
-      <Stack.Screen name="Preview" component={PreviewScreen} />
-      <Stack.Screen name="Generate" component={GenerateScreen} />
+      <Stack.Screen
+        name="EditScreen"
+        component={EditScreen}
+        options={{ title: 'Edytuj Szablon' }}
+      />
+      <Stack.Screen
+        name="GenerateScreen"
+        component={GenerateScreen}
+        options={{ title: 'Generuj Dokument' }}
+      />
+      <Stack.Screen
+        name="PreviewScreen"
+        component={PreviewScreen}
+        options={{ title: 'Podgląd Dokumentu' }}
+      />
     </Stack.Navigator>
   );
 };

@@ -1,13 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, Button } from 'react-native';
+import { removeToken } from '../authUtils';
+import { AuthContext } from '../contexts/AuthContext';
 
 function SettingsScreen() {
+  const { setIsLoggedIn } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    await removeToken();
+    setIsLoggedIn(false); // Przełączy na ekran logowania
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Settings Screen</Text>
       <Text style={styles.text}>
         Here you can adjust your app settings in the future.
       </Text>
+      <Button title="Wyloguj się" onPress={handleLogout} color="#001426" />
     </View>
   );
 }

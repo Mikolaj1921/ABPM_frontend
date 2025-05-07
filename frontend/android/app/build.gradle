@@ -86,7 +86,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.abpm"
+    namespace 'com.abpm'
     defaultConfig {
         applicationId 'com.abpm'
         minSdkVersion rootProject.ext.minSdkVersion
@@ -173,4 +173,13 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Dodaj zależności Firebase
+    implementation platform('com.google.firebase:firebase-bom:33.3.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
 }
+
+// Dodaj wtyczkę Google Services na końcu
+apply plugin: 'com.google.gms.google-services'
