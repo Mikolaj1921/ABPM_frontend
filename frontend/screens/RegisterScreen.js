@@ -63,7 +63,7 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await API.post('/auth/register', {
+      await API.post('/auth/register', {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
@@ -201,7 +201,7 @@ const RegisterScreen = ({ navigation }) => {
           rippleColor="#ffffff"
           style={styles.button}
         >
-          <Text>Register</Text>
+          <Text style={{ color: '#FFFFFF' }}>Register</Text>
         </Button>
 
         <Button

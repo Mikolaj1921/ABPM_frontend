@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { TextInput, Button, IconButton } from 'react-native-paper';
+import { View, Text, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { TextInput, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { storeToken, getToken } from '../authUtils';
 import API from '../api';
@@ -47,8 +47,21 @@ export default function LoginScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Access Account</Text>
+      <View
+        style={styles.container}
+        accessible={true}
+        accessibilityLabel="Ekran logowania"
+      >
+        <Image
+          source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
+          style={styles.image}
+          accessible={true}
+          accessibilityLabel="Logotyp aplikacji automatyzującej dokumenty"
+        />
+
+        <Text style={styles.title} accessibilityRole="header">
+          Access Account
+        </Text>
         <Text style={styles.subtitle}>Manage your documents efficiently</Text>
 
         <TextInput
@@ -58,6 +71,8 @@ export default function LoginScreen() {
           onChangeText={setEmail}
           left={<TextInput.Icon icon="email" />}
           style={styles.input}
+          accessibilityLabel="Adres e-mail"
+          accessibilityHint="Wprowadź swój adres e-mail"
         />
 
         <TextInput
@@ -69,6 +84,8 @@ export default function LoginScreen() {
           left={<TextInput.Icon icon="lock" />}
           right={<TextInput.Icon icon="eye" />}
           style={styles.input}
+          accessibilityLabel="Hasło"
+          accessibilityHint="Wprowadź swoje hasło"
         />
 
         <Button
@@ -78,6 +95,9 @@ export default function LoginScreen() {
           labelStyle={styles.buttonText}
           rippleColor="#ffffff"
           loading={loading}
+          accessibilityLabel="Zaloguj się"
+          accessibilityHint="Naciśnij, aby się zalogować"
+          accessibilityRole="button"
         >
           Log In
         </Button>
@@ -87,29 +107,12 @@ export default function LoginScreen() {
           onPress={() => navigation.navigate('Register')}
           style={styles.createButton}
           labelStyle={styles.createButtonText}
+          accessibilityLabel="Utwórz konto"
+          accessibilityHint="Przejdź do ekranu rejestracji"
+          accessibilityRole="button"
         >
           Create Account
         </Button>
-
-        <IconButton
-          icon="fingerprint"
-          size={30}
-          onPress={() => console.log('Biometric login')}
-          style={styles.biometricButton}
-        />
-        <Text style={styles.biometricText}>Use Biometrics</Text>
-
-        <Text style={styles.orText}>Or</Text>
-
-        <Text style={styles.signUpText}>
-          Need to create an account?{' '}
-          <Text
-            onPress={() => navigation.navigate('Register')}
-            style={styles.signUpLink}
-          >
-            Sign Up
-          </Text>
-        </Text>
       </View>
     </ScrollView>
   );
@@ -160,38 +163,15 @@ const styles = StyleSheet.create({
     color: '#001426FF',
     fontSize: 16,
   },
-  biometricButton: {
-    marginBottom: 5,
-  },
-  biometricText: {
-    color: '#424242',
-    marginBottom: 20,
-  },
-  orText: {
-    color: '#424242',
-    marginVertical: 10,
-  },
-  socialButton: {
-    width: '100%',
-    borderRadius: 8,
-    borderColor: '#E0E0E0',
-    marginBottom: 10,
-  },
-  socialButtonText: {
-    color: '#424242',
-    fontSize: 14,
-  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
   },
-  signUpText: {
-    color: '#424242',
-    marginTop: 20,
+
+  image: {
+    width: 100,
+    height: 100,
     marginBottom: 20,
-  },
-  signUpLink: {
-    color: '#001426FF',
-    fontWeight: 'bold',
+    tintColor: '#001426FF',
   },
 });

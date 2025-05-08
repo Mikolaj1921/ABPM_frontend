@@ -30,6 +30,7 @@ module.exports = {
   plugins: ['react-native', 'prettier', 'react'], // Dodaj Prettiera do pluginów
   rules: {
     'linebreak-style': 'off',
+    'import/prefer-default-export': 'off',
     'no-console': 'off', // Wyłącza regułę no-console w całym projekcie
     'react-native/no-raw-text': 'off', // Wyłączamy regułę, aby zezwolić na tekst surowy
     'react/jsx-filename-extension': ['warn', { extensions: ['.js'] }],
