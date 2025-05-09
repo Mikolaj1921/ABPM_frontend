@@ -7,16 +7,15 @@ import {
   useTheme as usePaperTheme,
   Snackbar,
 } from 'react-native-paper';
-// eslint-disable-next-line
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
 import { AuthContext } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { removeToken } from '../authUtils';
 import { LanguageContext } from '../contexts/LanguageContext';
 
 export default function SettingsScreen({ navigation }) {
-  const { setIsLoggedIn, user } = useContext(AuthContext);
+  const { setIsLoggedIn, user, loading, login } = useContext(AuthContext);
   const { isDarkMode, toggleTheme, colorScheme, changeColorScheme } =
     useTheme();
   const { i18n, locale, changeLanguage } = useContext(LanguageContext);
@@ -44,6 +43,7 @@ export default function SettingsScreen({ navigation }) {
     console.log('SettingsScreen locale:', locale);
     console.log('SettingsScreen i18n.t("settings"):', i18n.t('settings'));
     console.log('SettingsScreen user:', user);
+    console.log('SettingsScreen loading:', loading);
     console.log('SettingsScreen notificationsEnabled:', notificationsEnabled);
     console.log('SettingsScreen colorScheme:', colorScheme);
     console.log('SettingsScreen isDarkMode:', isDarkMode);
@@ -52,6 +52,7 @@ export default function SettingsScreen({ navigation }) {
     locale,
     i18n,
     user,
+    loading,
     notificationsEnabled,
     colorScheme,
     isDarkMode,
@@ -60,7 +61,7 @@ export default function SettingsScreen({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      await removeToken();
+      await AsyncStorage.removeItem('token');
       setIsLoggedIn(false);
     } catch (error) {
       console.error('Błąd wylogowania:', error);
@@ -94,6 +95,20 @@ export default function SettingsScreen({ navigation }) {
     setSnackbarVisible(true);
   };
 
+  const retryFetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        await login(null, null, token); // Wywołanie login z tokenem do ponownego pobrania danych
+      } else {
+        setSnackbarVisible(true);
+      }
+    } catch (error) {
+      console.error('Retry fetch user error:', error);
+      setSnackbarVisible(true);
+    }
+  };
+
   return (
     <>
       <ScrollView
@@ -112,7 +127,6 @@ export default function SettingsScreen({ navigation }) {
             styles.header,
             {
               color: paperTheme.colors.text,
-              justifyContent: 'center',
               textAlign: 'center',
             },
           ]}
@@ -120,17 +134,109 @@ export default function SettingsScreen({ navigation }) {
           {i18n.t('userInfo')}
         </Text>
         <View style={styles.userInfo}>
-          <Text style={[styles.userName, { color: paperTheme.colors.text }]}>
-            {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
-          </Text>
-          <Text
-            style={[
-              styles.userEmail,
-              { color: paperTheme.colors.onSurfaceDisabled },
-            ]}
-          >
-            {user ? user.email : ''}
-          </Text>
+          {(() => {
+            if (loading) {
+              return (
+                <Text
+                  style={[
+                    styles.loadingText,
+                    { color: paperTheme.colors.text },
+                  ]}
+                >
+                  {i18n.t('loading') || 'Loading...'}
+                </Text>
+              );
+            }
+
+            if (user) {
+              return (
+                <>
+                  <View style={styles.userInfoRow}>
+                    <View style={styles.labelContainer}>
+                      <FontAwesome
+                        name="user"
+                        size={20}
+                        color={paperTheme.colors.primary}
+                        style={styles.icon}
+                      />
+                      <Text
+                        style={[
+                          styles.userLabel,
+                          {
+                            color:
+                              paperTheme.colors.text ||
+                              paperTheme.colors.onSurface,
+                          },
+                        ]}
+                      >
+                        {i18n.t('fullName') || 'Full Name'}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.userValue,
+                        {
+                          color:
+                            paperTheme.colors.text ||
+                            paperTheme.colors.onSurface,
+                        },
+                      ]}
+                    >
+                      {`${user.firstName} ${user.lastName}`}
+                    </Text>
+                  </View>
+                  <View style={styles.userInfoRow}>
+                    <View style={styles.labelContainer}>
+                      <FontAwesome
+                        name="envelope"
+                        size={20}
+                        color={paperTheme.colors.primary}
+                        style={styles.icon}
+                      />
+                      <Text
+                        style={[
+                          styles.userLabel,
+                          {
+                            color:
+                              paperTheme.colors.text ||
+                              paperTheme.colors.onSurface,
+                          },
+                        ]}
+                      >
+                        {i18n.t('email') || 'Email'}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.userValue,
+                        { color: paperTheme.colors.onSurfaceDisabled },
+                      ]}
+                    >
+                      {user.email}
+                    </Text>
+                  </View>
+                </>
+              );
+            }
+
+            return (
+              <View style={styles.errorContainer}>
+                <Text
+                  style={[styles.errorText, { color: paperTheme.colors.error }]}
+                >
+                  {i18n.t('userFetchError') || 'Failed to load user data'}
+                </Text>
+                <Button
+                  mode="outlined"
+                  onPress={retryFetchUser}
+                  style={styles.retryButton}
+                  labelStyle={{ color: paperTheme.colors.primary }}
+                >
+                  {i18n.t('retry') || 'Try Again'}
+                </Button>
+              </View>
+            );
+          })()}
         </View>
 
         <Divider style={styles.divider} />
@@ -197,7 +303,6 @@ export default function SettingsScreen({ navigation }) {
             >
               {i18n.t('greenTheme')}
             </Button>
-
             <Button
               mode={colorScheme === 'grey' ? 'contained' : 'outlined'}
               onPress={() => changeColorScheme('grey')}
@@ -215,14 +320,29 @@ export default function SettingsScreen({ navigation }) {
         <Divider style={styles.divider} />
 
         {/* Statystyki użytkowania */}
-        <Text style={[styles.header, { color: paperTheme.colors.text }]}>
+        <Text
+          style={[
+            styles.header,
+            { textAlign: 'center', color: paperTheme.colors.text },
+          ]}
+        >
           {i18n.t('stats')}
         </Text>
         <View style={styles.stats}>
-          <Text style={[styles.statItem, { color: paperTheme.colors.text }]}>
+          <Text
+            style={[
+              styles.statItem,
+              { textAlign: 'center', color: paperTheme.colors.text },
+            ]}
+          >
             {i18n.t('documentsGenerated')}: 42
           </Text>
-          <Text style={[styles.statItem, { color: paperTheme.colors.text }]}>
+          <Text
+            style={[
+              styles.statItem,
+              { textAlign: 'center', color: paperTheme.colors.text },
+            ]}
+          >
             {i18n.t('joinedDate')}: 2023-01-15
           </Text>
         </View>
@@ -260,12 +380,22 @@ export default function SettingsScreen({ navigation }) {
         </Button>
 
         <Text
-          style={[
-            styles.version,
-            { color: paperTheme.colors.onSurfaceDisabled },
-          ]}
+          style={{
+            ...styles.version,
+            color: paperTheme.colors.onSurfaceDisabled,
+          }}
         >
           {i18n.t('appVersion')}: {Constants?.manifest?.version || '1.0.0'}
+        </Text>
+
+        <Text
+          style={{
+            color: paperTheme.colors.onSurfaceDisabled,
+            textAlign: 'center',
+            marginTop: 10,
+          }}
+        >
+          © All rights reserved
         </Text>
       </ScrollView>
       <Snackbar
@@ -283,9 +413,12 @@ const styles = StyleSheet.create({
   container: {
     paddingLeft: 20,
     paddingRight: 20,
-    marginTop: 50,
-    paddingBottom: 20,
+    marginVertical: 50,
+    paddingBottom: 70,
     flexGrow: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     fontSize: 24,
@@ -294,14 +427,47 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     marginBottom: 20,
+    alignItems: 'center',
   },
-  userName: {
-    fontSize: 20,
+  userInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
+  },
+  labelContainer: {
+    width: '40%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  icon: {
+    marginRight: 8,
+    width: '10%',
+  },
+  userLabel: {
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  userEmail: {
-    fontSize: 14,
-    marginTop: 4,
+  userValue: {
+    width: '50%',
+    fontSize: 16,
+    textAlign: 'right',
+  },
+  loadingText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+  },
+  retryButton: {
+    marginTop: 10,
   },
   settingItem: {
     flexDirection: 'row',
@@ -325,11 +491,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   stats: {
-    marginBottom: 20,
+    marginTop: 5,
+    marginBottom: 5,
   },
   statItem: {
     fontSize: 16,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   button: {
     marginTop: 20,

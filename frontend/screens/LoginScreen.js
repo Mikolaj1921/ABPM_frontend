@@ -49,13 +49,13 @@ export default function LoginScreen() {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View
         style={styles.container}
-        accessible={true}
+        accessible
         accessibilityLabel="Ekran logowania"
       >
         <Image
           source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
           style={styles.image}
-          accessible={true}
+          accessible
           accessibilityLabel="Logotyp aplikacji automatyzującej dokumenty"
         />
 
