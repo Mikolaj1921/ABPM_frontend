@@ -1,187 +1,349 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  View,
+  ActivityIndicator,
+  Text,
+  Modal,
+} from 'react-native';
 import {
   Card,
   Button,
-  Text,
   List,
+  IconButton,
   useTheme as usePaperTheme,
 } from 'react-native-paper';
-import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageContext } from '../contexts/LanguageContext';
+import { AuthContext } from '../contexts/AuthContext';
+import { fetchDocuments, fetchTemplates } from '../api';
+import OfertaHandlowaScreen from './documentScreens/handloweiOfertowe/OfertaHandlowaScreen';
 
 const documentCategories = [
   {
     id: '1',
     nameKey: 'handloweiOfertowe',
-    navigator: 'Handlowe',
-    category: 'Dokumenty Handlowe i Ofertowe',
+    category: 'Handlowe',
   },
   {
     id: '2',
     nameKey: 'finansowe',
-    navigator: 'Finansowe',
     category: 'Faktury',
   },
   {
     id: '3',
     nameKey: 'kadrowe',
-    navigator: 'Kadrowe',
     category: 'Kadrowe',
   },
 ];
 
-const HomeScreen = ({ navigation }) => {
+const LeftIcon = () => <IconButton icon="check-circle" color="green" />;
+const RightIcon = ({ onPress }) => (
+  <IconButton icon="arrow-right" color="#001426FF" onPress={onPress} />
+);
+const EditIcon = ({ onPress }) => (
+  <IconButton icon="pencil" color="#001426FF" onPress={onPress} />
+);
+
+const HomeScreen = ({ navigation, route }) => {
   const [expanded, setExpanded] = useState(null);
   const [templates, setTemplates] = useState({});
+  const [documents, setDocuments] = useState({});
+  const [searchQueries, setSearchQueries] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const paperTheme = usePaperTheme();
   const { i18n } = useContext(LanguageContext);
+  const { isLoggedIn, user, retryFetchUser } = useContext(AuthContext);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const token = await AsyncStorage.getItem('token');
+      if (!token || !isLoggedIn) {
+        setError('Brak tokena lub użytkownik nie jest zalogowany');
+        navigation.navigate('Login');
+        return;
+      }
+
+      if (!user) {
+        const result = await retryFetchUser();
+        if (!result.success) {
+          setError('Nie udało się pobrać danych użytkownika');
+          navigation.navigate('Login');
+          return;
+        }
+      }
+
+      const responses = await Promise.all(
+        documentCategories.map(async (category) => {
+          const [docData, templateData] = await Promise.all([
+            fetchDocuments(category.category),
+            fetchTemplates(category.category),
+          ]);
+          return {
+            category: category.category,
+            documents: docData || [],
+            templates: templateData || [],
+          };
+        }),
+      );
+
+      const templatesData = responses.reduce(
+        (acc, { category, templates: categoryTemplates }) => {
+          acc[category] = categoryTemplates;
+          return acc;
+        },
+        {},
+      );
+
+      const documentsData = responses.reduce(
+        (acc, { category, documents: categoryDocuments }) => {
+          acc[category] = categoryDocuments;
+          return acc;
+        },
+        {},
+      );
+
+      setTemplates(templatesData);
+      setDocuments(documentsData);
+    } catch (fetchError) {
+      console.error('Błąd podczas pobierania danych:', fetchError);
+      setError('Błąd podczas ładowania danych');
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoggedIn, user, retryFetchUser, navigation]);
 
   useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const responses = await Promise.all(
-          documentCategories.map((category) =>
-            axios
-              .get('http://192.168.1.105:5000/api/templates', {
-                params: { category: category.category },
-              })
-              .then((response) => ({
-                category: category.category,
-                data: response.data,
-              })),
-          ),
-        );
+    fetchData();
+  }, [fetchData]);
 
-        const templatesData = responses.reduce((acc, { category, data }) => {
-          acc[category] = data;
-          return acc;
-        }, {});
-
-        setTemplates(templatesData);
-      } catch (error) {
-        console.error('Błąd podczas pobierania szablonów:', error);
-      }
-    };
-    fetchTemplates();
-  }, []);
+  useEffect(() => {
+    if (route.params?.newDocument) {
+      const category = route.params.newDocument.category || 'Handlowe';
+      setDocuments((prev) => ({
+        ...prev,
+        [category]: [route.params.newDocument, ...(prev[category] || [])],
+      }));
+    }
+    if (route.params?.refetch) {
+      fetchData();
+    }
+  }, [route.params?.newDocument, route.params?.refetch, fetchData]);
 
   const handleAccordionPress = (id) => {
     setExpanded(expanded === id ? null : id);
   };
 
-  const handleAction = (action, category, template) => {
-    navigation.navigate('Documents', {
-      screen: category.navigator,
-      params: {
-        screen: (() => {
-          if (action === 'Edit') return 'EditScreen';
-          if (action === 'Preview') return 'PreviewScreen';
-          return 'GenerateScreen';
-        })(),
-        params: { category, template },
-      },
-    });
+  // eslint-disable-next-line
+  const handleSearchChange = (category, query) => {
+    setSearchQueries((prev) => ({ ...prev, [category]: query }));
   };
 
-  return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: paperTheme.colors.background },
-      ]}
-      style={[
-        styles.scrollView,
-        { backgroundColor: paperTheme.colors.background },
-      ]}
-    >
-      <View style={styles.headerContainer}>
-        <Text style={[styles.header, { color: paperTheme.colors.text }]}>
-          {i18n.t('documentCategories')}
-        </Text>
-      </View>
+  const handleEdit = (category, template, document = null) => {
+    setSelectedCategory(category);
+    setSelectedTemplate(template);
+    setSelectedDocument(document);
+    setModalVisible(true);
+  };
 
-      {documentCategories.map((category) => (
-        <List.Accordion
-          key={category.id}
-          title={i18n.t(category.nameKey)}
-          titleStyle={[styles.cardTitle, { color: paperTheme.colors.text }]}
-          expanded={expanded === category.id}
-          onPress={() => handleAccordionPress(category.id)}
-          style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
-          theme={{ colors: { background: paperTheme.colors.surface } }}
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedCategory(null);
+    setSelectedTemplate(null);
+    setSelectedDocument(null);
+  };
+
+  const handleSaveDocument = (newDocument) => {
+    setDocuments((prev) => ({
+      ...prev,
+      [newDocument.category || 'Handlowe']: [
+        newDocument,
+        ...(prev[newDocument.category || 'Handlowe'] || []),
+      ],
+    }));
+    handleCloseModal();
+  };
+
+  const renderCard =
+    (category) =>
+    ({ item }) => (
+      <Card style={styles.card}>
+        <Card.Title
+          title={item.name}
+          subtitle={`${new Date(item.created_at).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`}
+          left={LeftIcon}
+          right={() => (
+            <View style={styles.actions}>
+              <EditIcon
+                onPress={() =>
+                  handleEdit(
+                    category,
+                    templates[category.category]?.find(
+                      (t) => t.id === item.template_id,
+                    ) || templates[category.category]?.[0],
+                    item,
+                  )
+                }
+              />
+              <RightIcon
+                onPress={() =>
+                  navigation.navigate('Documents', {
+                    screen: 'DocumentsScreen',
+                    params: { document: item, category },
+                  })
+                }
+              />
+            </View>
+          )}
+        />
+      </Card>
+    );
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={paperTheme.colors.primary} />
+        <Text>Ładowanie danych...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={[styles.error, { color: paperTheme.colors.error }]}>
+          {error}
+        </Text>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('Login')}
+          style={styles.button}
         >
-          {(templates[category.category] || []).map((template) => (
-            <Card
-              key={template.id}
+          Wróć do logowania
+        </Button>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={handleCloseModal}
+      >
+        {selectedCategory && selectedTemplate && (
+          <OfertaHandlowaScreen
+            route={{
+              params: {
+                category: selectedCategory,
+                template: selectedTemplate,
+                document: selectedDocument,
+              },
+            }}
+            navigation={{ navigate: handleCloseModal }}
+            onSave={handleSaveDocument}
+          />
+        )}
+      </Modal>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { backgroundColor: paperTheme.colors.background },
+        ]}
+        style={[
+          styles.scrollView,
+          { backgroundColor: paperTheme.colors.background },
+        ]}
+      >
+        <View style={styles.headerContainer}>
+          <Text style={[styles.header, { color: paperTheme.colors.text }]}>
+            {i18n.t('documentCategories')}
+          </Text>
+        </View>
+
+        {documentCategories.map((category) => {
+          return (
+            <List.Accordion
+              key={category.id}
+              title={i18n.t(category.nameKey)}
+              titleStyle={[styles.cardTitle, { color: paperTheme.colors.text }]}
+              expanded={expanded === category.id}
+              onPress={() => handleAccordionPress(category.id)}
               style={[
-                styles.templateCard,
+                styles.card,
                 { backgroundColor: paperTheme.colors.surface },
               ]}
+              theme={{ colors: { background: paperTheme.colors.surface } }}
             >
-              <Card.Title
-                title={template.name}
-                titleStyle={[
-                  styles.templateTitle,
-                  { color: paperTheme.colors.text },
-                ]}
-              />
-              <Card.Actions style={styles.cardActions}>
-                <Button
-                  onPress={() => handleAction('Edit', category, template)}
+              {(templates[category.category] || []).map((template) => (
+                <Card
+                  key={template.id}
                   style={[
-                    styles.button,
-                    { borderColor: paperTheme.colors.primary },
-                  ]}
-                  mode="outlined"
-                  labelStyle={[
-                    styles.buttonText,
-                    { color: paperTheme.colors.primary },
+                    styles.templateCard,
+                    { backgroundColor: paperTheme.colors.surface },
                   ]}
                 >
-                  {i18n.t('edit')}
-                </Button>
-                <Button
-                  onPress={() => handleAction('Preview', category, template)}
-                  style={[
-                    styles.button,
-                    { borderColor: paperTheme.colors.primary },
-                  ]}
-                  mode="outlined"
-                  labelStyle={[
-                    styles.buttonText,
-                    { color: paperTheme.colors.primary },
-                  ]}
-                >
-                  {i18n.t('preview')}
-                </Button>
-                <Button
-                  onPress={() => handleAction('Generate', category, template)}
-                  style={styles.button}
-                  mode="contained"
-                  labelStyle={styles.buttonText}
-                  theme={{ colors: { primary: paperTheme.colors.primary } }}
-                >
-                  {i18n.t('generate')}
-                </Button>
-              </Card.Actions>
-            </Card>
-          ))}
-        </List.Accordion>
-      ))}
-    </ScrollView>
+                  <Card.Title
+                    title={template.name}
+                    titleStyle={[
+                      styles.templateTitle,
+                      { color: paperTheme.colors.text },
+                    ]}
+                  />
+                  <Card.Actions style={styles.cardActions}>
+                    <Button
+                      onPress={() => handleEdit(category, template)}
+                      style={[
+                        styles.button,
+                        { borderColor: paperTheme.colors.primary },
+                      ]}
+                      mode="outlined"
+                      labelStyle={[
+                        styles.buttonText,
+                        { color: paperTheme.colors.primary },
+                      ]}
+                    >
+                      {i18n.t('edit')}
+                    </Button>
+                  </Card.Actions>
+                </Card>
+              ))}
+            </List.Accordion>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
   scrollView: {
     flex: 1,
   },
-  container: {
+  scrollContainer: {
     paddingLeft: 20,
     paddingRight: 20,
     marginTop: 50,
     paddingBottom: 20,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -205,7 +367,7 @@ const styles = StyleSheet.create({
   },
   templateCard: {
     marginVertical: 10,
-    marginHorizontal: 0,
+    marginHorizontal: 10,
     borderRadius: 8,
   },
   templateTitle: {
@@ -216,11 +378,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
     paddingBottom: 10,
   },
+  searchbar: {
+    marginBottom: 10,
+    marginHorizontal: 10,
+  },
+  list: {
+    marginBottom: 10,
+  },
   button: {
     marginHorizontal: 4,
   },
   buttonText: {
     fontSize: 14,
   },
+  actions: {
+    flexDirection: 'row',
+  },
+  error: {
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  noData: {
+    textAlign: 'center',
+    marginVertical: 20,
+    fontSize: 16,
+  },
 });
+
 export default HomeScreen;

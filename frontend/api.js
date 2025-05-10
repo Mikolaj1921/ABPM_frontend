@@ -1,8 +1,85 @@
-// api.js
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API = axios.create({
-  baseURL: 'http://192.168.112.117:5000/api', // zamień na IP backendu jeśli testujesz na fizycznym urządzeniu   ---- http://192.168.1.105:5000/api
+  baseURL: 'http://192.168.176.117:5000/api',
 });
+
+API.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      const updatedConfig = {
+        ...config,
+        headers: { ...config.headers, Authorization: `Bearer ${token}` },
+      };
+      return updatedConfig;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+    return Promise.reject(error);
+  },
+);
+
+export const fetchDocuments = () =>
+  API.get('/documents')
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd pobierania dokumentów',
+      );
+    });
+
+export const fetchTemplates = (category) =>
+  API.get('/templates', { params: { category } })
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd pobierania szablonów',
+      );
+    });
+
+export const uploadDocument = (formData) =>
+  API.post('/documents', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd przesyłania dokumentu',
+      );
+    });
+
+export const deleteDocument = (documentId) => {
+  if (!documentId) {
+    return Promise.reject(new Error('Brak ID dokumentu'));
+  }
+  return API.delete(`/documents/${documentId}`)
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd podczas usuwania dokumentu',
+      );
+    });
+};
 
 export default API;

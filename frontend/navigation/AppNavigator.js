@@ -8,7 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AccountManagementScreen from '../screens/AccountManagementScreen';
 import HelpScreen from '../screens/HelpScreen';
-import DocumentsScreen from '../screens/DocumentsScreen';
+import DocumentNavigator from './DocumentNavigator';
 
 const Tab = createBottomTabNavigator();
 const SettingsStack = createStackNavigator();
@@ -71,7 +71,7 @@ const AppNavigator = () => {
       />
       <Tab.Screen
         name="Documents"
-        component={DocumentsScreen}
+        component={DocumentNavigator}
         options={{
           tabBarIcon: DocumentsIcon,
         }}

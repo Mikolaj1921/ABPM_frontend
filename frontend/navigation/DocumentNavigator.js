@@ -1,32 +1,28 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-
-import HandloweNavigator from './HandloweNavigator';
-import FinansoweNavigator from './FinansoweNavigator';
-import KadroweNavigator from './KadroweNavigator';
+import DocumentsScreen from '../screens/DocumentsScreen';
+import PreviewScreen from '../screens/documentScreens/PreviewScreen';
 
 const Stack = createStackNavigator();
 
 const DocumentNavigator = ({ route }) => {
   const { navigator } = route.params || {};
+  // Mapowanie navigator na category dla DocumentsScreen
+  const categoryMap = {
+    Handlowe: 'Handlowe',
+    Finansowe: 'Faktury',
+    Kadrowe: 'Kadrowe',
+  };
+  const initialCategory = categoryMap[navigator] || 'Handlowe';
 
   return (
-    <Stack.Navigator initialRouteName={navigator || 'Handlowe'}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen
-        name="Handlowe"
-        component={HandloweNavigator}
-        options={{ headerShown: false }}
+        name="DocumentsScreen"
+        component={DocumentsScreen}
+        initialParams={{ category: initialCategory }}
       />
-      <Stack.Screen
-        name="Finansowe"
-        component={FinansoweNavigator}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Kadrowe"
-        component={KadroweNavigator}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="PreviewScreen" component={PreviewScreen} />
     </Stack.Navigator>
   );
 };
