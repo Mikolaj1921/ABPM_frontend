@@ -11,7 +11,6 @@ import {
   Card,
   Button,
   List,
-  IconButton,
   useTheme as usePaperTheme,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,18 +37,12 @@ const documentCategories = [
   },
 ];
 
-const LeftIcon = () => <IconButton icon="check-circle" color="green" />;
-const RightIcon = ({ onPress }) => (
-  <IconButton icon="arrow-right" color="#001426FF" onPress={onPress} />
-);
-const EditIcon = ({ onPress }) => (
-  <IconButton icon="pencil" color="#001426FF" onPress={onPress} />
-);
-
 const HomeScreen = ({ navigation, route }) => {
   const [expanded, setExpanded] = useState(null);
   const [templates, setTemplates] = useState({});
+  // eslint-disable-next-line
   const [documents, setDocuments] = useState({});
+  // eslint-disable-next-line
   const [searchQueries, setSearchQueries] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -171,41 +164,6 @@ const HomeScreen = ({ navigation, route }) => {
     }));
     handleCloseModal();
   };
-
-  const renderCard =
-    (category) =>
-    ({ item }) => (
-      <Card style={styles.card}>
-        <Card.Title
-          title={item.name}
-          subtitle={`${new Date(item.created_at).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`}
-          left={LeftIcon}
-          right={() => (
-            <View style={styles.actions}>
-              <EditIcon
-                onPress={() =>
-                  handleEdit(
-                    category,
-                    templates[category.category]?.find(
-                      (t) => t.id === item.template_id,
-                    ) || templates[category.category]?.[0],
-                    item,
-                  )
-                }
-              />
-              <RightIcon
-                onPress={() =>
-                  navigation.navigate('Documents', {
-                    screen: 'DocumentsScreen',
-                    params: { document: item, category },
-                  })
-                }
-              />
-            </View>
-          )}
-        />
-      </Card>
-    );
 
   if (loading) {
     return (
@@ -347,9 +305,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
+    marginTop: 5,
   },
   header: {
     fontSize: 24,
@@ -361,6 +320,12 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderRadius: 8,
     marginVertical: 5,
+    shadowOpacity: 0, // Wyłączamy cień na iOS
+    shadowColor: 'transparent', // Zapewniamy brak cienia na iOS
+    shadowOffset: { width: 0, height: 0 }, // Brak przesunięcia cienia
+    shadowRadius: 0, // Brak rozmycia cienia
+    borderWidth: 1,
+    borderColor: '#CCC',
   },
   cardTitle: {
     fontWeight: 'bold',
@@ -378,30 +343,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
     paddingBottom: 10,
   },
-  searchbar: {
-    marginBottom: 10,
-    marginHorizontal: 10,
-  },
-  list: {
-    marginBottom: 10,
-  },
   button: {
     marginHorizontal: 4,
   },
   buttonText: {
     fontSize: 14,
   },
-  actions: {
-    flexDirection: 'row',
-  },
+
   error: {
     marginBottom: 10,
     textAlign: 'center',
-  },
-  noData: {
-    textAlign: 'center',
-    marginVertical: 20,
-    fontSize: 16,
   },
 });
 

@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, Alert } from 'react-native';
 import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
+// eslint-disable-next-line
 import * as FileSystem from 'expo-file-system';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
@@ -163,6 +164,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             <p><strong>Numer oferty:</strong> ${formData.numer_oferty}</p>
 
             <h2>Pozycje Oferty</h2>
+
             ${
               formData.products.length > 0
                 ? formData.products
@@ -206,7 +208,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       const fileName = `oferta_handlowa_${Date.now()}`;
       const formDataToSend = new FormData();
       formDataToSend.append('file', {
-        uri: uri,
+        uri,
         type: 'application/pdf',
         name: `${fileName}.pdf`,
       });
