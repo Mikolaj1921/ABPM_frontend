@@ -387,19 +387,23 @@ export default function DocumentsScreen({ navigation, route }) {
           return;
         }
       }
-      const docData = await retryOperation(fetchDocuments);
-      const docDataWithCategory = docData.map((doc) => ({
-        ...doc,
-        category: typeToCategory[doc.type] || 'Handlowe',
-        id: String(doc.id),
-      }));
+      const docData = await fetchDocuments();
+      const docDataWithCategory = docData.map((doc) => {
+        console.log('Document from API:', doc); // Log dla debugowania
+        return {
+          ...doc,
+          category: typeToCategory[doc.type] || 'Handlowe',
+          id: String(doc.id),
+          products: Array.isArray(doc.products) ? doc.products : [], // Upewnij się, że products jest tablicą
+        };
+      });
       const documentsData = documentCategories.reduce((acc, category) => {
-        acc[category.category] =
-          docDataWithCategory.filter(
-            (doc) => doc.category === category.category,
-          ) || [];
+        acc[category.category] = docDataWithCategory.filter(
+          (doc) => doc.category === category.category,
+        );
         return acc;
       }, {});
+      console.log('Załadowane dokumenty:', documentsData);
       setDocuments(documentsData);
     } catch (fetchError) {
       console.error('Błąd podczas pobierania dokumentów:', fetchError);
@@ -407,16 +411,10 @@ export default function DocumentsScreen({ navigation, route }) {
         i18n.t('fetchDocumentsError') ||
           `Błąd podczas ładowania dokumentów: ${fetchError.message}`,
       );
-      Alert.alert(
-        i18n.t('error') || 'Błąd',
-        i18n.t('networkError') ||
-          'Nie udało się połączyć z serwerem. Sprawdź połączenie i spróbuj ponownie.',
-      );
     } finally {
       setLoading(false);
     }
   }, [isLoggedIn, user, retryFetchUser, navigation]);
-  // pupupu
 
   useEffect(() => {
     fetchData();
@@ -546,7 +544,7 @@ export default function DocumentsScreen({ navigation, route }) {
     if (!ALLOWED_MIME_TYPES.includes(file.mimeType)) {
       return (
         i18n.t('invalidFileType') ||
-        'Niedozwolony typ pliku (dozwolone: PNG, JPEG)'
+        'Niedozwolony typ pliku (dozwolone: PNG, JPEG, JPG, PDF, GIF, WebP, BMP)'
       );
     }
     return null;
@@ -636,7 +634,6 @@ export default function DocumentsScreen({ navigation, route }) {
     const isRecoverableError = (err) => {
       const status = err.response?.status;
       const message = err.message?.toLowerCase();
-      // Ponawiaj tylko dla błędów sieciowych, timeoutów lub błędów serwera (5xx)
       return (
         message.includes('network error') ||
         message.includes('timeout') ||
@@ -652,7 +649,7 @@ export default function DocumentsScreen({ navigation, route }) {
       } catch (err) {
         lastError = err;
         if (!isRecoverableError(err)) {
-          throw err; // Nie ponawiaj dla błędów typu 400, 413
+          throw err;
         }
         console.warn(
           `Próba ${attempt} nieudana, ponawiam po ${Math.pow(2, attempt) * 1000}ms...`,
@@ -676,11 +673,13 @@ export default function DocumentsScreen({ navigation, route }) {
 
       setIsUploading(true);
 
-      // Krok 1: Wgraj obraz
+      // Krok 1: Wgraj obraz (logo lub podpis)
       const formData = new FormData();
       formData.append('image', {
         uri: fileUri,
-        type: 'image/png',
+        type: ALLOWED_MIME_TYPES.includes('image/jpeg')
+          ? 'image/jpeg'
+          : 'image/png',
         name: `${field}_${document.id}_${Date.now()}.png`,
       });
       formData.append('userId', user.id);
@@ -710,37 +709,50 @@ export default function DocumentsScreen({ navigation, route }) {
       // Krok 3: Wygeneruj zaktualizowaną treść HTML
       let htmlContent = templateContent;
 
-      // Zamień tabelę produktów
-      htmlContent = htmlContent.replace(
-        '{{products}}',
-        document.products && Array.isArray(document.products)
+      // Generuj HTML dla products
+      console.log('Document products:', document.products);
+      const productsHtml =
+        Array.isArray(document.products) && document.products.length > 0
           ? document.products
               .map(
-                (p) => `
-                  <tr>
-                    <td>${p.nazwa_uslugi_towaru || ''}</td>
-                    <td>${p.ilosc || 0}</td>
-                    <td>${p.cena_netto || 0}</td>
-                    <td>${p.wartosc_netto || 0}</td>
-                  </tr>
-                `,
+                (product) => `
+                <tr>
+                  <td>${product.nazwa_uslugi_towaru || ''}</td>
+                  <td>${product.ilosc || ''}</td>
+                  <td>${product.cena_netto || ''}</td>
+                  <td>${product.wartosc_netto || ''}</td>
+                </tr>
+              `,
               )
               .join('')
-          : '<tr><td colspan="4">Brak pozycji</td></tr>',
-      );
+          : '<tr><td colspan="4">Brak pozycji</td></tr>';
+      htmlContent = htmlContent.replace('{{products}}', productsHtml);
 
-      // Zamień inne placeholdery
-      Object.entries(document).forEach(([key, value]) => {
-        if (key !== 'products' && key !== 'logo' && key !== 'podpis') {
-          const placeholder = `{{${key}}}`;
-          htmlContent = htmlContent.replace(
-            new RegExp(placeholder, 'g'),
-            value || '',
-          );
-        }
+      // Lista placeholderów (bez products, bo już obsłużone)
+      const placeholders = [
+        'numer_oferty',
+        'nazwa_firmy_wystawcy',
+        'nip_wystawcy',
+        'adres_wystawcy',
+        'nazwa_firmy_klienta',
+        'nip_klienta',
+        'adres_firmy_klienta',
+        'wartosc_netto_suma',
+        'stawka_vat',
+        'wartosc_vat',
+        'wartosc_brutto_suma',
+        'data_wystawienia',
+        'numer_konta_bankowego',
+      ];
+
+      // Zastąp pozostałe placeholdery
+      placeholders.forEach((key) => {
+        const placeholder = `{{${key}}}`;
+        const value = document[key] || '';
+        htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
       });
 
-      // Zamień logo lub podpis
+      // Aktualizuj logo lub podpis
       htmlContent = htmlContent.replace(
         '{{logo}}',
         field === 'logo' ? fileUrl : document.logo || '',
@@ -768,10 +780,28 @@ export default function DocumentsScreen({ navigation, route }) {
         type: 'application/pdf',
         name: `document_${document.id}.pdf`,
       });
-      updateFormData.append('templateId', document.template_id || 1);
-      updateFormData.append('title', document.name);
-      updateFormData.append('type', document.type);
-      updateFormData.append(field, fileUrl);
+      updateFormData.append('templateId', String(document.template_id || 1));
+      updateFormData.append('title', document.name || '');
+      updateFormData.append('type', document.type || 'Faktura');
+      updateFormData.append(
+        'logo',
+        field === 'logo' ? fileUrl : document.logo || '',
+      );
+      updateFormData.append(
+        'podpis',
+        field === 'podpis' ? fileUrl : document.podpis || '',
+      );
+
+      // Przekaż dane szablonu, w tym products jako JSON
+      placeholders.forEach((key) => {
+        updateFormData.append(key, document[key] || '');
+      });
+      updateFormData.append(
+        'products',
+        JSON.stringify(document.products || []),
+      );
+
+      console.log('Update FormData:', Array.from(updateFormData.entries()));
 
       // Krok 6: Zaktualizuj dokument przez API
       const updateOperation = () => updateDocument(document.id, updateFormData);
@@ -788,7 +818,12 @@ export default function DocumentsScreen({ navigation, route }) {
         ...prev,
         [document.category]: prev[document.category].map((doc) =>
           doc.id === document.id
-            ? { ...doc, url: updatedDoc.document.url, [field]: fileUrl }
+            ? {
+                ...doc,
+                url: updatedDoc.document.url,
+                [field]: fileUrl,
+                products: document.products, // Zachowaj products
+              }
             : doc,
         ),
       }));

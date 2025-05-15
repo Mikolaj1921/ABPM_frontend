@@ -3,14 +3,11 @@ import { StyleSheet, ScrollView, View, Alert } from 'react-native';
 import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
-// eslint-disable-next-line
-import * as FileSystem from 'expo-file-system';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
 import { fetchTemplateById, uploadDocument } from '../../../api';
 
 export default function OfertaHandlowaScreen({ route, navigation }) {
-  // eslint-disable-next-line
   const { template: templateParam, document } = route.params || {};
   const { user } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
@@ -39,6 +36,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
     swift_bic: '',
     forma_platnosci: 'przelew',
     products: [],
+    logo: '',
+    podpis: '',
   });
   const [error, setError] = useState('');
   const [templateHtml, setTemplateHtml] = useState('');
@@ -65,16 +64,31 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             nazwa_firmy_klienta: document.nazwa_firmy_klienta || '',
             nip_klienta: document.nip_klienta || '',
             adres_firmy_klienta: document.adres_firmy_klienta || '',
+            data_wystawienia:
+              document.data_wystawienia || prev.data_wystawienia,
+            data_waznosci: document.data_waznosci || '',
+            numer_oferty: document.numer_oferty || '',
+            wartosc_netto_suma: document.wartosc_netto_suma || '',
+            stawka_vat: document.stawka_vat || '23',
+            wartosc_vat: document.wartosc_vat || '',
+            wartosc_brutto_suma: document.wartosc_brutto_suma || '',
+            products: Array.isArray(document.products) ? document.products : [],
+            logo: document.logo || '',
+            podpis: document.podpis || '',
+            numer_konta_bankowego: document.numer_konta_bankowego || '',
+            nazwa_banku: document.nazwa_banku || '',
+            swift_bic: document.swift_bic || '',
+            forma_platnosci: document.forma_platnosci || 'przelew',
           }));
+          // console.log('Loaded document products:', document.products);
         }
 
-        // Pobieranie szablonu po ID (id: 1)
-        console.log('Fetching template with ID 1...');
+        // console.log('Fetching template with ID 1...');
         const selectedTemplate = await fetchTemplateById(1);
-        console.log('Template received:', selectedTemplate);
+        // console.log('Template received:', selectedTemplate);
 
         if (selectedTemplate && selectedTemplate.content) {
-          console.log('Template found:', selectedTemplate);
+          // console.log('Template found:', selectedTemplate);
           setTemplateHtml(selectedTemplate.content);
         } else {
           throw new Error('Nie znaleziono szablonu o ID 1 w odpowiedzi API');
@@ -88,7 +102,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       }
     };
     loadData();
-  }, [user, document]);
+  }, [user, document, i18n]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -101,22 +115,23 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       formData.cena_netto &&
       formData.wartosc_netto
     ) {
+      const newProduct = {
+        nazwa_uslugi_towaru: formData.nazwa_uslugi_towaru,
+        ilosc: formData.ilosc,
+        cena_netto: formData.cena_netto,
+        wartosc_netto: formData.wartosc_netto,
+      };
       setFormData((prev) => ({
         ...prev,
-        products: [
-          ...prev.products,
-          {
-            nazwa_uslugi_towaru: prev.nazwa_uslugi_towaru,
-            ilosc: prev.ilosc,
-            cena_netto: prev.cena_netto,
-            wartosc_netto: prev.wartosc_netto,
-          },
-        ],
+        products: [...prev.products, newProduct],
         nazwa_uslugi_towaru: '',
         ilosc: '',
         cena_netto: '',
         wartosc_netto: '',
       }));
+      // console.log('Added product:', newProduct);
+      // console.log('Current products:', [...formData.products, newProduct]);
+      setError('');
     } else {
       setError(
         i18n.t('fillProductFields') || 'Wypełnij wszystkie pola produktu',
@@ -129,6 +144,11 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       ...prev,
       products: prev.products.filter((_, i) => i !== index),
     }));
+    console.log('Removed product at index:', index);
+    console.log(
+      'Current products:',
+      formData.products.filter((_, i) => i !== index),
+    );
   };
 
   const saveDocument = async () => {
@@ -147,17 +167,23 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         setError(i18n.t('fillAllFields') || 'Wypełnij wszystkie wymagane pola');
         return;
       }
+
       await AsyncStorage.setItem(
         'userData',
         JSON.stringify({
           nazwa_firmy_wystawcy: formData.nazwa_firmy_wystawcy,
           nip_wystawcy: formData.nip_wystawcy,
           adres_wystawcy: formData.adres_wystawcy,
+          nazwa_banku: formData.nazwa_banku,
+          numer_konta_bankowego: formData.numer_konta_bankowego,
+          swift_bic: formData.swift_bic,
         }),
       );
+
       if (!templateHtml) {
         throw new Error('Szablon nie został załadowany');
       }
+
       let htmlContent = templateHtml;
       const productsHtml =
         formData.products.length > 0
@@ -174,31 +200,73 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
               )
               .join('')
           : '<tr><td colspan="4">Brak pozycji</td></tr>';
+
       htmlContent = htmlContent.replace('{{products}}', productsHtml);
-      Object.keys(formData).forEach((key) => {
+
+      const templateFields = [
+        'nazwa_firmy_klienta',
+        'adres_firmy_klienta',
+        'nip_klienta',
+        'clientEmail',
+        'data_wystawienia',
+        'data_waznosci',
+        'numer_oferty',
+        'wartosc_netto_suma',
+        'stawka_vat',
+        'wartosc_vat',
+        'wartosc_brutto_suma',
+        'nazwa_firmy_wystawcy',
+        'nip_wystawcy',
+        'adres_wystawcy',
+        'nazwa_banku',
+        'numer_konta_bankowego',
+        'swift_bic',
+        'forma_platnosci',
+        'logo',
+        'podpis',
+        'products',
+      ];
+
+      templateFields.forEach((key) => {
         const placeholder = `{{${key}}}`;
-        htmlContent = htmlContent.replace(
-          new RegExp(placeholder, 'g'),
-          formData[key] || '',
-        );
+        const value = formData[key] || '';
+        htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
       });
+
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
       const fileName = `oferta_handlowa_${Date.now()}`;
       const formDataToSend = new FormData();
+
       formDataToSend.append('file', {
         uri,
         type: 'application/pdf',
         name: `${fileName}.pdf`,
       });
-      formDataToSend.append('templateId', 1);
+      formDataToSend.append('templateId', '1');
       formDataToSend.append(
         'title',
         `Oferta Handlowa ${formData.nazwa_firmy_wystawcy}`,
       );
       formDataToSend.append('type', 'Oferta Handlowa');
-      formDataToSend.append('logo', formData.logo || '');
-      formDataToSend.append('podpis', formData.podpis || '');
+
+      templateFields.forEach((key) => {
+        let value = formData[key];
+        if (key === 'products') {
+          value = JSON.stringify(formData.products || []);
+        } else {
+          value = value || '';
+        }
+        formDataToSend.append(key, value);
+      });
+
+      console.log('Products to send:', formData.products);
+      console.log('FormData fields:', Array.from(formDataToSend.entries()));
+
       const response = await uploadDocument(formDataToSend);
+      if (!response?.document?.id) {
+        throw new Error('Nie udało się zapisać dokumentu');
+      }
+
       const newDocument = {
         id: String(response.document.id),
         name: `Oferta Handlowa ${formData.nazwa_firmy_wystawcy}`,
@@ -211,7 +279,13 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         products: formData.products,
         ...formData,
       };
-      Alert.alert('Sukces', 'Dokument został zapisany.');
+
+      console.log('New document products:', newDocument.products);
+
+      Alert.alert(
+        i18n.t('success') || 'Sukces',
+        i18n.t('documentSaved') || 'Dokument został zapisany.',
+      );
       navigation.navigate('Documents', {
         newDocument,
         category: 'Handlowe',
@@ -219,7 +293,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
     } catch (err) {
       console.error('Error in saveDocument:', err);
       Alert.alert(
-        'Błąd',
+        i18n.t('error') || 'Błąd',
         i18n.t('errorSaving') ||
           `Błąd podczas zapisywania dokumentu: ${err.message}`,
       );
@@ -342,7 +416,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         style={styles.button}
         labelStyle={{ color: paperTheme.colors.primary }}
       >
-        Dodaj Produkt
+        {i18n.t('addProduct') || 'Dodaj Produkt'}
       </Button>
       {formData.products.map((product, index) => (
         <View
@@ -359,7 +433,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             style={styles.removeButton}
             labelStyle={{ color: paperTheme.colors.error }}
           >
-            Usuń
+            {i18n.t('remove') || 'Usuń'}
           </Button>
         </View>
       ))}
@@ -477,7 +551,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { padding: 20, flexGrow: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -499,7 +572,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: { marginVertical: 5, borderColor: '#001426FF' },
   error: { color: 'red', marginBottom: 10, textAlign: 'center' },
-  errorText: { fontSize: 18 },
   productItem: {
     marginVertical: 5,
     padding: 10,
@@ -511,3 +583,4 @@ const styles = StyleSheet.create({
   },
   removeButton: { marginLeft: 10 },
 });
+// koko nowa
