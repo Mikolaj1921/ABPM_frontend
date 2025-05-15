@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API = axios.create({
   baseURL: 'http://192.168.176.117:5000/api',
+  timeout: 60000,
 });
 
 API.interceptors.request.use(
@@ -54,6 +55,28 @@ export const fetchTemplates = (category) =>
       );
     });
 
+export const fetchTemplateById = (id) =>
+  API.get(`/templates/${id}`)
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          `Błąd pobierania szablonu o ID ${id}`,
+      );
+    });
+
+export const fetchTemplateContent = (id) =>
+  API.get(`/templates/${id}/content`)
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          `Błąd pobierania treści szablonu o ID ${id}`,
+      );
+    });
+
 export const uploadDocument = (formData) =>
   API.post('/documents', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -64,6 +87,30 @@ export const uploadDocument = (formData) =>
         error.response?.data?.error ||
           error.message ||
           'Błąd przesyłania dokumentu',
+      );
+    });
+
+export const updateDocument = (documentId, formData) =>
+  API.put(`/documents/${documentId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd aktualizacji dokumentu',
+      );
+    });
+
+export const uploadImage = (formData) =>
+  API.post('/documents/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error || error.message || 'Błąd wgrywania obrazu',
       );
     });
 

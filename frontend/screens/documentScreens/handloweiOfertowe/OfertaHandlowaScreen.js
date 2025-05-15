@@ -7,10 +7,11 @@ import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
-import { uploadDocument } from '../../../api';
+import { fetchTemplateById, uploadDocument } from '../../../api';
 
 export default function OfertaHandlowaScreen({ route, navigation }) {
-  const { template, document } = route.params || {};
+  // eslint-disable-next-line
+  const { template: templateParam, document } = route.params || {};
   const { user } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
   const paperTheme = useTheme();
@@ -40,6 +41,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
     products: [],
   });
   const [error, setError] = useState('');
+  const [templateHtml, setTemplateHtml] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,9 +67,24 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             adres_firmy_klienta: document.adres_firmy_klienta || '',
           }));
         }
+
+        // Pobieranie szablonu po ID (id: 1)
+        console.log('Fetching template with ID 1...');
+        const selectedTemplate = await fetchTemplateById(1);
+        console.log('Template received:', selectedTemplate);
+
+        if (selectedTemplate && selectedTemplate.content) {
+          console.log('Template found:', selectedTemplate);
+          setTemplateHtml(selectedTemplate.content);
+        } else {
+          throw new Error('Nie znaleziono szablonu o ID 1 w odpowiedzi API');
+        }
       } catch (err) {
         console.error('Error loading data:', err);
-        setError(i18n.t('errorLoading') || 'Błąd podczas ładowania danych');
+        setError(
+          i18n.t('errorLoading') ||
+            `Błąd podczas ładowania danych: ${err.message}`,
+        );
       }
     };
     loadData();
@@ -115,10 +132,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
   };
 
   const saveDocument = async () => {
-    console.log('saveDocument started');
-
     try {
-      console.log('Validating form data:', formData);
       if (
         !formData.nazwa_firmy_klienta ||
         !formData.nip_klienta ||
@@ -126,7 +140,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         !formData.nip_wystawcy ||
         !formData.wartosc_brutto_suma
       ) {
-        console.log('Validation failed: Missing required fields');
         Alert.alert(
           'Błąd',
           i18n.t('fillAllFields') || 'Wypełnij wszystkie wymagane pola',
@@ -134,8 +147,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         setError(i18n.t('fillAllFields') || 'Wypełnij wszystkie wymagane pola');
         return;
       }
-
-      console.log('Saving user data to AsyncStorage...');
       await AsyncStorage.setItem(
         'userData',
         JSON.stringify({
@@ -144,67 +155,34 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
           adres_wystawcy: formData.adres_wystawcy,
         }),
       );
-
-      // Generowanie HTML-a do PDF-a
-      console.log('Generating HTML for PDF...');
-      const htmlContent = `
-        <html>
-          <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h1>Oferta Handlowa</h1>
-
-            <h2>Dane Klienta</h2>
-            <p><strong>Firma:</strong> ${formData.nazwa_firmy_klienta}</p>
-            <p><strong>Adres:</strong> ${formData.adres_firmy_klienta}</p>
-            <p><strong>NIP:</strong> ${formData.nip_klienta}</p>
-            <p><strong>Email:</strong> ${formData.clientEmail}</p>
-
-            <h2>Dane Oferty</h2>
-            <p><strong>Data wystawienia:</strong> ${formData.data_wystawienia}</p>
-            <p><strong>Data ważności:</strong> ${formData.data_waznosci}</p>
-            <p><strong>Numer oferty:</strong> ${formData.numer_oferty}</p>
-
-            <h2>Pozycje Oferty</h2>
-
-            ${
-              formData.products.length > 0
-                ? formData.products
-                    .map(
-                      (product, index) =>
-                        `<p>${index + 1}. ${product.nazwa_uslugi_towaru} | Ilość: ${
-                          product.ilosc
-                        } | Cena netto: ${product.cena_netto} | Wartość netto: ${
-                          product.wartosc_netto
-                        }</p>`,
-                    )
-                    .join('')
-                : '<p>Brak pozycji</p>'
-            }
-
-            <h2>Podsumowanie</h2>
-            <p><strong>Wartość netto suma:</strong> ${formData.wartosc_netto_suma}</p>
-            <p><strong>Stawka VAT:</strong> ${formData.stawka_vat}%</p>
-            <p><strong>Wartość VAT:</strong> ${formData.wartosc_vat}</p>
-            <p><strong>Wartość brutto suma:</strong> ${formData.wartosc_brutto_suma}</p>
-
-            <h2>Dane Wystawcy</h2>
-            <p><strong>Firma:</strong> ${formData.nazwa_firmy_wystawcy}</p>
-            <p><strong>NIP:</strong> ${formData.nip_wystawcy}</p>
-            <p><strong>Adres:</strong> ${formData.adres_wystawcy}</p>
-            <p><strong>Bank:</strong> ${formData.nazwa_banku}</p>
-            <p><strong>Numer konta:</strong> ${formData.numer_konta_bankowego}</p>
-            <p><strong>SWIFT/BIC:</strong> ${formData.swift_bic}</p>
-            <p><strong>Forma płatności:</strong> ${formData.forma_platnosci}</p>
-          </body>
-        </html>
-      `;
-
-      // Generowanie PDF-a za pomocą expo-print
-      console.log('Generating PDF...');
+      if (!templateHtml) {
+        throw new Error('Szablon nie został załadowany');
+      }
+      let htmlContent = templateHtml;
+      const productsHtml =
+        formData.products.length > 0
+          ? formData.products
+              .map(
+                (product) => `
+              <tr>
+                <td>${product.nazwa_uslugi_towaru}</td>
+                <td>${product.ilosc}</td>
+                <td>${product.cena_netto}</td>
+                <td>${product.wartosc_netto}</td>
+              </tr>
+            `,
+              )
+              .join('')
+          : '<tr><td colspan="4">Brak pozycji</td></tr>';
+      htmlContent = htmlContent.replace('{{products}}', productsHtml);
+      Object.keys(formData).forEach((key) => {
+        const placeholder = `{{${key}}}`;
+        htmlContent = htmlContent.replace(
+          new RegExp(placeholder, 'g'),
+          formData[key] || '',
+        );
+      });
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      console.log('PDF generated at:', uri);
-
-      // Przygotowanie FormData do wysyłki
-      console.log('Preparing FormData for upload...');
       const fileName = `oferta_handlowa_${Date.now()}`;
       const formDataToSend = new FormData();
       formDataToSend.append('file', {
@@ -212,28 +190,27 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         type: 'application/pdf',
         name: `${fileName}.pdf`,
       });
-      formDataToSend.append('templateId', template.id);
+      formDataToSend.append('templateId', 1);
       formDataToSend.append(
         'title',
         `Oferta Handlowa ${formData.nazwa_firmy_wystawcy}`,
       );
       formDataToSend.append('type', 'Oferta Handlowa');
-
-      console.log('Uploading document...');
+      formDataToSend.append('logo', formData.logo || '');
+      formDataToSend.append('podpis', formData.podpis || '');
       const response = await uploadDocument(formDataToSend);
-      console.log('Upload response:', response);
-
       const newDocument = {
         id: String(response.document.id),
         name: `Oferta Handlowa ${formData.nazwa_firmy_wystawcy}`,
         type: 'Oferta Handlowa',
-        template_name: template?.name || 'Oferta Handlowa',
+        template_name: 'Oferta Handlowa',
         created_at: new Date().toISOString(),
         url: response.document.url || uri,
+        logo: formData.logo,
+        podpis: formData.podpis,
+        products: formData.products,
+        ...formData,
       };
-      console.log('Prepared newDocument:', newDocument);
-
-      console.log('Navigating to Documents screen...');
       Alert.alert('Sukces', 'Dokument został zapisany.');
       navigation.navigate('Documents', {
         newDocument,
@@ -257,23 +234,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
     console.log('Save button pressed');
     saveDocument();
   };
-
-  if (!template) {
-    return (
-      <View style={styles.center}>
-        <Text style={[styles.errorText, { color: paperTheme.colors.error }]}>
-          {i18n.t('noTemplate') || 'Brak szablonu.'}
-        </Text>
-        <Button
-          mode="contained"
-          onPress={() => navigation.navigate('Home')}
-          style={styles.cancelButton}
-        >
-          Wróć
-        </Button>
-      </View>
-    );
-  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

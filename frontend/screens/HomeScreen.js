@@ -14,26 +14,36 @@ import {
   useTheme as usePaperTheme,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { fetchDocuments, fetchTemplates } from '../api';
 import OfertaHandlowaScreen from './documentScreens/handloweiOfertowe/OfertaHandlowaScreen';
+
+const categoryIcons = {
+  Handlowe: 'briefcase',
+  Faktury: 'dollar',
+  Kadrowe: 'users',
+};
 
 const documentCategories = [
   {
     id: '1',
     nameKey: 'handloweiOfertowe',
     category: 'Handlowe',
+    icon: 'shopping-cart',
   },
   {
     id: '2',
     nameKey: 'finansowe',
     category: 'Faktury',
+    icon: 'file-invoice-dollar',
   },
   {
     id: '3',
     nameKey: 'kadrowe',
     category: 'Kadrowe',
+    icon: 'users',
   },
 ];
 
@@ -229,56 +239,68 @@ const HomeScreen = ({ navigation, route }) => {
           </Text>
         </View>
 
-        {documentCategories.map((category) => {
-          return (
-            <List.Accordion
-              key={category.id}
-              title={i18n.t(category.nameKey)}
-              titleStyle={[styles.cardTitle, { color: paperTheme.colors.text }]}
-              expanded={expanded === category.id}
-              onPress={() => handleAccordionPress(category.id)}
-              style={[
-                styles.card,
-                { backgroundColor: paperTheme.colors.surface },
-              ]}
-              theme={{ colors: { background: paperTheme.colors.surface } }}
-            >
-              {(templates[category.category] || []).map((template) => (
-                <Card
-                  key={template.id}
-                  style={[
-                    styles.templateCard,
-                    { backgroundColor: paperTheme.colors.surface },
-                  ]}
+        {documentCategories.map((category) => (
+          <List.Accordion
+            key={category.id}
+            title={
+              <View style={styles.titleContainer}>
+                <FontAwesome
+                  name={categoryIcons[category.category] || 'folder'}
+                  size={24}
+                  color={paperTheme.colors.text}
+                  style={styles.icon}
+                />
+                <Text
+                  style={[styles.cardTitle, { color: paperTheme.colors.text }]}
+                  ellipsizeMode="clip"
                 >
-                  <Card.Title
-                    title={template.name}
-                    titleStyle={[
-                      styles.templateTitle,
-                      { color: paperTheme.colors.text },
+                  {i18n.t(category.nameKey)}
+                </Text>
+              </View>
+            }
+            expanded={expanded === category.id}
+            onPress={() => handleAccordionPress(category.id)}
+            style={[
+              styles.card,
+              { backgroundColor: paperTheme.colors.surface },
+            ]}
+            theme={{ colors: { background: paperTheme.colors.surface } }}
+          >
+            {(templates[category.category] || []).map((template) => (
+              <Card
+                key={template.id}
+                style={[
+                  styles.templateCard,
+                  { backgroundColor: paperTheme.colors.surface },
+                ]}
+              >
+                <Card.Title
+                  title={template.name}
+                  titleStyle={[
+                    styles.templateTitle,
+                    { color: paperTheme.colors.text },
+                  ]}
+                />
+                <Card.Actions style={styles.cardActions}>
+                  <Button
+                    onPress={() => handleEdit(category, template)}
+                    style={[
+                      styles.button,
+                      { borderColor: paperTheme.colors.primary },
                     ]}
-                  />
-                  <Card.Actions style={styles.cardActions}>
-                    <Button
-                      onPress={() => handleEdit(category, template)}
-                      style={[
-                        styles.button,
-                        { borderColor: paperTheme.colors.primary },
-                      ]}
-                      mode="outlined"
-                      labelStyle={[
-                        styles.buttonText,
-                        { color: paperTheme.colors.primary },
-                      ]}
-                    >
-                      {i18n.t('edit')}
-                    </Button>
-                  </Card.Actions>
-                </Card>
-              ))}
-            </List.Accordion>
-          );
-        })}
+                    mode="outlined"
+                    labelStyle={[
+                      styles.buttonText,
+                      { color: paperTheme.colors.primary },
+                    ]}
+                  >
+                    {i18n.t('edit')}
+                  </Button>
+                </Card.Actions>
+              </Card>
+            ))}
+          </List.Accordion>
+        ))}
       </ScrollView>
     </View>
   );
@@ -327,8 +349,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CCC',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 5, // Dodajemy padding dla lepszego wyglądu
+  },
+  icon: {
+    width: 24, // Stała szerokość ikony
+    height: 24, // Stała wysokość ikony
+    marginLeft: 8,
+    marginRight: 10, // Odstęp między ikoną a tekstem
+    overflow: 'visible', // Zapobiega obcinaniu ikony
+  },
   cardTitle: {
+    flex: 1, // Zajmuje pozostałą przestrzeń
     fontWeight: 'bold',
+    fontSize: 16,
+    overflow: 'visible', // Zapobiega obcinaniu tekstu
   },
   templateCard: {
     marginVertical: 10,
@@ -349,7 +387,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
   },
-
   error: {
     marginBottom: 10,
     textAlign: 'center',

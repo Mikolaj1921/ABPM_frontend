@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   FlatList,
   Animated,
-  Clipboard,
 } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   Card,
@@ -22,9 +22,17 @@ import {
   useTheme as usePaperTheme,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
+import * as Print from 'expo-print';
 import { AuthContext } from '../contexts/AuthContext';
 import { LanguageContext } from '../contexts/LanguageContext';
-import { fetchDocuments, deleteDocument } from '../api';
+import {
+  fetchDocuments,
+  deleteDocument,
+  updateDocument,
+  uploadImage,
+  fetchTemplateContent,
+} from '../api';
 
 const documentCategories = [
   {
@@ -45,36 +53,36 @@ const typeToCategory = {
   Kadrowy: 'Kadrowe',
 };
 
-// Standalone component for List.Accordion left icon
+// Maksymalny rozmiar pliku (10 MB, zgodny z backendem)
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB w bajtach
+const ALLOWED_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'application/pdf',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+];
+
+// Komponenty pomocnicze
 const AccordionIcon = ({ icon }) => (
   <FontAwesome
     name={icon}
     size={20}
     color="#001426FF"
-    style={{
-      justifyContent: 'center',
-      alignSelf: 'center',
-      marginLeft: 10,
-    }}
+    style={{ justifyContent: 'center', alignSelf: 'center', marginLeft: 10 }}
   />
 );
-
-// Standalone component for Searchbar icon
 const SearchIcon = () => (
   <FontAwesome name="search" size={20} color="#001426FF" />
 );
-
-// Standalone component for Button sort icon
 const SortIcon = () => (
   <FontAwesome name="sort" size={16} style={{ marginRight: 8 }} />
 );
-
-// Standalone component for Card.Title left icon
 const LeftIcon = () => (
   <FontAwesome name="check-circle" size={24} color="#001426FF" />
 );
-
-// Standalone component for Card.Title right menu icon
 const MenuIcon = ({ onPress }) => (
   <TouchableOpacity onPress={onPress}>
     <FontAwesome
@@ -85,8 +93,16 @@ const MenuIcon = ({ onPress }) => (
     />
   </TouchableOpacity>
 );
+const SortOption = ({ item, selectedCategory, handleSortChange }) => (
+  <TouchableOpacity
+    style={styles.modalItem}
+    onPress={() => handleSortChange(selectedCategory, item.value)}
+  >
+    <Text style={styles.modalItemText}>{item.label}</Text>
+  </TouchableOpacity>
+);
 
-// Standalone component for Card.Title right menu
+// Komponent CardMenu
 const CardMenu = ({
   item,
   menuVisible,
@@ -98,55 +114,32 @@ const CardMenu = ({
   handleDelete,
   category,
   menuFadeAnim,
+  handleAddLogo,
+  handleAddSignature,
 }) => {
-  // Funkcja do udostępniania linku do dokumentu
   const handleShare = async (document) => {
     try {
       const url = document.url || document.file_path;
       if (!url) {
-        Alert.alert('Błąd', i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
+        Alert.alert(i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
         return;
       }
-
-      // Tworzymy link do udostępnienia
       const shareUrl = `${i18n.t('shareMessage') || 'Sprawdź ten dokument'}: ${url}`;
       const encodedUrl = encodeURIComponent(shareUrl);
       const canOpen = await Linking.canOpenURL('https://');
-
       if (canOpen) {
-        // Używamy Linking do otwarcia natywnego interfejsu udostępniania
-        // Przykładowo WhatsApp, można dodać inne platformy
         await Linking.openURL(`https://t.me/share/url?url=${encodedUrl}`);
       } else {
         Alert.alert(
-          'Błąd',
-          i18n.t('sharingNotAvailable') ||
-            'Udostępnianie nie jest dostępne na tym urządzeniu',
+          i18n.t('sharingNotAvailable') || 'Udostępnianie nie jest dostępne',
         );
       }
     } catch (err) {
-      console.error('Błąd podczas udostępniania dokumentu:', err);
+      console.error('Błąd podczas udostępniania:', err);
       Alert.alert(
-        'Błąd',
-        i18n.t('sharingError') ||
-          `Nie udało się udostępnić dokumentu: ${err.message}`,
+        i18n.t('sharingError') || `Nie udało się udostępnić: ${err.message}`,
       );
     }
-  };
-
-  // Funkcja do kopiowania linku
-  const handleCopyLink = (document) => {
-    const url = document.url || document.file_path;
-    if (!url) {
-      Alert.alert('Błąd', i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
-      return;
-    }
-
-    Clipboard.setString(url);
-    Alert.alert(
-      'Sukces',
-      i18n.t('linkCopied') || 'Link do dokumentu został skopiowany do schowka',
-    );
   };
 
   return (
@@ -209,11 +202,25 @@ const CardMenu = ({
               style={styles.menuItem}
               onPress={() => {
                 handleMenuClose(item.id);
-                handleCopyLink(item);
+                handleAddLogo(item);
               }}
             >
-              <FontAwesome name="link" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('shareLink')}</Text>
+              <FontAwesome name="image" size={20} color="#001426FF" />
+              <Text style={styles.menuItemText}>
+                {i18n.t('addLogo') || 'Dodaj logo firmy'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                handleMenuClose(item.id);
+                handleAddSignature(item);
+              }}
+            >
+              <FontAwesome name="pencil" size={20} color="#001426FF" />
+              <Text style={styles.menuItemText}>
+                {i18n.t('addSignature') || 'Dodaj podpis elektroniczny'}
+              </Text>
             </TouchableOpacity>
             <View style={styles.menuDivider} />
             <TouchableOpacity
@@ -235,7 +242,7 @@ const CardMenu = ({
   );
 };
 
-// Standalone component for DocumentCard
+// Komponent DocumentCard
 const DocumentCard = ({
   category,
   item,
@@ -248,6 +255,8 @@ const DocumentCard = ({
   handleDelete,
   paperTheme,
   menuFadeAnim,
+  handleAddLogo,
+  handleAddSignature,
 }) => (
   <Card
     style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
@@ -255,13 +264,11 @@ const DocumentCard = ({
   >
     <Card.Title
       title={item.name}
-      subtitle={`${new Date(item.created_at || Date.now()).toLocaleDateString()} | Szablon: ${
-        item.template_name || 'Brak'
-      }`}
+      subtitle={`${new Date(item.created_at || Date.now()).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`}
       titleStyle={styles.cardTitle}
       subtitleStyle={styles.cardSubtitle}
       left={LeftIcon}
-      leftStyle={{ marginRight: 2.5 }} // Small margin for left icon
+      leftStyle={{ marginRight: 2.5 }}
       right={() => (
         <CardMenu
           item={item}
@@ -274,20 +281,12 @@ const DocumentCard = ({
           handleDelete={handleDelete}
           category={category}
           menuFadeAnim={menuFadeAnim}
+          handleAddLogo={handleAddLogo}
+          handleAddSignature={handleAddSignature}
         />
       )}
     />
   </Card>
-);
-
-// Standalone component for sort option
-const SortOption = ({ item, selectedCategory, handleSortChange }) => (
-  <TouchableOpacity
-    style={styles.modalItem}
-    onPress={() => handleSortChange(selectedCategory, item.value)}
-  >
-    <Text style={styles.modalItemText}>{item.label}</Text>
-  </TouchableOpacity>
 );
 
 export default function DocumentsScreen({ navigation, route }) {
@@ -302,21 +301,25 @@ export default function DocumentsScreen({ navigation, route }) {
   const [expanded, setExpanded] = useState(null);
   const [menuVisible, setMenuVisible] = useState({});
   const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [logoModalVisible, setLogoModalVisible] = useState(false);
+  const [signatureModalVisible, setSignatureModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const paperTheme = usePaperTheme();
 
-  const [fadeAnim] = useState(new Animated.Value(0)); // Animacja dla modalu sortowania
-  const [menuFadeAnim] = useState(new Animated.Value(0)); // Animacja dla modalu opcji dokumentów
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [menuFadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    if (sortModalVisible) {
+    if (sortModalVisible || logoModalVisible || signatureModalVisible) {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 200,
         useNativeDriver: true,
       }).start();
     }
-  }, [sortModalVisible]);
+  }, [sortModalVisible, logoModalVisible, signatureModalVisible]);
 
   const handleClose = () => {
     Animated.timing(fadeAnim, {
@@ -325,6 +328,9 @@ export default function DocumentsScreen({ navigation, route }) {
       useNativeDriver: true,
     }).start(() => {
       setSortModalVisible(false);
+      setLogoModalVisible(false);
+      setSignatureModalVisible(false);
+      setSelectedDocument(null);
     });
   };
 
@@ -364,29 +370,29 @@ export default function DocumentsScreen({ navigation, route }) {
       setError('');
       const token = await AsyncStorage.getItem('token');
       if (!token || !isLoggedIn) {
-        setError('Brak tokena lub użytkownik nie jest zalogowany');
+        setError(
+          i18n.t('noToken') || 'Brak tokena lub użytkownik nie jest zalogowany',
+        );
         navigation.navigate('Login');
         return;
       }
-
       if (!user) {
         const result = await retryFetchUser();
         if (!result.success) {
-          setError('Nie udało się pobrać danych użytkownika');
+          setError(
+            i18n.t('userFetchError') ||
+              'Nie udało się pobrać danych użytkownika',
+          );
           navigation.navigate('Login');
           return;
         }
       }
-
-      const docData = await fetchDocuments();
-      console.log('Dane z fetchDocuments:', docData);
-
+      const docData = await retryOperation(fetchDocuments);
       const docDataWithCategory = docData.map((doc) => ({
         ...doc,
         category: typeToCategory[doc.type] || 'Handlowe',
         id: String(doc.id),
       }));
-
       const documentsData = documentCategories.reduce((acc, category) => {
         acc[category.category] =
           docDataWithCategory.filter(
@@ -394,18 +400,23 @@ export default function DocumentsScreen({ navigation, route }) {
           ) || [];
         return acc;
       }, {});
-
-      console.log('Zgrupowane dokumenty:', documentsData);
       setDocuments(documentsData);
     } catch (fetchError) {
       console.error('Błąd podczas pobierania dokumentów:', fetchError);
       setError(
-        `Błąd podczas ładowania dokumentów: ${fetchError.message || 'Nieznany błąd'}`,
+        i18n.t('fetchDocumentsError') ||
+          `Błąd podczas ładowania dokumentów: ${fetchError.message}`,
+      );
+      Alert.alert(
+        i18n.t('error') || 'Błąd',
+        i18n.t('networkError') ||
+          'Nie udało się połączyć z serwerem. Sprawdź połączenie i spróbuj ponownie.',
       );
     } finally {
       setLoading(false);
     }
   }, [isLoggedIn, user, retryFetchUser, navigation]);
+  // pupupu
 
   useEffect(() => {
     fetchData();
@@ -417,8 +428,6 @@ export default function DocumentsScreen({ navigation, route }) {
 
   useEffect(() => {
     const params = route.params || {};
-    console.log('Route params:', params);
-
     let { newDocument } = params;
     if (
       !newDocument &&
@@ -427,7 +436,6 @@ export default function DocumentsScreen({ navigation, route }) {
     ) {
       newDocument = params.params.newDocument;
     }
-
     if (newDocument) {
       const category = validCategories.includes(newDocument.category)
         ? newDocument.category
@@ -437,18 +445,10 @@ export default function DocumentsScreen({ navigation, route }) {
         category,
         id: String(newDocument.id),
       };
-      console.log('Nowy dokument:', {
-        newDoc: newDocument,
-        assignedCategory: category,
-      });
-      setDocuments((prev) => {
-        const updatedDocuments = {
-          ...prev,
-          [category]: [newDocWithCategory, ...(prev[category] || [])],
-        };
-        console.log('Zaktualizowany stan documents:', updatedDocuments);
-        return updatedDocuments;
-      });
+      setDocuments((prev) => ({
+        ...prev,
+        [category]: [newDocWithCategory, ...(prev[category] || [])],
+      }));
       const categoryIndex = documentCategories.findIndex(
         (cat) => cat.category === category,
       );
@@ -475,25 +475,18 @@ export default function DocumentsScreen({ navigation, route }) {
     try {
       const url = document.url || document.file_path;
       if (url) {
-        await Linking.openURL(url);
+        await Linking.openURL(`${url}?t=${Date.now()}`);
       } else {
-        Alert.alert('Błąd', 'Brak URL do dokumentu');
+        Alert.alert(i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
       }
     } catch (err) {
       console.error('Błąd podczas pobierania dokumentu:', err);
-      Alert.alert('Błąd', 'Nie udało się pobrać dokumentu');
+      Alert.alert(i18n.t('downloadError') || 'Nie udało się pobrać dokumentu');
     }
   };
 
   const handleDelete = async (document, category) => {
     const documentId = String(document.id);
-    console.log('Usuwanie dokumentu:', {
-      documentId,
-      category,
-      documentsKeys: Object.keys(documents),
-      documentsInCategory: documents[category] || [],
-    });
-
     Alert.alert(
       i18n.t('confirmDelete') || 'Potwierdź usunięcie',
       i18n.t('deleteDocumentConfirm') ||
@@ -506,31 +499,22 @@ export default function DocumentsScreen({ navigation, route }) {
           onPress: async () => {
             try {
               await deleteDocument(documentId);
-              setDocuments((prev) => {
-                if (!prev[category]) {
-                  console.warn(
-                    `Kategoria ${category} nie istnieje w documents`,
-                    prev,
-                  );
-                  return { ...prev };
-                }
-                const filteredDocs = prev[category].filter(
+              setDocuments((prev) => ({
+                ...prev,
+                [category]: prev[category].filter(
                   (doc) => String(doc.id) !== documentId,
-                );
-                console.log('Przefiltrowane dokumenty:', filteredDocs);
-                const updatedDocs = {
-                  ...prev,
-                  [category]: filteredDocs,
-                };
-                console.log('Stan po usunięciu:', updatedDocs);
-                return updatedDocs;
-              });
-              Alert.alert('Sukces', 'Dokument został usunięty');
+                ),
+              }));
+              Alert.alert(
+                i18n.t('success') || 'Sukces',
+                i18n.t('documentDeleted') || 'Dokument został usunięty',
+              );
             } catch (err) {
               console.error('Błąd podczas usuwania dokumentu:', err);
               Alert.alert(
-                'Błąd',
-                `Nie udało się usunąć dokumentu: ${err.message}`,
+                i18n.t('error') || 'Błąd',
+                i18n.t('deleteError') ||
+                  `Nie udało się usunąć dokumentu: ${err.message}`,
               );
             }
           },
@@ -539,18 +523,305 @@ export default function DocumentsScreen({ navigation, route }) {
     );
   };
 
+  const handleAddLogo = (document) => {
+    setSelectedDocument(document);
+    setLogoModalVisible(true);
+  };
+
+  const handleAddSignature = (document) => {
+    setSelectedDocument(document);
+    setSignatureModalVisible(true);
+  };
+
+  const validateFile = (file) => {
+    if (!file) {
+      return i18n.t('noFileSelected') || 'Nie wybrano pliku';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return (
+        i18n.t('fileTooLarge') ||
+        `Plik jest za duży (maks. ${MAX_FILE_SIZE / (1024 * 1024)} MB)`
+      );
+    }
+    if (!ALLOWED_MIME_TYPES.includes(file.mimeType)) {
+      return (
+        i18n.t('invalidFileType') ||
+        'Niedozwolony typ pliku (dozwolone: PNG, JPEG)'
+      );
+    }
+    return null;
+  };
+
+  const checkNetwork = async () => {
+    const state = await NetInfo.fetch();
+    return state.isConnected && state.isInternetReachable;
+  };
+
+  const handlePickLogo = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ALLOWED_MIME_TYPES,
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled) {
+        const file = result.assets[0];
+        const validationError = validateFile(file);
+        if (validationError) {
+          Alert.alert(i18n.t('error') || 'Błąd', validationError);
+          return;
+        }
+        const isOnline = await checkNetwork();
+        if (!isOnline) {
+          Alert.alert(
+            i18n.t('noNetwork') || 'Brak połączenia z internetem',
+            i18n.t('checkConnection') ||
+              'Sprawdź połączenie i spróbuj ponownie',
+          );
+          return;
+        }
+        setIsUploading(true);
+        await updateDocumentWithFile(selectedDocument, file.uri, 'logo');
+        setLogoModalVisible(false);
+      }
+    } catch (err) {
+      console.error('Błąd podczas wyboru logo:', err);
+      Alert.alert(
+        i18n.t('error') || 'Błąd',
+        i18n.t('logoPickError') || `Nie udało się wybrać logo: ${err.message}`,
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePickSignature = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ALLOWED_MIME_TYPES,
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled) {
+        const file = result.assets[0];
+        const validationError = validateFile(file);
+        if (validationError) {
+          Alert.alert(i18n.t('error') || 'Błąd', validationError);
+          return;
+        }
+        const isOnline = await checkNetwork();
+        if (!isOnline) {
+          Alert.alert(
+            i18n.t('noNetwork') || 'Brak połączenia z internetem',
+            i18n.t('checkConnection') ||
+              'Sprawdź połączenie i spróbuj ponownie',
+          );
+          return;
+        }
+        setIsUploading(true);
+        await updateDocumentWithFile(selectedDocument, file.uri, 'podpis');
+        setSignatureModalVisible(false);
+      }
+    } catch (err) {
+      console.error('Błąd podczas wyboru podpisu:', err);
+      Alert.alert(
+        i18n.t('error') || 'Błąd',
+        i18n.t('signaturePickError') ||
+          `Nie udało się wybrać podpisu: ${err.message}`,
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const retryOperation = async (operation, maxRetries = 3) => {
+    const isRecoverableError = (err) => {
+      const status = err.response?.status;
+      const message = err.message?.toLowerCase();
+      // Ponawiaj tylko dla błędów sieciowych, timeoutów lub błędów serwera (5xx)
+      return (
+        message.includes('network error') ||
+        message.includes('timeout') ||
+        (status >= 500 && status <= 599) ||
+        status === undefined
+      );
+    };
+
+    let lastError;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (err) {
+        lastError = err;
+        if (!isRecoverableError(err)) {
+          throw err; // Nie ponawiaj dla błędów typu 400, 413
+        }
+        console.warn(
+          `Próba ${attempt} nieudana, ponawiam po ${Math.pow(2, attempt) * 1000}ms...`,
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 1000),
+        );
+      }
+    }
+    throw lastError;
+  };
+
+  const updateDocumentWithFile = async (document, fileUri, field) => {
+    try {
+      if (!document || !fileUri || !field) {
+        throw new Error(
+          i18n.t('missingParams') ||
+            'Brak wymaganych parametrów: dokument, plik lub pole',
+        );
+      }
+
+      setIsUploading(true);
+
+      // Krok 1: Wgraj obraz
+      const formData = new FormData();
+      formData.append('image', {
+        uri: fileUri,
+        type: 'image/png',
+        name: `${field}_${document.id}_${Date.now()}.png`,
+      });
+      formData.append('userId', user.id);
+      formData.append('field', field);
+
+      const uploadOperation = () => uploadImage(formData);
+      const { url: fileUrl } = await retryOperation(uploadOperation);
+      if (!fileUrl) {
+        throw new Error(
+          i18n.t('imageUploadFailed') ||
+            'Nie udało się uzyskać URL wgranego obrazu',
+        );
+      }
+
+      // Krok 2: Pobierz treść szablonu
+      const fetchTemplateOperation = () =>
+        fetchTemplateContent(document.template_id || 1);
+      const { content: templateContent } = await retryOperation(
+        fetchTemplateOperation,
+      );
+      if (!templateContent) {
+        throw new Error(
+          i18n.t('noTemplateContent') || 'Brak zawartości szablonu',
+        );
+      }
+
+      // Krok 3: Wygeneruj zaktualizowaną treść HTML
+      let htmlContent = templateContent;
+
+      // Zamień tabelę produktów
+      htmlContent = htmlContent.replace(
+        '{{products}}',
+        document.products && Array.isArray(document.products)
+          ? document.products
+              .map(
+                (p) => `
+                  <tr>
+                    <td>${p.nazwa_uslugi_towaru || ''}</td>
+                    <td>${p.ilosc || 0}</td>
+                    <td>${p.cena_netto || 0}</td>
+                    <td>${p.wartosc_netto || 0}</td>
+                  </tr>
+                `,
+              )
+              .join('')
+          : '<tr><td colspan="4">Brak pozycji</td></tr>',
+      );
+
+      // Zamień inne placeholdery
+      Object.entries(document).forEach(([key, value]) => {
+        if (key !== 'products' && key !== 'logo' && key !== 'podpis') {
+          const placeholder = `{{${key}}}`;
+          htmlContent = htmlContent.replace(
+            new RegExp(placeholder, 'g'),
+            value || '',
+          );
+        }
+      });
+
+      // Zamień logo lub podpis
+      htmlContent = htmlContent.replace(
+        '{{logo}}',
+        field === 'logo' ? fileUrl : document.logo || '',
+      );
+      htmlContent = htmlContent.replace(
+        '{{podpis}}',
+        field === 'podpis' ? fileUrl : document.podpis || '',
+      );
+
+      // Krok 4: Wygeneruj PDF
+      const { uri: pdfUri } = await Print.printToFileAsync({
+        html: htmlContent,
+      });
+      if (!pdfUri) {
+        throw new Error(
+          i18n.t('pdfGenerationFailed') ||
+            'Nie udało się wygenerować pliku PDF',
+        );
+      }
+
+      // Krok 5: Przygotuj FormData do aktualizacji dokumentu
+      const updateFormData = new FormData();
+      updateFormData.append('file', {
+        uri: pdfUri,
+        type: 'application/pdf',
+        name: `document_${document.id}.pdf`,
+      });
+      updateFormData.append('templateId', document.template_id || 1);
+      updateFormData.append('title', document.name);
+      updateFormData.append('type', document.type);
+      updateFormData.append(field, fileUrl);
+
+      // Krok 6: Zaktualizuj dokument przez API
+      const updateOperation = () => updateDocument(document.id, updateFormData);
+      const updatedDoc = await retryOperation(updateOperation);
+      if (!updatedDoc?.document?.url) {
+        throw new Error(
+          i18n.t('documentUpdateFailed') ||
+            'Nie udało się uzyskać zaktualizowanego dokumentu',
+        );
+      }
+
+      // Krok 7: Zaktualizuj stan lokalny
+      setDocuments((prev) => ({
+        ...prev,
+        [document.category]: prev[document.category].map((doc) =>
+          doc.id === document.id
+            ? { ...doc, url: updatedDoc.document.url, [field]: fileUrl }
+            : doc,
+        ),
+      }));
+
+      Alert.alert(
+        i18n.t('success') || 'Sukces',
+        i18n.t(field === 'logo' ? 'logoAdded' : 'signatureAdded') ||
+          `${field === 'logo' ? 'Logo' : 'Podpis'} został dodany do dokumentu`,
+      );
+    } catch (err) {
+      console.error(`Błąd podczas aktualizacji dokumentu z ${field}:`, err);
+      const message =
+        err.response?.status === 413
+          ? i18n.t('fileTooLarge') ||
+            `Plik jest za duży (maks. ${MAX_FILE_SIZE / (1024 * 1024)} MB)`
+          : i18n.t('updateError') ||
+            `Nie udało się dodać ${field}: ${err.message}`;
+      Alert.alert(i18n.t('error') || 'Błąd', message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const applyFiltersAndSort = (category, docs) => {
     let filteredDocs = [...docs];
     const query = searchQueries[category] || '';
     const filter = filters[category] || {};
     const sort = sortBy[category] || 'date_desc';
-
     if (query) {
       filteredDocs = filteredDocs.filter((doc) =>
         doc.name.toLowerCase().includes(query.toLowerCase()),
       );
     }
-
     if (filter.type) {
       filteredDocs = filteredDocs.filter((doc) => doc.type === filter.type);
     }
@@ -564,41 +835,32 @@ export default function DocumentsScreen({ navigation, route }) {
         (doc) => new Date(doc.created_at || 0) <= new Date(filter.dateTo),
       );
     }
-
     filteredDocs.sort((a, b) => {
       const dateA = new Date(a.created_at || 0);
       const dateB = new Date(b.created_at || 0);
-
-      if (sort === 'date_asc') {
-        return dateA - dateB;
-      }
-      if (sort === 'date_desc') {
-        return dateB - dateA;
-      }
-      if (sort === 'name_asc') {
-        return a.name.localeCompare(b.name);
-      }
-      if (sort === 'name_desc') {
-        return b.name.localeCompare(a.name);
-      }
+      if (sort === 'date_asc') return dateA - dateB;
+      if (sort === 'date_desc') return dateB - dateA;
+      if (sort === 'name_asc') return a.name.localeCompare(b.name);
+      if (sort === 'name_desc') return b.name.localeCompare(a.name);
       return 0;
     });
-
     return filteredDocs;
   };
 
   const sortOptions = [
-    { label: 'Data rosnąco', value: 'date_asc' },
-    { label: 'Data malejąco', value: 'date_desc' },
-    { label: 'Nazwa rosnąco', value: 'name_asc' },
-    { label: 'Nazwa malejąco', value: 'name_desc' },
+    { label: i18n.t('dateAsc') || 'Data rosnąco', value: 'date_asc' },
+    { label: i18n.t('dateDesc') || 'Data malejąco', value: 'date_desc' },
+    { label: i18n.t('nameAsc') || 'Nazwa rosnąco', value: 'name_asc' },
+    { label: i18n.t('nameDesc') || 'Nazwa malejąco', value: 'name_desc' },
   ];
 
   if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={paperTheme.colors.primary} />
-        <Text style={styles.loadingText}>Ładowanie dokumentów...</Text>
+        <Text style={styles.loadingText}>
+          {i18n.t('loadingDocuments') || 'Ładowanie dokumentów...'}
+        </Text>
       </View>
     );
   }
@@ -621,7 +883,7 @@ export default function DocumentsScreen({ navigation, route }) {
             color="#FFFFFF"
             style={{ marginRight: 8 }}
           />
-          Spróbuj ponownie
+          {i18n.t('retry') || 'Spróbuj ponownie'}
         </Button>
       </View>
     );
@@ -640,17 +902,13 @@ export default function DocumentsScreen({ navigation, route }) {
     >
       <View style={styles.headerContainer}>
         <Text style={[styles.header, { color: paperTheme.colors.text }]}>
-          {i18n.t('managementDocuments')}
+          {i18n.t('managementDocuments') || 'Zarządzanie dokumentami'}
         </Text>
       </View>
       {documentCategories.map((category) => {
         const filteredDocuments = applyFiltersAndSort(
           category.category,
           documents[category.category] || [],
-        );
-        console.log(
-          `Renderowanie kategorii ${category.category}:`,
-          filteredDocuments,
         );
         return (
           <List.Accordion
@@ -698,8 +956,12 @@ export default function DocumentsScreen({ navigation, route }) {
                   labelStyle={styles.filterButtonText}
                   icon={SortIcon}
                 >
-                  <Text>Sortuj:</Text>{' '}
-                  {sortBy[category.category] || 'Data malejąco'}
+                  {i18n.t('sort') || 'Sortuj'}:{' '}
+                  {sortOptions.find(
+                    (opt) => opt.value === sortBy[category.category],
+                  )?.label ||
+                    i18n.t('dateDesc') ||
+                    'Data malejąco'}
                 </Button>
               </View>
               <Modal
@@ -716,7 +978,9 @@ export default function DocumentsScreen({ navigation, route }) {
                   <Animated.View
                     style={[styles.modalContent, { opacity: fadeAnim }]}
                   >
-                    <Text style={styles.modalTitle}>Wybierz sortowanie</Text>
+                    <Text style={styles.modalTitle}>
+                      {i18n.t('selectSort') || 'Wybierz sortowanie'}
+                    </Text>
                     <FlatList
                       data={sortOptions}
                       renderItem={({ item }) => (
@@ -732,14 +996,94 @@ export default function DocumentsScreen({ navigation, route }) {
                       style={styles.modalCloseButton}
                       onPress={handleClose}
                     >
-                      <Text style={styles.modalCloseButtonText}>Zamknij</Text>
+                      <Text style={styles.modalCloseButtonText}>
+                        {i18n.t('close') || 'Zamknij'}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </TouchableOpacity>
+              </Modal>
+              <Modal
+                animationType="fade"
+                transparent
+                visible={logoModalVisible}
+                onRequestClose={handleClose}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  onPress={handleClose}
+                  activeOpacity={1}
+                >
+                  <Animated.View
+                    style={[styles.modalContent, { opacity: fadeAnim }]}
+                  >
+                    <Text style={styles.modalTitle}>
+                      {i18n.t('selectLogo') || 'Wybierz logo firmy'}
+                    </Text>
+                    <Button
+                      mode="contained"
+                      onPress={handlePickLogo}
+                      style={styles.modalButton}
+                      labelStyle={styles.modalButtonText}
+                      disabled={isUploading}
+                    >
+                      {isUploading
+                        ? i18n.t('uploading') || 'Wgrywanie...'
+                        : i18n.t('pickImage') || 'Wybierz obraz z urządzenia'}
+                    </Button>
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={handleClose}
+                    >
+                      <Text style={styles.modalCloseButtonText}>
+                        {i18n.t('cancel') || 'Anuluj'}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </TouchableOpacity>
+              </Modal>
+              <Modal
+                animationType="fade"
+                transparent
+                visible={signatureModalVisible}
+                onRequestClose={handleClose}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  onPress={handleClose}
+                  activeOpacity={1}
+                >
+                  <Animated.View
+                    style={[styles.modalContent, { opacity: fadeAnim }]}
+                  >
+                    <Text style={styles.modalTitle}>
+                      {i18n.t('addSignature') || 'Dodaj podpis elektroniczny'}
+                    </Text>
+                    <Button
+                      mode="contained"
+                      onPress={handlePickSignature}
+                      style={styles.modalButton}
+                      labelStyle={styles.modalButtonText}
+                      disabled={isUploading}
+                    >
+                      {isUploading
+                        ? i18n.t('uploading') || 'Wgrywanie...'
+                        : i18n.t('pickSignature') || 'Wybierz obraz podpisu'}
+                    </Button>
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={handleClose}
+                    >
+                      <Text style={styles.modalCloseButtonText}>
+                        {i18n.t('cancel') || 'Anuluj'}
+                      </Text>
                     </TouchableOpacity>
                   </Animated.View>
                 </TouchableOpacity>
               </Modal>
               {filteredDocuments.length === 0 ? (
                 <Text style={styles.noData}>
-                  {i18n.t('noDocuments') || 'Brak dokumentów do wyświetlenia'}
+                  {i18n.t('noDocuments') || 'Brak dokumentów'}
                 </Text>
               ) : (
                 <View style={styles.list}>
@@ -757,6 +1101,8 @@ export default function DocumentsScreen({ navigation, route }) {
                       handleDelete={handleDelete}
                       paperTheme={paperTheme}
                       menuFadeAnim={menuFadeAnim}
+                      handleAddLogo={handleAddLogo}
+                      handleAddSignature={handleAddSignature}
                     />
                   ))}
                 </View>
@@ -939,6 +1285,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto',
     fontSize: 16,
     color: '#001426FF',
+  },
+  modalButton: {
+    marginVertical: 10,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    fontFamily: 'Roboto',
+    fontSize: 16,
   },
   modalCloseButton: {
     marginTop: 15,
