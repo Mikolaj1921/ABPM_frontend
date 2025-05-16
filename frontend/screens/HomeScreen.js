@@ -19,6 +19,8 @@ import { LanguageContext } from '../contexts/LanguageContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { fetchDocuments, fetchTemplates } from '../api';
 import OfertaHandlowaScreen from './documentScreens/handloweiOfertowe/OfertaHandlowaScreen';
+import UmowaOPraceScreen from './documentScreens/kadroweiAdministracyjne/UmowaOPraceScreen';
+import FakturaVATScreen from './documentScreens/finansowe/FakturaVATScreen';
 
 const categoryIcons = {
   Handlowe: 'briefcase',
@@ -50,9 +52,7 @@ const documentCategories = [
 const HomeScreen = ({ navigation, route }) => {
   const [expanded, setExpanded] = useState(null);
   const [templates, setTemplates] = useState({});
-  // eslint-disable-next-line
   const [documents, setDocuments] = useState({});
-  // eslint-disable-next-line
   const [searchQueries, setSearchQueries] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,7 +145,6 @@ const HomeScreen = ({ navigation, route }) => {
     setExpanded(expanded === id ? null : id);
   };
 
-  // eslint-disable-next-line
   const handleSearchChange = (category, query) => {
     setSearchQueries((prev) => ({ ...prev, [category]: query }));
   };
@@ -209,19 +208,45 @@ const HomeScreen = ({ navigation, route }) => {
         visible={modalVisible}
         onRequestClose={handleCloseModal}
       >
-        {selectedCategory && selectedTemplate && (
-          <OfertaHandlowaScreen
-            route={{
-              params: {
-                category: selectedCategory,
-                template: selectedTemplate,
-                document: selectedDocument,
-              },
-            }}
-            navigation={{ navigate: handleCloseModal }}
-            onSave={handleSaveDocument}
-          />
-        )}
+        {selectedCategory &&
+          selectedTemplate &&
+          (selectedCategory.category === 'Kadrowe' ? (
+            <UmowaOPraceScreen
+              route={{
+                params: {
+                  category: selectedCategory,
+                  template: selectedTemplate,
+                  document: selectedDocument,
+                },
+              }}
+              navigation={{ navigate: handleCloseModal }}
+              onSave={handleSaveDocument}
+            />
+          ) : selectedCategory.category === 'Faktury' ? (
+            <FakturaVATScreen
+              route={{
+                params: {
+                  category: selectedCategory,
+                  template: selectedTemplate,
+                  document: selectedDocument,
+                },
+              }}
+              navigation={{ navigate: handleCloseModal }}
+              onSave={handleSaveDocument}
+            />
+          ) : (
+            <OfertaHandlowaScreen
+              route={{
+                params: {
+                  category: selectedCategory,
+                  template: selectedTemplate,
+                  document: selectedDocument,
+                },
+              }}
+              navigation={{ navigate: handleCloseModal }}
+              onSave={handleSaveDocument}
+            />
+          ))}
       </Modal>
       <ScrollView
         contentContainerStyle={[
@@ -342,10 +367,10 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderRadius: 8,
     marginVertical: 5,
-    shadowOpacity: 0, // Wyłączamy cień na iOS
-    shadowColor: 'transparent', // Zapewniamy brak cienia na iOS
-    shadowOffset: { width: 0, height: 0 }, // Brak przesunięcia cienia
-    shadowRadius: 0, // Brak rozmycia cienia
+    shadowOpacity: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 0,
     borderWidth: 1,
     borderColor: '#CCC',
   },
@@ -353,20 +378,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 5, // Dodajemy padding dla lepszego wyglądu
+    paddingVertical: 5,
   },
   icon: {
-    width: 24, // Stała szerokość ikony
-    height: 24, // Stała wysokość ikony
+    width: 24,
+    height: 24,
     marginLeft: 8,
-    marginRight: 10, // Odstęp między ikoną a tekstem
-    overflow: 'visible', // Zapobiega obcinaniu ikony
+    marginRight: 10,
+    overflow: 'visible',
   },
   cardTitle: {
-    flex: 1, // Zajmuje pozostałą przestrzeń
+    flex: 1,
     fontWeight: 'bold',
     fontSize: 16,
-    overflow: 'visible', // Zapobiega obcinaniu tekstu
+    overflow: 'visible',
   },
   templateCard: {
     marginVertical: 10,

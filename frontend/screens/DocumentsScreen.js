@@ -50,11 +50,10 @@ const validCategories = documentCategories.map((cat) => cat.category);
 const typeToCategory = {
   'Oferta Handlowa': 'Handlowe',
   Faktura: 'Faktury',
-  Kadrowy: 'Kadrowe',
+  'Umowa o Pracę': 'Kadrowe',
 };
 
-// Maksymalny rozmiar pliku (10 MB, zgodny z backendem)
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB w bajtach
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   'image/png',
   'image/jpeg',
@@ -65,7 +64,6 @@ const ALLOWED_MIME_TYPES = [
   'image/bmp',
 ];
 
-// Komponenty pomocnicze
 const AccordionIcon = ({ icon }) => (
   <FontAwesome
     name={icon}
@@ -102,7 +100,6 @@ const SortOption = ({ item, selectedCategory, handleSortChange }) => (
   </TouchableOpacity>
 );
 
-// Komponent CardMenu
 const CardMenu = ({
   item,
   menuVisible,
@@ -242,7 +239,6 @@ const CardMenu = ({
   );
 };
 
-// Komponent DocumentCard
 const DocumentCard = ({
   category,
   item,
@@ -257,37 +253,53 @@ const DocumentCard = ({
   menuFadeAnim,
   handleAddLogo,
   handleAddSignature,
-}) => (
-  <Card
-    style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
-    key={item.id}
-  >
-    <Card.Title
-      title={item.name}
-      subtitle={`${new Date(item.created_at || Date.now()).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`}
-      titleStyle={styles.cardTitle}
-      subtitleStyle={styles.cardSubtitle}
-      left={LeftIcon}
-      leftStyle={{ marginRight: 2.5 }}
-      right={() => (
-        <CardMenu
-          item={item}
-          menuVisible={menuVisible}
-          setMenuVisible={setMenuVisible}
-          handleMenuClose={handleMenuClose}
-          navigation={navigation}
-          i18n={i18n}
-          handleDownload={handleDownload}
-          handleDelete={handleDelete}
-          category={category}
-          menuFadeAnim={menuFadeAnim}
-          handleAddLogo={handleAddLogo}
-          handleAddSignature={handleAddSignature}
-        />
-      )}
-    />
-  </Card>
-);
+}) => {
+  let subtitle = `${new Date(item.created_at || Date.now()).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`;
+  if (item.type === 'Umowa o Pracę') {
+    const obowiazkiCount = Array.isArray(item.obowiazki)
+      ? item.obowiazki.length
+      : 0;
+    const ofertyCount = Array.isArray(item.oferty) ? item.oferty.length : 0;
+    subtitle += ` | Obowiązki: ${obowiazkiCount} | Postanowienia: ${ofertyCount}`;
+  } else if (item.type === 'Oferta Handlowa') {
+    const productsCount = Array.isArray(item.products)
+      ? item.products.length
+      : 0;
+    subtitle += ` | Produkty: ${productsCount}`;
+  }
+
+  return (
+    <Card
+      style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
+      key={item.id}
+    >
+      <Card.Title
+        title={item.name}
+        subtitle={subtitle}
+        titleStyle={styles.cardTitle}
+        subtitleStyle={styles.cardSubtitle}
+        left={LeftIcon}
+        leftStyle={{ marginRight: 2.5 }}
+        right={() => (
+          <CardMenu
+            item={item}
+            menuVisible={menuVisible}
+            setMenuVisible={setMenuVisible}
+            handleMenuClose={handleMenuClose}
+            navigation={navigation}
+            i18n={i18n}
+            handleDownload={handleDownload}
+            handleDelete={handleDelete}
+            category={category}
+            menuFadeAnim={menuFadeAnim}
+            handleAddLogo={handleAddLogo}
+            handleAddSignature={handleAddSignature}
+          />
+        )}
+      />
+    </Card>
+  );
+};
 
 export default function DocumentsScreen({ navigation, route }) {
   const { isLoggedIn, user, retryFetchUser } = useContext(AuthContext);
@@ -389,12 +401,14 @@ export default function DocumentsScreen({ navigation, route }) {
       }
       const docData = await fetchDocuments();
       const docDataWithCategory = docData.map((doc) => {
-        console.log('Document from API:', doc); // Log dla debugowania
+        console.log('Document from API:', doc);
         return {
           ...doc,
           category: typeToCategory[doc.type] || 'Handlowe',
           id: String(doc.id),
-          products: Array.isArray(doc.products) ? doc.products : [], // Upewnij się, że products jest tablicą
+          products: Array.isArray(doc.products) ? doc.products : [],
+          obowiazki: Array.isArray(doc.obowiazki) ? doc.obowiazki : [],
+          oferty: Array.isArray(doc.oferty) ? doc.oferty : [],
         };
       });
       const documentsData = documentCategories.reduce((acc, category) => {
@@ -673,7 +687,6 @@ export default function DocumentsScreen({ navigation, route }) {
 
       setIsUploading(true);
 
-      // Krok 1: Wgraj obraz (logo lub podpis)
       const formData = new FormData();
       formData.append('image', {
         uri: fileUri,
@@ -694,7 +707,6 @@ export default function DocumentsScreen({ navigation, route }) {
         );
       }
 
-      // Krok 2: Pobierz treść szablonu
       const fetchTemplateOperation = () =>
         fetchTemplateContent(document.template_id || 1);
       const { content: templateContent } = await retryOperation(
@@ -706,16 +718,14 @@ export default function DocumentsScreen({ navigation, route }) {
         );
       }
 
-      // Krok 3: Wygeneruj zaktualizowaną treść HTML
       let htmlContent = templateContent;
 
-      // Generuj HTML dla products
-      console.log('Document products:', document.products);
-      const productsHtml =
-        Array.isArray(document.products) && document.products.length > 0
-          ? document.products
-              .map(
-                (product) => `
+      if (document.type === 'Oferta Handlowa') {
+        const productsHtml =
+          Array.isArray(document.products) && document.products.length > 0
+            ? document.products
+                .map(
+                  (product) => `
                 <tr>
                   <td>${product.nazwa_uslugi_towaru || ''}</td>
                   <td>${product.ilosc || ''}</td>
@@ -723,12 +733,30 @@ export default function DocumentsScreen({ navigation, route }) {
                   <td>${product.wartosc_netto || ''}</td>
                 </tr>
               `,
-              )
-              .join('')
-          : '<tr><td colspan="4">Brak pozycji</td></tr>';
-      htmlContent = htmlContent.replace('{{products}}', productsHtml);
+                )
+                .join('')
+            : '<tr><td colspan="4">Brak pozycji</td></tr>';
+        htmlContent = htmlContent.replace('{{products}}', productsHtml);
+      } else if (document.type === 'Umowa o Pracę') {
+        const obowiazkiHtml =
+          Array.isArray(document.obowiazki) && document.obowiazki.length > 0
+            ? document.obowiazki
+                .map((obowiazek) => `<li>${obowiazek}</li>`)
+                .join('')
+            : '<li>Brak obowiązków</li>';
+        const ofertyHtml =
+          Array.isArray(document.oferty) && document.oferty.length > 0
+            ? document.oferty.map((oferta) => `<li>${oferta}</li>`).join('')
+            : '<li>Brak dodatkowych postanowień</li>';
+        htmlContent = htmlContent
+          .replace('{{obowiazek_1}}', document.obowiazki[0] || 'Brak')
+          .replace('{{obowiazek_2}}', document.obowiazki[1] || 'Brak')
+          .replace('{{obowiazek_3}}', document.obowiazki[2] || 'Brak')
+          .replace('{{oferta_1}}', document.oferty[0] || 'Brak')
+          .replace('{{oferta_2}}', document.oferty[1] || 'Brak')
+          .replace('{{oferta_3}}', document.oferty[2] || 'Brak');
+      }
 
-      // Lista placeholderów (bez products, bo już obsłużone)
       const placeholders = [
         'numer_oferty',
         'nazwa_firmy_wystawcy',
@@ -743,16 +771,32 @@ export default function DocumentsScreen({ navigation, route }) {
         'wartosc_brutto_suma',
         'data_wystawienia',
         'numer_konta_bankowego',
+        'nazwa_firmy',
+        'adres_firmy',
+        'nip',
+        'regon',
+        'przedstawiciel_imie_nazwisko',
+        'przedstawiciel_stanowisko',
+        'imie_nazwisko_pracownika',
+        'adres_pracownika',
+        'pesel_pracownika',
+        'stanowisko',
+        'wymiar_pracy',
+        'miejsce_pracy',
+        'wynagrodzenie',
+        'termin_platnosci',
+        'czas_trwania_umowy',
+        'data_rozpoczecia',
+        'data',
+        'miejsce_zawarcia',
       ];
 
-      // Zastąp pozostałe placeholdery
       placeholders.forEach((key) => {
         const placeholder = `{{${key}}}`;
         const value = document[key] || '';
         htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
       });
 
-      // Aktualizuj logo lub podpis
       htmlContent = htmlContent.replace(
         '{{logo}}',
         field === 'logo' ? fileUrl : document.logo || '',
@@ -762,7 +806,6 @@ export default function DocumentsScreen({ navigation, route }) {
         field === 'podpis' ? fileUrl : document.podpis || '',
       );
 
-      // Krok 4: Wygeneruj PDF
       const { uri: pdfUri } = await Print.printToFileAsync({
         html: htmlContent,
       });
@@ -773,7 +816,6 @@ export default function DocumentsScreen({ navigation, route }) {
         );
       }
 
-      // Krok 5: Przygotuj FormData do aktualizacji dokumentu
       const updateFormData = new FormData();
       updateFormData.append('file', {
         uri: pdfUri,
@@ -782,7 +824,7 @@ export default function DocumentsScreen({ navigation, route }) {
       });
       updateFormData.append('templateId', String(document.template_id || 1));
       updateFormData.append('title', document.name || '');
-      updateFormData.append('type', document.type || 'Faktura');
+      updateFormData.append('type', document.type || 'Umowa o Pracę');
       updateFormData.append(
         'logo',
         field === 'logo' ? fileUrl : document.logo || '',
@@ -792,18 +834,24 @@ export default function DocumentsScreen({ navigation, route }) {
         field === 'podpis' ? fileUrl : document.podpis || '',
       );
 
-      // Przekaż dane szablonu, w tym products jako JSON
       placeholders.forEach((key) => {
         updateFormData.append(key, document[key] || '');
       });
-      updateFormData.append(
-        'products',
-        JSON.stringify(document.products || []),
-      );
+      if (document.type === 'Oferta Handlowa') {
+        updateFormData.append(
+          'products',
+          JSON.stringify(document.products || []),
+        );
+      } else if (document.type === 'Umowa o Pracę') {
+        updateFormData.append(
+          'obowiazki',
+          JSON.stringify(document.obowiazki || []),
+        );
+        updateFormData.append('oferty', JSON.stringify(document.oferty || []));
+      }
 
       console.log('Update FormData:', Array.from(updateFormData.entries()));
 
-      // Krok 6: Zaktualizuj dokument przez API
       const updateOperation = () => updateDocument(document.id, updateFormData);
       const updatedDoc = await retryOperation(updateOperation);
       if (!updatedDoc?.document?.url) {
@@ -813,7 +861,6 @@ export default function DocumentsScreen({ navigation, route }) {
         );
       }
 
-      // Krok 7: Zaktualizuj stan lokalny
       setDocuments((prev) => ({
         ...prev,
         [document.category]: prev[document.category].map((doc) =>
@@ -822,7 +869,9 @@ export default function DocumentsScreen({ navigation, route }) {
                 ...doc,
                 url: updatedDoc.document.url,
                 [field]: fileUrl,
-                products: document.products, // Zachowaj products
+                products: document.products,
+                obowiazki: document.obowiazki,
+                oferty: document.oferty,
               }
             : doc,
         ),
@@ -1376,3 +1425,4 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+// aktualoczka bez update logo i podpisu dla VAT
