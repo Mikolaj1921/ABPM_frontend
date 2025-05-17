@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, Alert } from 'react-native';
 import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
+import * as ImagePicker from 'expo-image-picker';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
 import { fetchTemplateById, uploadDocument } from '../../../api';
@@ -14,31 +15,36 @@ export default function FakturaVATScreen({ route, navigation }) {
   const paperTheme = useTheme();
   const [formData, setFormData] = useState({
     numer_faktury: '',
-    nazwa_firmy_sprzedawcy: '',
-    nip_sprzedawcy: '',
-    adres_sprzedawcy: '',
-    telefon_sprzedawcy: '',
-    email_sprzedawcy: '',
-    nazwa_firmy_nabywcy: '',
-    nip_nabywcy: '',
-    adres_nabywcy: '',
-    telefon_nabywcy: '',
-    email_nabywcy: '',
+    nazwa_firmy_wystawcy: '',
+    nip_wystawcy: '',
+    adres_wystawcy: '',
+    telefon_wystawcy: '',
+    email_wystawcy: '',
+    nazwa_firmy_klienta: '',
+    nip_klienta: '',
+    adres_firmy_klienta: '',
+    telefon_klienta: '',
+    email_klienta: '',
     data_wystawienia: new Date().toISOString().split('T')[0],
     data_sprzedazy: new Date().toISOString().split('T')[0],
     termin_platnosci: '',
+    sposob_platnosci: 'przelew',
+    numer_konta_bankowego: '',
     wystawiajacy: '',
     nazwa_uslugi_towaru: '',
     ilosc: '',
+    jednostka: 'szt.',
     cena_netto: '',
     stawka_vat: '23',
     wartosc_netto: '',
     wartosc_vat: '',
     wartosc_brutto: '',
-    razem_netto: '',
-    razem_vat: '',
+    wartosc_netto_suma: '',
+    wartosc_vat_suma: '',
     wartosc_brutto_suma: '',
     products: [],
+    logo: '', // Dodano pole logo
+    podpis: '', // Dodano pole podpis
   });
   const [error, setError] = useState('');
   const [templateHtml, setTemplateHtml] = useState('');
@@ -53,10 +59,9 @@ export default function FakturaVATScreen({ route, navigation }) {
         if (user) {
           setFormData((prev) => ({
             ...prev,
-            nazwa_firmy_sprzedawcy:
-              user.firstName || prev.nazwa_firmy_sprzedawcy,
-            nip_sprzedawcy: prev.nip_sprzedawcy,
-            adres_sprzedawcy: prev.adres_sprzedawcy,
+            nazwa_firmy_wystawcy: user.firstName || prev.nazwa_firmy_wystawcy,
+            nip_wystawcy: prev.nip_wystawcy,
+            adres_wystawcy: prev.adres_wystawcy,
             wystawiajacy: user.firstName || prev.wystawiajacy,
           }));
         }
@@ -64,27 +69,30 @@ export default function FakturaVATScreen({ route, navigation }) {
         if (document) {
           setFormData((prev) => ({
             ...prev,
-            id: document.id || '',
             numer_faktury: document.numer_faktury || '',
-            nazwa_firmy_sprzedawcy: document.nazwa_firmy_sprzedawcy || '',
-            nip_sprzedawcy: document.nip_sprzedawcy || '',
-            adres_sprzedawcy: document.adres_sprzedawcy || '',
-            telefon_sprzedawcy: document.telefon_sprzedawcy || '',
-            email_sprzedawcy: document.email_sprzedawcy || '',
-            nazwa_firmy_nabywcy: document.nazwa_firmy_nabywcy || '',
-            nip_nabywcy: document.nip_nabywcy || '',
-            adres_nabywcy: document.adres_nabywcy || '',
-            telefon_nabywcy: document.telefon_nabywcy || '',
-            email_nabywcy: document.email_nabywcy || '',
+            nazwa_firmy_wystawcy: document.nazwa_firmy_wystawcy || '',
+            nip_wystawcy: document.nip_wystawcy || '',
+            adres_wystawcy: document.adres_wystawcy || '',
+            telefon_wystawcy: document.telefon_wystawcy || '',
+            email_wystawcy: document.email_wystawcy || '',
+            nazwa_firmy_klienta: document.nazwa_firmy_klienta || '',
+            nip_klienta: document.nip_klienta || '',
+            adres_firmy_klienta: document.adres_firmy_klienta || '',
+            telefon_klienta: document.telefon_klienta || '',
+            email_klienta: document.email_klienta || '',
             data_wystawienia:
               document.data_wystawienia || prev.data_wystawienia,
             data_sprzedazy: document.data_sprzedazy || prev.data_sprzedazy,
             termin_platnosci: document.termin_platnosci || '',
+            sposob_platnosci: document.sposob_platnosci || 'przelew',
+            numer_konta_bankowego: document.numer_konta_bankowego || '',
             wystawiajacy: document.wystawiajacy || '',
-            razem_netto: document.razem_netto || '',
-            razem_vat: document.razem_vat || '',
+            wartosc_netto_suma: document.wartosc_netto_suma || '',
+            wartosc_vat_suma: document.wartosc_vat_suma || '',
             wartosc_brutto_suma: document.wartosc_brutto_suma || '',
             products: Array.isArray(document.products) ? document.products : [],
+            logo: document.logo || '', // Ładowanie logo z dokumentu
+            podpis: document.podpis || '', // Ładowanie podpisu z dokumentu
           }));
         }
 
@@ -109,39 +117,74 @@ export default function FakturaVATScreen({ route, navigation }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const pickImage = async (field) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Błąd', 'Potrzebne są uprawnienia do galerii zdjęć.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      base64: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: `data:image/png;base64,${result.assets[0].base64}`,
+      }));
+    }
+  };
+
   const addProduct = () => {
     if (
       formData.nazwa_uslugi_towaru &&
       formData.ilosc &&
+      formData.jednostka &&
       formData.cena_netto &&
       formData.stawka_vat
     ) {
       const ilosc = parseFloat(formData.ilosc) || 0;
+      // eslint-disable-next-line
       const cena_netto = parseFloat(formData.cena_netto) || 0;
+      // eslint-disable-next-line
       const stawka_vat = parseFloat(formData.stawka_vat) || 0;
+      // eslint-disable-next-line
       const wartosc_netto = (ilosc * cena_netto).toFixed(2);
+      // eslint-disable-next-line
       const wartosc_vat = ((ilosc * cena_netto * stawka_vat) / 100).toFixed(2);
+      // eslint-disable-next-line
       const wartosc_brutto = (
         parseFloat(wartosc_netto) + parseFloat(wartosc_vat)
       ).toFixed(2);
 
       const newProduct = {
-        nazwa_uslugi_towaru: formData.nazwa_uslugi_towaru,
+        nazwa: formData.nazwa_uslugi_towaru,
+        jednostka: formData.jednostka,
         ilosc: formData.ilosc,
         cena_netto: formData.cena_netto,
         stawka_vat: formData.stawka_vat,
+        // eslint-disable-next-line
         wartosc_netto,
-        wartosc_vat,
+        // eslint-disable-next-line
+        kwota_vat: wartosc_vat,
+        // eslint-disable-next-line
         wartosc_brutto,
       };
       setFormData((prev) => {
         const updatedProducts = [...prev.products, newProduct];
-        const razem_netto = updatedProducts
+        // eslint-disable-next-line
+        const wartosc_netto_suma = updatedProducts
           .reduce((sum, p) => sum + parseFloat(p.wartosc_netto || 0), 0)
           .toFixed(2);
-        const razem_vat = updatedProducts
-          .reduce((sum, p) => sum + parseFloat(p.wartosc_vat || 0), 0)
+        // eslint-disable-next-line
+        const wartosc_vat_suma = updatedProducts
+          .reduce((sum, p) => sum + parseFloat(p.kwota_vat || 0), 0)
           .toFixed(2);
+        // eslint-disable-next-line
         const wartosc_brutto_suma = updatedProducts
           .reduce((sum, p) => sum + parseFloat(p.wartosc_brutto || 0), 0)
           .toFixed(2);
@@ -149,14 +192,18 @@ export default function FakturaVATScreen({ route, navigation }) {
           ...prev,
           products: updatedProducts,
           nazwa_uslugi_towaru: '',
+          jednostka: 'szt.',
           ilosc: '',
           cena_netto: '',
           stawka_vat: '23',
           wartosc_netto: '',
           wartosc_vat: '',
           wartosc_brutto: '',
-          razem_netto,
-          razem_vat,
+          // eslint-disable-next-line
+          wartosc_netto_suma,
+          // eslint-disable-next-line
+          wartosc_vat_suma,
+          // eslint-disable-next-line
           wartosc_brutto_suma,
         };
       });
@@ -171,20 +218,26 @@ export default function FakturaVATScreen({ route, navigation }) {
   const removeProduct = (index) => {
     setFormData((prev) => {
       const updatedProducts = prev.products.filter((_, i) => i !== index);
-      const razem_netto = updatedProducts
+      // eslint-disable-next-line
+      const wartosc_netto_suma = updatedProducts
         .reduce((sum, p) => sum + parseFloat(p.wartosc_netto || 0), 0)
         .toFixed(2);
-      const razem_vat = updatedProducts
-        .reduce((sum, p) => sum + parseFloat(p.wartosc_vat || 0), 0)
+      // eslint-disable-next-line
+      const wartosc_vat_suma = updatedProducts
+        .reduce((sum, p) => sum + parseFloat(p.kwota_vat || 0), 0)
         .toFixed(2);
+      // eslint-disable-next-line
       const wartosc_brutto_suma = updatedProducts
         .reduce((sum, p) => sum + parseFloat(p.wartosc_brutto || 0), 0)
         .toFixed(2);
       return {
         ...prev,
         products: updatedProducts,
-        razem_netto,
-        razem_vat,
+        // eslint-disable-next-line
+        wartosc_netto_suma,
+        // eslint-disable-next-line
+        wartosc_vat_suma,
+        // eslint-disable-next-line
         wartosc_brutto_suma,
       };
     });
@@ -194,10 +247,11 @@ export default function FakturaVATScreen({ route, navigation }) {
     try {
       if (
         !formData.numer_faktury ||
-        !formData.nazwa_firmy_sprzedawcy ||
-        !formData.nip_sprzedawcy ||
-        !formData.nazwa_firmy_nabywcy ||
-        !formData.nip_nabywcy ||
+        !formData.nazwa_firmy_wystawcy ||
+        !formData.nip_wystawcy ||
+        !formData.nazwa_firmy_klienta ||
+        !formData.nip_klienta ||
+        !formData.termin_platnosci ||
         !formData.wartosc_brutto_suma
       ) {
         Alert.alert(
@@ -211,12 +265,15 @@ export default function FakturaVATScreen({ route, navigation }) {
       await AsyncStorage.setItem(
         'userData',
         JSON.stringify({
-          nazwa_firmy_sprzedawcy: formData.nazwa_firmy_sprzedawcy,
-          nip_sprzedawcy: formData.nip_sprzedawcy,
-          adres_sprzedawcy: formData.adres_sprzedawcy,
-          telefon_sprzedawcy: formData.telefon_sprzedawcy,
-          email_sprzedawcy: formData.email_sprzedawcy,
+          nazwa_firmy_wystawcy: formData.nazwa_firmy_wystawcy,
+          nip_wystawcy: formData.nip_wystawcy,
+          adres_wystawcy: formData.adres_wystawcy,
+          telefon_wystawcy: formData.telefon_wystawcy,
+          email_wystawcy: formData.email_wystawcy,
+          numer_konta_bankowego: formData.numer_konta_bankowego,
           wystawiajacy: formData.wystawiajacy,
+          logo: formData.logo, // Zapis logo
+          podpis: formData.podpis, // Zapis podpisu
         }),
       );
 
@@ -229,49 +286,75 @@ export default function FakturaVATScreen({ route, navigation }) {
         formData.products.length > 0
           ? formData.products
               .map(
-                (product) => `
+                (product, index) => `
               <tr>
-                <td>${product.nazwa_uslugi_towaru || ''}</td>
-                <td>${product.ilosc || ''}</td>
+                <td>${index + 1}</td>
+                <td>${product.nazwa || ''}</td>
+                <td>${product.jednostka || ''}</td>
                 <td>${product.cena_netto || ''}</td>
-                <td>${product.stawka_vat || ''}%</td>
-                <td>${product.wartosc_netto || ''}</td>
-                <td>${product.wartosc_vat || ''}</td>
-                <td>${product.wartosc_brutto || ''}</td>
+                <td>${product.ilosc || ''}</td>
+              </tr>
+              <tr>
+                <td colspan="2">${product.stawka_vat || ''}%</td>
+                <td>${product.kwota_vat || ''}</td>
+                <td colspan="2">${product.wartosc_brutto || ''}</td>
               </tr>
             `,
               )
               .join('')
-          : '<tr><td colspan="7">Brak pozycji</td></tr>';
+          : '<tr><td colspan="5">Brak pozycji</td></tr>';
 
       htmlContent = htmlContent.replace('{{#each pozycje}}', productsHtml);
 
-      const templateFields = [
-        'numer_faktury',
-        'nazwa_firmy_sprzedawcy',
-        'nip_sprzedawcy',
-        'adres_sprzedawcy',
-        'telefon_sprzedawcy',
-        'email_sprzedawcy',
-        'nazwa_firmy_nabywcy',
-        'nip_nabywcy',
-        'adres_nabywcy',
-        'telefon_nabywcy',
-        'email_nabywcy',
-        'data_wystawienia',
-        'data_sprzedazy',
-        'termin_platnosci',
-        'wystawiajacy',
-        'razem_netto',
-        'razem_vat',
-        'wartosc_brutto_suma',
-      ];
+      const templateFields = {
+        numer_faktury: formData.numer_faktury,
+        firma_sprzedawcy: formData.nazwa_firmy_wystawcy,
+        nip_sprzedawcy: formData.nip_wystawcy,
+        adres_sprzedawcy: formData.adres_wystawcy,
+        telefon_sprzedawcy: formData.telefon_wystawcy,
+        email_sprzedawcy: formData.email_wystawcy,
+        firma_nabywcy: formData.nazwa_firmy_klienta,
+        nip_nabywcy: formData.nip_klienta,
+        adres_nabywcy: formData.adres_firmy_klienta,
+        telefon_nabywcy: formData.telefon_klienta,
+        email_nabywcy: formData.email_klienta,
+        data_wystawienia: formData.data_wystawienia,
+        data_sprzedazy: formData.data_sprzedazy,
+        termin_platnosci: formData.termin_platnosci,
+        sposob_platnosci: formData.sposob_platnosci,
+        numer_konta: formData.numer_konta_bankowego,
+        wystawiajacy: formData.wystawiajacy,
+        razem_netto: formData.wartosc_netto_suma,
+        razem_vat: formData.wartosc_vat_suma,
+        razem_brutto: formData.wartosc_brutto_suma,
+        logo: formData.logo || '',
+        podpis: formData.podpis || '',
+      };
 
-      templateFields.forEach((key) => {
+      Object.entries(templateFields).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
-        const value = formData[key] || '';
-        htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
+        if (key === 'logo' && !value) {
+          // Usuń element logo, jeśli jest pusty
+          htmlContent = htmlContent.replace(
+            /<img src="{{logo}}" alt="Logo firmy">/,
+            '',
+          );
+        } else if (key === 'podpis' && !value) {
+          // Usuń blok podpisu, jeśli jest pusty
+          htmlContent = htmlContent.replace(
+            /<img src="{{podpis}}" alt="Podpis elektroniczny" class="signature-text" \/>/,
+            '',
+          );
+        } else {
+          htmlContent = htmlContent.replace(
+            new RegExp(placeholder, 'g'),
+            value || '',
+          );
+        }
       });
+
+      // Usunięcie wszystkich niewypełnionych placeholderów
+      htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
       const fileName = `faktura_vat_${formData.numer_faktury || Date.now()}`;
@@ -284,25 +367,45 @@ export default function FakturaVATScreen({ route, navigation }) {
       });
       formDataToSend.append('templateId', '2');
       formDataToSend.append('title', `Faktura ${formData.numer_faktury}`);
-      formDataToSend.append('type', 'Faktura');
-
-      templateFields.forEach((key) => {
-        let value = formData[key];
-        if (key === 'products') {
-          value = JSON.stringify(formData.products || []);
-        } else {
-          value = value || '';
-        }
-        formDataToSend.append(key, value);
-      });
+      formDataToSend.append('type', 'Faktura VAT');
       formDataToSend.append(
         'products',
         JSON.stringify(formData.products || []),
       );
 
-      if (formData.id) {
-        formDataToSend.append('id', formData.id);
-      }
+      const backendFields = {
+        numer_faktury: formData.numer_faktury,
+        nazwa_firmy_wystawcy: formData.nazwa_firmy_wystawcy,
+        nip_wystawcy: formData.nip_wystawcy,
+        adres_wystawcy: formData.adres_wystawcy,
+        telefon_wystawcy: formData.telefon_wystawcy,
+        email_wystawcy: formData.email_wystawcy,
+        nazwa_firmy_klienta: formData.nazwa_firmy_klienta,
+        nip_klienta: formData.nip_klienta,
+        adres_firmy_klienta: formData.adres_firmy_klienta,
+        telefon_klienta: formData.telefon_klienta,
+        email_klienta: formData.email_klienta,
+        data_wystawienia: formData.data_wystawienia,
+        data_sprzedazy: formData.data_sprzedazy,
+        termin_platnosci: formData.termin_platnosci,
+        sposob_platnosci: formData.sposob_platnosci,
+        numer_konta_bankowego: formData.numer_konta_bankowego,
+        wystawiajacy: formData.wystawiajacy,
+        wartosc_netto_suma: formData.wartosc_netto_suma,
+        wartosc_vat: formData.wartosc_vat_suma,
+        wartosc_brutto_suma: formData.wartosc_brutto_suma,
+        logo: formData.logo, // Dodano logo
+        podpis: formData.podpis, // Dodano podpis
+      };
+
+      Object.entries(backendFields).forEach(([key, value]) => {
+        formDataToSend.append(key, value || '');
+      });
+
+      formDataToSend.append(
+        'data',
+        JSON.stringify({ ...backendFields, products: formData.products }),
+      );
 
       const response = await uploadDocument(formDataToSend);
       if (!response?.document?.id) {
@@ -312,12 +415,14 @@ export default function FakturaVATScreen({ route, navigation }) {
       const newDocument = {
         id: String(response.document.id),
         name: `Faktura ${formData.numer_faktury}`,
-        type: 'Faktura',
+        type: 'Faktura VAT',
         template_name: 'Faktura VAT',
+        template_id: '2',
+        category: 'Faktury',
         created_at: new Date().toISOString(),
         url: response.document.url || uri,
         products: formData.products,
-        ...formData,
+        ...backendFields,
       };
 
       Alert.alert(
@@ -356,7 +461,7 @@ export default function FakturaVATScreen({ route, navigation }) {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Text style={styles.sectionTitle}>
-        {i18n.t('sellerDetails') || 'Dane Sprzedawcy'}
+        {i18n.t('sellerDetails') || 'Dane Wystawcy'}
       </Text>
       <TextInput
         label={i18n.t('invoiceNumber') || 'Numer faktury'}
@@ -367,82 +472,80 @@ export default function FakturaVATScreen({ route, navigation }) {
       />
       <TextInput
         label={i18n.t('companyName') || 'Nazwa firmy'}
-        value={formData.nazwa_firmy_sprzedawcy}
-        onChangeText={(text) =>
-          handleInputChange('nazwa_firmy_sprzedawcy', text)
-        }
+        value={formData.nazwa_firmy_wystawcy}
+        onChangeText={(text) => handleInputChange('nazwa_firmy_wystawcy', text)}
         style={styles.input}
         theme={paperTheme}
       />
       <TextInput
         label={i18n.t('nip') || 'NIP'}
-        value={formData.nip_sprzedawcy}
-        onChangeText={(text) => handleInputChange('nip_sprzedawcy', text)}
+        value={formData.nip_wystawcy}
+        onChangeText={(text) => handleInputChange('nip_wystawcy', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="numeric"
       />
       <TextInput
         label={i18n.t('address') || 'Adres'}
-        value={formData.adres_sprzedawcy}
-        onChangeText={(text) => handleInputChange('adres_sprzedawcy', text)}
+        value={formData.adres_wystawcy}
+        onChangeText={(text) => handleInputChange('adres_wystawcy', text)}
         style={styles.input}
         theme={paperTheme}
       />
       <TextInput
         label={i18n.t('phone') || 'Telefon'}
-        value={formData.telefon_sprzedawcy}
-        onChangeText={(text) => handleInputChange('telefon_sprzedawcy', text)}
+        value={formData.telefon_wystawcy}
+        onChangeText={(text) => handleInputChange('telefon_wystawcy', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="phone-pad"
       />
       <TextInput
         label={i18n.t('email') || 'Email'}
-        value={formData.email_sprzedawcy}
-        onChangeText={(text) => handleInputChange('email_sprzedawcy', text)}
+        value={formData.email_wystawcy}
+        onChangeText={(text) => handleInputChange('email_wystawcy', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="email-address"
       />
 
       <Text style={styles.sectionTitle}>
-        {i18n.t('buyerDetails') || 'Dane Nabywcy'}
+        {i18n.t('buyerDetails') || 'Dane Klienta'}
       </Text>
       <TextInput
         label={i18n.t('companyName') || 'Nazwa firmy'}
-        value={formData.nazwa_firmy_nabywcy}
-        onChangeText={(text) => handleInputChange('nazwa_firmy_nabywcy', text)}
+        value={formData.nazwa_firmy_klienta}
+        onChangeText={(text) => handleInputChange('nazwa_firmy_klienta', text)}
         style={styles.input}
         theme={paperTheme}
       />
       <TextInput
         label={i18n.t('nip') || 'NIP'}
-        value={formData.nip_nabywcy}
-        onChangeText={(text) => handleInputChange('nip_nabywcy', text)}
+        value={formData.nip_klienta}
+        onChangeText={(text) => handleInputChange('nip_klienta', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="numeric"
       />
       <TextInput
         label={i18n.t('address') || 'Adres'}
-        value={formData.adres_nabywcy}
-        onChangeText={(text) => handleInputChange('adres_nabywcy', text)}
+        value={formData.adres_firmy_klienta}
+        onChangeText={(text) => handleInputChange('adres_firmy_klienta', text)}
         style={styles.input}
         theme={paperTheme}
       />
       <TextInput
         label={i18n.t('phone') || 'Telefon'}
-        value={formData.telefon_nabywcy}
-        onChangeText={(text) => handleInputChange('telefon_nabywcy', text)}
+        value={formData.telefon_klienta}
+        onChangeText={(text) => handleInputChange('telefon_klienta', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="phone-pad"
       />
       <TextInput
         label={i18n.t('email') || 'Email'}
-        value={formData.email_nabywcy}
-        onChangeText={(text) => handleInputChange('email_nabywcy', text)}
+        value={formData.email_klienta}
+        onChangeText={(text) => handleInputChange('email_klienta', text)}
         style={styles.input}
         theme={paperTheme}
         keyboardType="email-address"
@@ -473,6 +576,23 @@ export default function FakturaVATScreen({ route, navigation }) {
         theme={paperTheme}
       />
       <TextInput
+        Railway
+        stationlabel={i18n.t('paymentMethod') || 'Sposób płatności'}
+        value={formData.sposob_platnosci}
+        onChangeText={(text) => handleInputChange('sposob_platnosci', text)}
+        style={styles.input}
+        theme={paperTheme}
+      />
+      <TextInput
+        label={i18n.t('bankAccountNumber') || 'Numer konta bankowego'}
+        value={formData.numer_konta_bankowego}
+        onChangeText={(text) =>
+          handleInputChange('numer_konta_bankowego', text)
+        }
+        style={styles.input}
+        theme={paperTheme}
+      />
+      <TextInput
         label={i18n.t('issuer') || 'Wystawiający'}
         value={formData.wystawiajacy}
         onChangeText={(text) => handleInputChange('wystawiajacy', text)}
@@ -481,12 +601,43 @@ export default function FakturaVATScreen({ route, navigation }) {
       />
 
       <Text style={styles.sectionTitle}>
+        {i18n.t('logoAndSignature') || 'Logo i Podpis'}
+      </Text>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('logo')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.logo
+          ? i18n.t('changeLogo') || 'Zmień Logo'
+          : i18n.t('uploadLogo') || 'Prześlij Logo'}
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('podpis')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.podpis
+          ? i18n.t('changeSignature') || 'Zmień Podpis'
+          : i18n.t('uploadSignature') || 'Prześlij Podpis'}
+      </Button>
+
+      <Text style={styles.sectionTitle}>
         {i18n.t('invoiceItems') || 'Pozycje Faktury'}
       </Text>
       <TextInput
         label={i18n.t('serviceProductName') || 'Nazwa usługi/towaru'}
         value={formData.nazwa_uslugi_towaru}
         onChangeText={(text) => handleInputChange('nazwa_uslugi_towaru', text)}
+        style={styles.input}
+        theme={paperTheme}
+      />
+      <TextInput
+        label={i18n.t('unit') || 'Jednostka'}
+        value={formData.jednostka}
+        onChangeText={(text) => handleInputChange('jednostka', text)}
         style={styles.input}
         theme={paperTheme}
       />
@@ -524,13 +675,13 @@ export default function FakturaVATScreen({ route, navigation }) {
       </Button>
       {formData.products.map((product, index) => (
         <View
-          key={product.nazwa_uslugi_towaru || `product-${index}`}
+          key={product.nazwa || `product-${index}`}
           style={styles.productItem}
         >
           <Text>
-            {product.nazwa_uslugi_towaru} | {product.ilosc} |{' '}
+            {product.nazwa} | {product.jednostka} | {product.ilosc} |{' '}
             {product.cena_netto} | {product.stawka_vat}% |{' '}
-            {product.wartosc_netto} | {product.wartosc_vat} |{' '}
+            {product.wartosc_netto} | {product.kwota_vat} |{' '}
             {product.wartosc_brutto}
           </Text>
           <Button
@@ -548,18 +699,18 @@ export default function FakturaVATScreen({ route, navigation }) {
         {i18n.t('summary') || 'Podsumowanie'}
       </Text>
       <TextInput
-        label={i18n.t('totalNetValue') || 'Razem netto'}
-        value={formData.razem_netto}
+        label={i18n.t('totalNetValue') || 'Wartość netto suma'}
+        value={formData.wartosc_netto_suma}
         keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('razem_netto', text)}
+        onChangeText={(text) => handleInputChange('wartosc_netto_suma', text)}
         style={styles.input}
         theme={paperTheme}
       />
       <TextInput
-        label={i18n.t('totalVATValue') || 'Razem VAT'}
-        value={formData.razem_vat}
+        label={i18n.t('totalVATValue') || 'Wartość VAT suma'}
+        value={formData.wartosc_vat_suma}
         keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('razem_vat', text)}
+        onChangeText={(text) => handleInputChange('wartosc_vat_suma', text)}
         style={styles.input}
         theme={paperTheme}
       />
@@ -626,3 +777,4 @@ const styles = StyleSheet.create({
   },
   removeButton: { marginLeft: 10 },
 });
+// git

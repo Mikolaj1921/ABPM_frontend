@@ -37,7 +37,7 @@ import {
 const documentCategories = [
   {
     id: '1',
-    nameKey: 'handloweiOfertowe',
+    nameKey: 'handloweOfertowe',
     category: 'Handlowe',
     icon: 'file-text',
   },
@@ -49,7 +49,7 @@ const validCategories = documentCategories.map((cat) => cat.category);
 
 const typeToCategory = {
   'Oferta Handlowa': 'Handlowe',
-  Faktura: 'Faktury',
+  'Faktura VAT': 'Faktury',
   'Umowa o Pracę': 'Kadrowe',
 };
 
@@ -261,7 +261,7 @@ const DocumentCard = ({
       : 0;
     const ofertyCount = Array.isArray(item.oferty) ? item.oferty.length : 0;
     subtitle += ` | Obowiązki: ${obowiazkiCount} | Postanowienia: ${ofertyCount}`;
-  } else if (item.type === 'Oferta Handlowa') {
+  } else if (item.type === 'Oferta Handlowa' || item.type === 'Faktura VAT') {
     const productsCount = Array.isArray(item.products)
       ? item.products.length
       : 0;
@@ -280,6 +280,7 @@ const DocumentCard = ({
         subtitleStyle={styles.cardSubtitle}
         left={LeftIcon}
         leftStyle={{ marginRight: 2.5 }}
+        // eslint-disable-next-line
         right={() => (
           <CardMenu
             item={item}
@@ -306,6 +307,7 @@ export default function DocumentsScreen({ navigation, route }) {
   const { i18n } = useContext(LanguageContext);
   const [documents, setDocuments] = useState({});
   const [searchQueries, setSearchQueries] = useState({});
+  // eslint-disable-next-line
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState({});
   const [loading, setLoading] = useState(true);
@@ -657,8 +659,10 @@ export default function DocumentsScreen({ navigation, route }) {
     };
 
     let lastError;
+    // eslint-disable-next-line
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        // eslint-disable-next-line
         return await operation();
       } catch (err) {
         lastError = err;
@@ -666,9 +670,12 @@ export default function DocumentsScreen({ navigation, route }) {
           throw err;
         }
         console.warn(
+          // eslint-disable-next-line
           `Próba ${attempt} nieudana, ponawiam po ${Math.pow(2, attempt) * 1000}ms...`,
         );
+        // eslint-disable-next-line
         await new Promise((resolve) =>
+          // eslint-disable-next-line
           setTimeout(resolve, Math.pow(2, attempt) * 1000),
         );
       }
@@ -708,7 +715,7 @@ export default function DocumentsScreen({ navigation, route }) {
       }
 
       const fetchTemplateOperation = () =>
-        fetchTemplateContent(document.template_id || 1);
+        fetchTemplateContent(document.template_id || 2);
       const { content: templateContent } = await retryOperation(
         fetchTemplateOperation,
       );
@@ -726,24 +733,49 @@ export default function DocumentsScreen({ navigation, route }) {
             ? document.products
                 .map(
                   (product) => `
-                <tr>
-                  <td>${product.nazwa_uslugi_towaru || ''}</td>
-                  <td>${product.ilosc || ''}</td>
-                  <td>${product.cena_netto || ''}</td>
-                  <td>${product.wartosc_netto || ''}</td>
-                </tr>
-              `,
+            <tr>
+              <td>${product.nazwa_uslugi_towaru || ''}</td>
+              <td>${product.ilosc || ''}</td>
+              <td>${product.cena_netto || ''}</td>
+              <td>${product.wartosc_netto || ''}</td>
+            </tr>
+          `,
                 )
                 .join('')
             : '<tr><td colspan="4">Brak pozycji</td></tr>';
         htmlContent = htmlContent.replace('{{products}}', productsHtml);
+      } else if (document.type === 'Faktura VAT') {
+        const productsHtml =
+          Array.isArray(document.products) && document.products.length > 0
+            ? document.products
+                .map(
+                  (product, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${product.nazwa || ''}</td>
+              <td>${product.jednostka || ''}</td>
+              <td>${product.cena_netto || ''}</td>
+              <td>${product.ilosc || ''}</td>
+            </tr>
+            <tr>
+              <td colspan="2">${product.stawka_vat || ''}%</td>
+              <td>${product.kwota_vat || ''}</td>
+              <td colspan="2">${product.wartosc_brutto || ''}</td>
+            </tr>
+          `,
+                )
+                .join('')
+            : '<tr><td colspan="5">Brak pozycji</td></tr>';
+        htmlContent = htmlContent.replace('{{#each pozycje}}', productsHtml);
       } else if (document.type === 'Umowa o Pracę') {
+        // eslint-disable-next-line
         const obowiazkiHtml =
           Array.isArray(document.obowiazki) && document.obowiazki.length > 0
             ? document.obowiazki
                 .map((obowiazek) => `<li>${obowiazek}</li>`)
                 .join('')
             : '<li>Brak obowiązków</li>';
+        // eslint-disable-next-line
         const ofertyHtml =
           Array.isArray(document.oferty) && document.oferty.length > 0
             ? document.oferty.map((oferta) => `<li>${oferta}</li>`).join('')
@@ -757,20 +789,73 @@ export default function DocumentsScreen({ navigation, route }) {
           .replace('{{oferta_3}}', document.oferty[2] || 'Brak');
       }
 
+      // Obliczenie wartosc_vat_suma dla Faktura VAT, jeśli undefined
+      // eslint-disable-next-line
+      let wartosc_vat_suma = document.wartosc_vat_suma;
+      if (
+        document.type === 'Faktura VAT' &&
+        // eslint-disable-next-line
+        !wartosc_vat_suma &&
+        Array.isArray(document.products)
+      ) {
+        // eslint-disable-next-line
+        wartosc_vat_suma = document.products
+          .reduce(
+            (sum, product) => sum + (parseFloat(product.kwota_vat) || 0),
+            0,
+          )
+          .toFixed(2);
+      }
+
+      // Dedykowane mapowanie placeholderów dla Faktura VAT
+      const placeholderMapFakturaVAT = {
+        firma_sprzedawcy: document.nazwa_firmy_wystawcy || '',
+        nip_sprzedawcy: document.nip_wystawcy || '',
+        adres_sprzedawcy: document.adres_wystawcy || '',
+        telefon_sprzedawcy: document.telefon_wystawcy || '',
+        email_sprzedawcy: document.email_wystawcy || '',
+        firma_nabywcy: document.nazwa_firmy_klienta || '',
+        nip_nabywcy: document.nip_klienta || '',
+        adres_nabywcy: document.adres_firmy_klienta || '',
+        telefon_nabywcy: document.telefon_klienta || '',
+        email_nabywcy: document.email_klienta || '',
+        numer_faktury: document.numer_faktury || '',
+        data_wystawienia: document.data_wystawienia || '',
+        data_sprzedazy: document.data_sprzedazy || '',
+        termin_platnosci: document.termin_platnosci || '',
+        sposob_platnosci: document.sposob_platnosci || '',
+        numer_konta: document.numer_konta_bankowego || '',
+        wystawiajacy: document.wystawiajacy || '',
+        razem_netto: document.wartosc_netto_suma || '',
+        // eslint-disable-next-line
+        razem_vat: wartosc_vat_suma || '',
+        razem_brutto: document.wartosc_brutto_suma || '',
+      };
+
+      // Mapowanie wszystkich placeholderów
       const placeholders = [
         'numer_oferty',
+        'numer_faktury',
         'nazwa_firmy_wystawcy',
         'nip_wystawcy',
         'adres_wystawcy',
+        'telefon_wystawcy',
+        'email_wystawcy',
         'nazwa_firmy_klienta',
         'nip_klienta',
         'adres_firmy_klienta',
+        'telefon_klienta',
+        'email_klienta',
         'wartosc_netto_suma',
         'stawka_vat',
         'wartosc_vat',
         'wartosc_brutto_suma',
         'data_wystawienia',
+        'data_sprzedazy',
+        'termin_platnosci',
+        'sposob_platnosci',
         'numer_konta_bankowego',
+        'wystawiajacy',
         'nazwa_firmy',
         'adres_firmy',
         'nip',
@@ -784,27 +869,69 @@ export default function DocumentsScreen({ navigation, route }) {
         'wymiar_pracy',
         'miejsce_pracy',
         'wynagrodzenie',
-        'termin_platnosci',
         'czas_trwania_umowy',
         'data_rozpoczecia',
         'data',
         'miejsce_zawarcia',
+        'razem_netto',
+        'razem_vat',
+        'razem_brutto',
+        'firma_sprzedawcy',
+        'nip_sprzedawcy',
+        'adres_sprzedawcy',
+        'telefon_sprzedawcy',
+        'email_sprzedawcy',
+        'firma_nabywcy',
+        'nip_nabywcy',
+        'adres_nabywcy',
+        'telefon_nabywcy',
+        'email_nabywcy',
+        'numer_konta',
       ];
 
+      // Zastąpienie placeholderów dla Faktura VAT
+      if (document.type === 'Faktura VAT') {
+        Object.entries(placeholderMapFakturaVAT).forEach(([key, value]) => {
+          const placeholder = `{{${key}}}`;
+          htmlContent = htmlContent.replace(
+            new RegExp(placeholder, 'g'),
+            value,
+          );
+        });
+      }
+
+      // Zastąpienie pozostałych placeholderów
       placeholders.forEach((key) => {
+        if (document.type === 'Faktura VAT' && key === 'razem_vat') return;
         const placeholder = `{{${key}}}`;
         const value = document[key] || '';
         htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
       });
 
-      htmlContent = htmlContent.replace(
-        '{{logo}}',
-        field === 'logo' ? fileUrl : document.logo || '',
-      );
-      htmlContent = htmlContent.replace(
-        '{{podpis}}',
-        field === 'podpis' ? fileUrl : document.podpis || '',
-      );
+      // Obsługa logo i podpisu
+      const logoValue = field === 'logo' ? fileUrl : document.logo || '';
+      const podpisValue = field === 'podpis' ? fileUrl : document.podpis || '';
+
+      if (!logoValue) {
+        htmlContent = htmlContent.replace(
+          /<img src="{{logo}}" alt="Logo firmy" \/>/,
+          '',
+        );
+      } else {
+        htmlContent = htmlContent.replace(/{{logo}}/g, logoValue);
+      }
+
+      if (!podpisValue) {
+        htmlContent = htmlContent.replace(
+          /<img src="{{podpis}}" alt="Podpis elektroniczny" class="signature-text" \/>/,
+          '',
+        );
+      } else {
+        htmlContent = htmlContent.replace(/{{podpis}}/g, podpisValue);
+      }
+
+      // Usunięcie wszystkich niewypełnionych placeholderów
+      htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri: pdfUri } = await Print.printToFileAsync({
         html: htmlContent,
@@ -822,22 +949,26 @@ export default function DocumentsScreen({ navigation, route }) {
         type: 'application/pdf',
         name: `document_${document.id}.pdf`,
       });
-      updateFormData.append('templateId', String(document.template_id || 1));
+      updateFormData.append('templateId', String(document.template_id || 2));
       updateFormData.append('title', document.name || '');
       updateFormData.append('type', document.type || 'Umowa o Pracę');
-      updateFormData.append(
-        'logo',
-        field === 'logo' ? fileUrl : document.logo || '',
-      );
-      updateFormData.append(
-        'podpis',
-        field === 'podpis' ? fileUrl : document.podpis || '',
-      );
+      updateFormData.append('logo', logoValue);
+      updateFormData.append('podpis', podpisValue);
 
-      placeholders.forEach((key) => {
-        updateFormData.append(key, document[key] || '');
-      });
-      if (document.type === 'Oferta Handlowa') {
+      if (document.type === 'Faktura VAT') {
+        Object.entries(placeholderMapFakturaVAT).forEach(([key, value]) => {
+          updateFormData.append(key, value);
+        });
+      } else {
+        placeholders.forEach((key) => {
+          updateFormData.append(key, document[key] || '');
+        });
+      }
+
+      if (
+        document.type === 'Oferta Handlowa' ||
+        document.type === 'Faktura VAT'
+      ) {
         updateFormData.append(
           'products',
           JSON.stringify(document.products || []),
@@ -849,6 +980,20 @@ export default function DocumentsScreen({ navigation, route }) {
         );
         updateFormData.append('oferty', JSON.stringify(document.oferty || []));
       }
+
+      updateFormData.append(
+        'data',
+        JSON.stringify({
+          ...(document.type === 'Faktura VAT'
+            ? placeholderMapFakturaVAT
+            : document),
+          products: document.products || [],
+          obowiazki: document.obowiazki || [],
+          oferty: document.oferty || [],
+          logo: logoValue,
+          podpis: podpisValue,
+        }),
+      );
 
       console.log('Update FormData:', Array.from(updateFormData.entries()));
 
@@ -868,10 +1013,16 @@ export default function DocumentsScreen({ navigation, route }) {
             ? {
                 ...doc,
                 url: updatedDoc.document.url,
-                [field]: fileUrl,
+                logo: logoValue,
+                podpis: podpisValue,
                 products: document.products,
                 obowiazki: document.obowiazki,
                 oferty: document.oferty,
+                wartosc_vat_suma:
+                  document.type === 'Faktura VAT'
+                    ? // eslint-disable-next-line
+                      wartosc_vat_suma
+                    : doc.wartosc_vat_suma,
               }
             : doc,
         ),
@@ -1003,6 +1154,7 @@ export default function DocumentsScreen({ navigation, route }) {
             onPress={() => handleAccordionPress(category.id)}
             style={styles.accordion}
             theme={{ colors: { primary: '#001426FF' } }}
+            // eslint-disable-next-line
             left={() => <AccordionIcon icon={category.icon} />}
           >
             <View
@@ -1425,4 +1577,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-// aktualoczka bez update logo i podpisu dla VAT
+// good version
+// bb
+// git

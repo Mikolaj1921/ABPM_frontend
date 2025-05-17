@@ -3,11 +3,13 @@ import { StyleSheet, ScrollView, View, Alert } from 'react-native';
 import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
+import * as ImagePicker from 'expo-image-picker';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
 import { fetchTemplateById, uploadDocument } from '../../../api';
 
 export default function UmowaOPraceScreen({ route, navigation }) {
+  // eslint-disable-next-line
   const { category, document } = route.params || {};
   const { user } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
@@ -125,6 +127,28 @@ export default function UmowaOPraceScreen({ route, navigation }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const pickImage = async (field) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Błąd', 'Potrzebne są uprawnienia do galerii zdjęć.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      base64: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: `data:image/png;base64,${result.assets[0].base64}`,
+      }));
+    }
+  };
+
   const addObowiazek = () => {
     if (newObowiazek.trim()) {
       setFormData((prev) => ({
@@ -192,6 +216,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
           regon: formData.regon,
           przedstawiciel_imie_nazwisko: formData.przedstawiciel_imie_nazwisko,
           przedstawiciel_stanowisko: formData.przedstawiciel_stanowisko,
+          logo: formData.logo,
+          podpis: formData.podpis,
         }),
       );
 
@@ -200,13 +226,14 @@ export default function UmowaOPraceScreen({ route, navigation }) {
       }
 
       let htmlContent = templateHtml;
-
+      // eslint-disable-next-line
       const obowiazkiHtml =
         formData.obowiazki.length > 0
           ? formData.obowiazki
               .map((obowiazek) => `<li>${obowiazek}</li>`)
               .join('')
           : '<li>Brak obowiązków</li>';
+      // eslint-disable-next-line
       const ofertyHtml =
         formData.oferty.length > 0
           ? formData.oferty.map((oferta) => `<li>${oferta}</li>`).join('')
@@ -220,34 +247,53 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         .replace('{{oferta_2}}', formData.oferty[1] || 'Brak')
         .replace('{{oferta_3}}', formData.oferty[2] || 'Brak');
 
-      const templateFields = [
-        'nazwa_firmy',
-        'adres_firmy',
-        'nip',
-        'regon',
-        'przedstawiciel_imie_nazwisko',
-        'przedstawiciel_stanowisko',
-        'imie_nazwisko_pracownika',
-        'adres_pracownika',
-        'pesel_pracownika',
-        'stanowisko',
-        'wymiar_pracy',
-        'miejsce_pracy',
-        'wynagrodzenie',
-        'termin_platnosci',
-        'czas_trwania_umowy',
-        'data_rozpoczecia',
-        'data',
-        'miejsce_zawarcia',
-        'logo',
-        'podpis',
-      ];
+      const templateFields = {
+        nazwa_firmy: formData.nazwa_firmy,
+        adres_firmy: formData.adres_firmy,
+        nip: formData.nip,
+        regon: formData.regon,
+        przedstawiciel_imie_nazwisko: formData.przedstawiciel_imie_nazwisko,
+        przedstawiciel_stanowisko: formData.przedstawiciel_stanowisko,
+        imie_nazwisko_pracownika: formData.imie_nazwisko_pracownika,
+        adres_pracownika: formData.adres_pracownika,
+        pesel_pracownika: formData.pesel_pracownika,
+        stanowisko: formData.stanowisko,
+        wymiar_pracy: formData.wymiar_pracy,
+        miejsce_pracy: formData.miejsce_pracy,
+        wynagrodzenie: formData.wynagrodzenie,
+        termin_platnosci: formData.termin_platnosci,
+        czas_trwania_umowy: formData.czas_trwania_umowy,
+        data_rozpoczecia: formData.data_rozpoczecia,
+        data: formData.data,
+        miejsce_zawarcia: formData.miejsce_zawarcia,
+        logo: formData.logo || '',
+        podpis: formData.podpis || '',
+      };
 
-      templateFields.forEach((key) => {
+      Object.entries(templateFields).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
-        const value = formData[key] || document?.[key] || '';
-        htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
+        if (key === 'logo' && !value) {
+          // Usuń element logo, jeśli jest pusty
+          htmlContent = htmlContent.replace(
+            /<img src="{{logo}}" alt="Logo firmy">/,
+            '',
+          );
+        } else if (key === 'podpis' && !value) {
+          // Usuń blok podpisu pracodawcy, jeśli jest pusty
+          htmlContent = htmlContent.replace(
+            /<img src="{{podpis}}" alt="Podpis elektroniczny" class="signature-text" \/>/,
+            '',
+          );
+        } else {
+          htmlContent = htmlContent.replace(
+            new RegExp(placeholder, 'g'),
+            value || '',
+          );
+        }
       });
+
+      // Usunięcie wszystkich niewypełnionych placeholderów
+      htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
       const fileName = `umowa_o_prace_${Date.now()}`;
@@ -265,20 +311,23 @@ export default function UmowaOPraceScreen({ route, navigation }) {
       );
       formDataToSend.append('type', 'Umowa o Pracę');
 
-      // Dodajemy wszystkie pola z formData lub document (jeśli formData jest puste)
-      templateFields.forEach((key) => {
-        let value = formData[key] || document?.[key] || '';
-        formDataToSend.append(key, value);
+      // Dodajemy wszystkie pola z formData lub document
+      Object.entries(templateFields).forEach(([key, value]) => {
+        formDataToSend.append(key, value || document?.[key] || '');
       });
 
-      // Dodajemy obowiazki i oferty, upewniając się, że są poprawnie serializowane
+      // Dodajemy obowiazki i oferty
+      // eslint-disable-next-line
       const obowiazkiToSend =
+        // eslint-disable-next-line
         Array.isArray(formData.obowiazki) && formData.obowiazki.length > 0
           ? formData.obowiazki
           : Array.isArray(document?.obowiazki)
             ? document.obowiazki
             : [];
+      // eslint-disable-next-line
       const ofertyToSend =
+        // eslint-disable-next-line
         Array.isArray(formData.oferty) && formData.oferty.length > 0
           ? formData.oferty
           : Array.isArray(document?.oferty)
@@ -307,9 +356,9 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         obowiazki: obowiazkiToSend,
         oferty: ofertyToSend,
         ...Object.fromEntries(
-          templateFields.map((key) => [
+          Object.entries(templateFields).map(([key, value]) => [
             key,
-            formData[key] || document?.[key] || '',
+            value || document?.[key] || '',
           ]),
         ),
       };
@@ -433,6 +482,30 @@ export default function UmowaOPraceScreen({ route, navigation }) {
       />
 
       <Text style={styles.sectionTitle}>
+        {i18n.t('logoAndSignature') || 'Logo i Podpis'}
+      </Text>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('logo')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.logo
+          ? i18n.t('changeLogo') || 'Zmień Logo'
+          : i18n.t('uploadLogo') || 'Prześlij Logo'}
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('podpis')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.podpis
+          ? i18n.t('changeSignature') || 'Zmień Podpis'
+          : i18n.t('uploadSignature') || 'Prześlij Podpis'}
+      </Button>
+
+      <Text style={styles.sectionTitle}>
         {i18n.t('contractDetails') || 'Szczegóły Umowy'}
       </Text>
       <TextInput
@@ -520,6 +593,7 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         {i18n.t('addDuty') || 'Dodaj Obowiązek'}
       </Button>
       {formData.obowiazki.map((obowiazek, index) => (
+        // eslint-disable-next-line
         <View key={`obowiazek-${index}`} style={styles.item}>
           <Text>{obowiazek}</Text>
           <Button
@@ -552,6 +626,7 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         {i18n.t('addProvision') || 'Dodaj Postanowienie'}
       </Button>
       {formData.oferty.map((oferta, index) => (
+        // eslint-disable-next-line
         <View key={`oferta-${index}`} style={styles.item}>
           <Text>{oferta}</Text>
           <Button
@@ -619,3 +694,4 @@ const styles = StyleSheet.create({
   },
   removeButton: { marginLeft: 10 },
 });
+// git

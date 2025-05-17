@@ -3,11 +3,13 @@ import { StyleSheet, ScrollView, View, Alert } from 'react-native';
 import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
+import * as ImagePicker from 'expo-image-picker';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
 import { fetchTemplateById, uploadDocument } from '../../../api';
 
 export default function OfertaHandlowaScreen({ route, navigation }) {
+  // eslint-disable-next-line
   const { template: templateParam, document } = route.params || {};
   const { user } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
@@ -80,15 +82,10 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             swift_bic: document.swift_bic || '',
             forma_platnosci: document.forma_platnosci || 'przelew',
           }));
-          // console.log('Loaded document products:', document.products);
         }
 
-        // console.log('Fetching template with ID 1...');
         const selectedTemplate = await fetchTemplateById(1);
-        // console.log('Template received:', selectedTemplate);
-
         if (selectedTemplate && selectedTemplate.content) {
-          // console.log('Template found:', selectedTemplate);
           setTemplateHtml(selectedTemplate.content);
         } else {
           throw new Error('Nie znaleziono szablonu o ID 1 w odpowiedzi API');
@@ -106,6 +103,28 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const pickImage = async (field) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Błąd', 'Potrzebne są uprawnienia do galerii zdjęć.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      base64: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: result.assets[0].uri, // Używamy URI zamiast base64, zgodnie z updateDocumentWithFile
+      }));
+    }
   };
 
   const addProduct = () => {
@@ -129,8 +148,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         cena_netto: '',
         wartosc_netto: '',
       }));
-      // console.log('Added product:', newProduct);
-      // console.log('Current products:', [...formData.products, newProduct]);
       setError('');
     } else {
       setError(
@@ -144,11 +161,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       ...prev,
       products: prev.products.filter((_, i) => i !== index),
     }));
-    console.log('Removed product at index:', index);
-    console.log(
-      'Current products:',
-      formData.products.filter((_, i) => i !== index),
-    );
   };
 
   const saveDocument = async () => {
@@ -203,35 +215,54 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
 
       htmlContent = htmlContent.replace('{{products}}', productsHtml);
 
-      const templateFields = [
-        'nazwa_firmy_klienta',
-        'adres_firmy_klienta',
-        'nip_klienta',
-        'clientEmail',
-        'data_wystawienia',
-        'data_waznosci',
-        'numer_oferty',
-        'wartosc_netto_suma',
-        'stawka_vat',
-        'wartosc_vat',
-        'wartosc_brutto_suma',
-        'nazwa_firmy_wystawcy',
-        'nip_wystawcy',
-        'adres_wystawcy',
-        'nazwa_banku',
-        'numer_konta_bankowego',
-        'swift_bic',
-        'forma_platnosci',
-        'logo',
-        'podpis',
-        'products',
-      ];
+      const templateFields = {
+        nazwa_firmy_klienta: formData.nazwa_firmy_klienta,
+        adres_firmy_klienta: formData.adres_firmy_klienta,
+        nip_klienta: formData.nip_klienta,
+        clientEmail: formData.clientEmail,
+        data_wystawienia: formData.data_wystawienia,
+        data_waznosci: formData.data_waznosci,
+        numer_oferty: formData.numer_oferty,
+        wartosc_netto_suma: formData.wartosc_netto_suma,
+        stawka_vat: formData.stawka_vat,
+        wartosc_vat: formData.wartosc_vat,
+        wartosc_brutto_suma: formData.wartosc_brutto_suma,
+        nazwa_firmy_wystawcy: formData.nazwa_firmy_wystawcy,
+        nip_wystawcy: formData.nip_wystawcy,
+        adres_wystawcy: formData.adres_wystawcy,
+        nazwa_banku: formData.nazwa_banku,
+        numer_konta_bankowego: formData.numer_konta_bankowego,
+        swift_bic: formData.swift_bic,
+        forma_platnosci: formData.forma_platnosci,
+        logo: formData.logo || '',
+        podpis: formData.podpis || '',
+        products: formData.products || [], // Dodajemy products do templateFields
+      };
 
-      templateFields.forEach((key) => {
+      Object.entries(templateFields).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
-        const value = formData[key] || '';
-        htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
+        if (key === 'logo' && !value) {
+          htmlContent = htmlContent.replace(
+            /<img src="{{logo}}" alt="Logo firmy" \/>/,
+            '',
+          );
+        } else if (key === 'podpis' && !value) {
+          htmlContent = htmlContent.replace(
+            /<img src="{{podpis}}" alt="Podpis elektroniczny" class="signature-text" \/>/,
+            '',
+          );
+        } else if (key === 'products') {
+          // Pomijamy zastępowanie placeholderów dla products, ponieważ jest obsługiwane przez productsHtml
+        } else {
+          htmlContent = htmlContent.replace(
+            new RegExp(placeholder, 'g'),
+            value || '',
+          );
+        }
       });
+
+      // Usunięcie wszystkich niewypełnionych placeholderów
+      htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
       const fileName = `oferta_handlowa_${Date.now()}`;
@@ -249,15 +280,19 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       );
       formDataToSend.append('type', 'Oferta Handlowa');
 
-      templateFields.forEach((key) => {
-        let value = formData[key];
+      Object.entries(templateFields).forEach(([key, value]) => {
         if (key === 'products') {
-          value = JSON.stringify(formData.products || []);
+          formDataToSend.append(
+            'products',
+            JSON.stringify(formData.products || []),
+          );
         } else {
-          value = value || '';
+          formDataToSend.append(key, value || '');
         }
-        formDataToSend.append(key, value);
       });
+
+      // Dodanie obiektu data dla spójności z updateDocumentWithFile
+      formDataToSend.append('data', JSON.stringify(templateFields));
 
       console.log('Products to send:', formData.products);
       console.log('FormData fields:', Array.from(formDataToSend.entries()));
@@ -277,7 +312,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         logo: formData.logo,
         podpis: formData.podpis,
         products: formData.products,
-        ...formData,
+        ...templateFields,
       };
 
       console.log('New document products:', newDocument.products);
@@ -375,6 +410,30 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         style={styles.input}
         theme={paperTheme}
       />
+
+      <Text style={styles.sectionTitle}>
+        {i18n.t('logoAndSignature') || 'Logo i Podpis'}
+      </Text>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('logo')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.logo
+          ? i18n.t('changeLogo') || 'Zmień Logo'
+          : i18n.t('uploadLogo') || 'Prześlij Logo'}
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={() => pickImage('podpis')}
+        style={styles.button}
+        labelStyle={{ color: paperTheme.colors.primary }}
+      >
+        {formData.podpis
+          ? i18n.t('changeSignature') || 'Zmień Podpis'
+          : i18n.t('uploadSignature') || 'Prześlij Podpis'}
+      </Button>
 
       <Text style={styles.sectionTitle}>
         {i18n.t('offerItems') || 'Pozycje Oferty'}
@@ -583,4 +642,4 @@ const styles = StyleSheet.create({
   },
   removeButton: { marginLeft: 10 },
 });
-// koko nowa
+// git

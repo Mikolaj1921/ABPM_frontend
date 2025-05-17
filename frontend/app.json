@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "sdkVersion": "53.0.0",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -25,10 +26,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-secure-store",
-      "expo-localization"
-    ],
+    "plugins": ["expo-secure-store", "expo-localization"],
     "extra": {
       "eas": {
         "projectId": "19251c6a-5cca-4bc3-b251-3eadcc6f3336"

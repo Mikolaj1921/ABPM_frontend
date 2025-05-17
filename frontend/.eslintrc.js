@@ -29,6 +29,7 @@ module.exports = {
   },
   plugins: ['react-native', 'prettier', 'react'], // Dodaj Prettiera do pluginów
   rules: {
+    indent: 'off',
     'linebreak-style': 'off',
     'import/prefer-default-export': 'off',
     'no-console': 'off', // Wyłącza regułę no-console w całym projekcie
@@ -37,7 +38,6 @@ module.exports = {
     'react/prop-types': 'off',
     'react-native/no-inline-styles': 'off',
     'prettier/prettier': 'error', // Dodaj tę linię, aby upewnić się, że Prettier przestrzega zasad
-    indent: ['error', 2],
     'no-trailing-spaces': 'error',
     'no-multiple-empty-lines': ['error', { max: 1 }],
     'eol-last': ['error', 'always'],
