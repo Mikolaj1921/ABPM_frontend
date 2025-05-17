@@ -37,7 +37,7 @@ import {
 const documentCategories = [
   {
     id: '1',
-    nameKey: 'handloweOfertowe',
+    nameKey: 'handloweiOfertowe',
     category: 'Handlowe',
     icon: 'file-text',
   },
@@ -64,25 +64,46 @@ const ALLOWED_MIME_TYPES = [
   'image/bmp',
 ];
 
-const AccordionIcon = ({ icon }) => (
+const AccordionIcon = ({ icon, accessibilityLabel }) => (
   <FontAwesome
     name={icon}
     size={20}
     color="#001426FF"
     style={{ justifyContent: 'center', alignSelf: 'center', marginLeft: 10 }}
+    accessibilityLabel={accessibilityLabel}
   />
 );
 const SearchIcon = () => (
-  <FontAwesome name="search" size={20} color="#001426FF" />
+  <FontAwesome
+    name="search"
+    size={20}
+    color="#001426FF"
+    accessibilityLabel="Ikona wyszukiwania"
+  />
 );
 const SortIcon = () => (
-  <FontAwesome name="sort" size={16} style={{ marginRight: 8 }} />
+  <FontAwesome
+    name="sort"
+    size={16}
+    style={{ marginRight: 8 }}
+    accessibilityLabel="Ikona sortowania"
+  />
 );
 const LeftIcon = () => (
-  <FontAwesome name="check-circle" size={24} color="#001426FF" />
+  <FontAwesome
+    name="check-circle"
+    size={24}
+    color="#001426FF"
+    accessibilityLabel="Ikona dokumentu"
+  />
 );
-const MenuIcon = ({ onPress }) => (
-  <TouchableOpacity onPress={onPress}>
+const MenuIcon = ({ onPress, accessibilityLabel }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    accessibilityLabel={accessibilityLabel}
+    accessibilityRole="button"
+    accessibilityHint="Otwórz menu opcji dokumentu"
+  >
     <FontAwesome
       name="ellipsis-v"
       size={24}
@@ -95,6 +116,9 @@ const SortOption = ({ item, selectedCategory, handleSortChange }) => (
   <TouchableOpacity
     style={styles.modalItem}
     onPress={() => handleSortChange(selectedCategory, item.value)}
+    accessibilityLabel={item.label}
+    accessibilityRole="button"
+    accessibilityHint="Wybierz tę opcję sortowania"
   >
     <Text style={styles.modalItemText}>{item.label}</Text>
   </TouchableOpacity>
@@ -118,24 +142,20 @@ const CardMenu = ({
     try {
       const url = document.url || document.file_path;
       if (!url) {
-        Alert.alert(i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
+        Alert.alert(i18n.t('noDocumentUrl'));
         return;
       }
-      const shareUrl = `${i18n.t('shareMessage') || 'Sprawdź ten dokument'}: ${url}`;
+      const shareUrl = `${i18n.t('shareMessage')}: ${url}`;
       const encodedUrl = encodeURIComponent(shareUrl);
       const canOpen = await Linking.canOpenURL('https://');
       if (canOpen) {
         await Linking.openURL(`https://t.me/share/url?url=${encodedUrl}`);
       } else {
-        Alert.alert(
-          i18n.t('sharingNotAvailable') || 'Udostępnianie nie jest dostępne',
-        );
+        Alert.alert(i18n.t('sharingNotAvailable'));
       }
     } catch (err) {
       console.error('Błąd podczas udostępniania:', err);
-      Alert.alert(
-        i18n.t('sharingError') || `Nie udało się udostępnić: ${err.message}`,
-      );
+      Alert.alert(i18n.t('sharingError', { message: err.message }));
     }
   };
 
@@ -143,17 +163,23 @@ const CardMenu = ({
     <>
       <MenuIcon
         onPress={() => setMenuVisible((prev) => ({ ...prev, [item.id]: true }))}
+        accessibilityLabel={i18n.t('openDocumentMenu', { name: item.name })}
       />
       <Modal
         animationType="fade"
         transparent
         visible={menuVisible[item.id] || false}
         onRequestClose={() => handleMenuClose(item.id)}
+        accessibilityLabel={i18n.t('documentMenuModal', { name: item.name })}
+        accessibilityHint={i18n.t('documentMenuModalHint')}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           onPress={() => handleMenuClose(item.id)}
           activeOpacity={1}
+          accessibilityLabel={i18n.t('closeModal')}
+          accessibilityRole="button"
+          accessibilityHint={i18n.t('closeModalHint')}
         >
           <Animated.View
             style={[styles.modalContent, { opacity: menuFadeAnim }]}
@@ -167,11 +193,14 @@ const CardMenu = ({
                   category,
                 });
               }}
+              accessibilityLabel={i18n.t('previewDocument', {
+                name: item.name,
+              })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('previewDocumentHint')}
             >
               <FontAwesome name="eye" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>
-                {i18n.t('preview') || 'Podgląd'}
-              </Text>
+              <Text style={styles.menuItemText}>{i18n.t('preview')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -179,11 +208,14 @@ const CardMenu = ({
                 handleMenuClose(item.id);
                 handleDownload(item);
               }}
+              accessibilityLabel={i18n.t('downloadDocument', {
+                name: item.name,
+              })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('downloadDocumentHint')}
             >
               <FontAwesome name="download" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>
-                {i18n.t('download') || 'Pobierz'}
-              </Text>
+              <Text style={styles.menuItemText}>{i18n.t('download')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -191,6 +223,9 @@ const CardMenu = ({
                 handleMenuClose(item.id);
                 handleShare(item);
               }}
+              accessibilityLabel={i18n.t('shareDocument', { name: item.name })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('shareDocumentHint')}
             >
               <FontAwesome name="telegram" size={20} color="#001426FF" />
               <Text style={styles.menuItemText}>{i18n.t('shareTelegram')}</Text>
@@ -201,11 +236,14 @@ const CardMenu = ({
                 handleMenuClose(item.id);
                 handleAddLogo(item);
               }}
+              accessibilityLabel={i18n.t('addLogoToDocument', {
+                name: item.name,
+              })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('addLogoToDocumentHint')}
             >
               <FontAwesome name="image" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>
-                {i18n.t('addLogo') || 'Dodaj logo firmy'}
-              </Text>
+              <Text style={styles.menuItemText}>{i18n.t('addLogo')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -213,11 +251,14 @@ const CardMenu = ({
                 handleMenuClose(item.id);
                 handleAddSignature(item);
               }}
+              accessibilityLabel={i18n.t('addSignatureToDocument', {
+                name: item.name,
+              })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('addSignatureToDocumentHint')}
             >
               <FontAwesome name="pencil" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>
-                {i18n.t('addSignature') || 'Dodaj podpis elektroniczny'}
-              </Text>
+              <Text style={styles.menuItemText}>{i18n.t('addSignature')}</Text>
             </TouchableOpacity>
             <View style={styles.menuDivider} />
             <TouchableOpacity
@@ -226,10 +267,13 @@ const CardMenu = ({
                 handleMenuClose(item.id);
                 handleDelete(item, category);
               }}
+              accessibilityLabel={i18n.t('deleteDocument', { name: item.name })}
+              accessibilityRole="button"
+              accessibilityHint={i18n.t('deleteDocumentHint')}
             >
               <FontAwesome name="trash" size={20} color="#FF4D4F" />
               <Text style={[styles.menuItemText, { color: '#FF4D4F' }]}>
-                {i18n.t('delete') || 'Usuń'}
+                {i18n.t('delete')}
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -254,24 +298,26 @@ const DocumentCard = ({
   handleAddLogo,
   handleAddSignature,
 }) => {
-  let subtitle = `${new Date(item.created_at || Date.now()).toLocaleDateString()} | Szablon: ${item.template_name || 'Brak'}`;
+  let subtitle = `${new Date(item.created_at || Date.now()).toLocaleDateString()} | ${i18n.t('template')}: ${item.template_name || i18n.t('none')}`;
   if (item.type === 'Umowa o Pracę') {
     const obowiazkiCount = Array.isArray(item.obowiazki)
       ? item.obowiazki.length
       : 0;
     const ofertyCount = Array.isArray(item.oferty) ? item.oferty.length : 0;
-    subtitle += ` | Obowiązki: ${obowiazkiCount} | Postanowienia: ${ofertyCount}`;
+    subtitle += ` | ${i18n.t('duties')}: ${obowiazkiCount} | ${i18n.t('provisions')}: ${ofertyCount}`;
   } else if (item.type === 'Oferta Handlowa' || item.type === 'Faktura VAT') {
     const productsCount = Array.isArray(item.products)
       ? item.products.length
       : 0;
-    subtitle += ` | Produkty: ${productsCount}`;
+    subtitle += ` | ${i18n.t('products')}: ${productsCount}`;
   }
 
   return (
     <Card
       style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
       key={item.id}
+      accessible
+      accessibilityLabel={`${i18n.t('document')}: ${item.name}, ${i18n.t('created')}: ${new Date(item.created_at || Date.now()).toLocaleDateString()}`}
     >
       <Card.Title
         title={item.name}
@@ -280,7 +326,6 @@ const DocumentCard = ({
         subtitleStyle={styles.cardSubtitle}
         left={LeftIcon}
         leftStyle={{ marginRight: 2.5 }}
-        // eslint-disable-next-line
         right={() => (
           <CardMenu
             item={item}
@@ -307,7 +352,6 @@ export default function DocumentsScreen({ navigation, route }) {
   const { i18n } = useContext(LanguageContext);
   const [documents, setDocuments] = useState({});
   const [searchQueries, setSearchQueries] = useState({});
-  // eslint-disable-next-line
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState({});
   const [loading, setLoading] = useState(true);
@@ -384,35 +428,27 @@ export default function DocumentsScreen({ navigation, route }) {
       setError('');
       const token = await AsyncStorage.getItem('token');
       if (!token || !isLoggedIn) {
-        setError(
-          i18n.t('noToken') || 'Brak tokena lub użytkownik nie jest zalogowany',
-        );
+        setError(i18n.t('noToken'));
         navigation.navigate('Login');
         return;
       }
       if (!user) {
         const result = await retryFetchUser();
         if (!result.success) {
-          setError(
-            i18n.t('userFetchError') ||
-              'Nie udało się pobrać danych użytkownika',
-          );
+          setError(i18n.t('userFetchError'));
           navigation.navigate('Login');
           return;
         }
       }
       const docData = await fetchDocuments();
-      const docDataWithCategory = docData.map((doc) => {
-        console.log('Document from API:', doc);
-        return {
-          ...doc,
-          category: typeToCategory[doc.type] || 'Handlowe',
-          id: String(doc.id),
-          products: Array.isArray(doc.products) ? doc.products : [],
-          obowiazki: Array.isArray(doc.obowiazki) ? doc.obowiazki : [],
-          oferty: Array.isArray(doc.oferty) ? doc.oferty : [],
-        };
-      });
+      const docDataWithCategory = docData.map((doc) => ({
+        ...doc,
+        category: typeToCategory[doc.type] || 'Handlowe',
+        id: String(doc.id),
+        products: Array.isArray(doc.products) ? doc.products : [],
+        obowiazki: Array.isArray(doc.obowiazki) ? doc.obowiazki : [],
+        oferty: Array.isArray(doc.oferty) ? doc.oferty : [],
+      }));
       const documentsData = documentCategories.reduce((acc, category) => {
         acc[category.category] = docDataWithCategory.filter(
           (doc) => doc.category === category.category,
@@ -423,14 +459,11 @@ export default function DocumentsScreen({ navigation, route }) {
       setDocuments(documentsData);
     } catch (fetchError) {
       console.error('Błąd podczas pobierania dokumentów:', fetchError);
-      setError(
-        i18n.t('fetchDocumentsError') ||
-          `Błąd podczas ładowania dokumentów: ${fetchError.message}`,
-      );
+      setError(i18n.t('fetchDocumentsError', { message: fetchError.message }));
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn, user, retryFetchUser, navigation]);
+  }, [isLoggedIn, user, retryFetchUser, navigation, i18n]);
 
   useEffect(() => {
     fetchData();
@@ -491,24 +524,23 @@ export default function DocumentsScreen({ navigation, route }) {
       if (url) {
         await Linking.openURL(`${url}?t=${Date.now()}`);
       } else {
-        Alert.alert(i18n.t('noDocumentUrl') || 'Brak URL do dokumentu');
+        Alert.alert(i18n.t('noDocumentUrl'));
       }
     } catch (err) {
       console.error('Błąd podczas pobierania dokumentu:', err);
-      Alert.alert(i18n.t('downloadError') || 'Nie udało się pobrać dokumentu');
+      Alert.alert(i18n.t('downloadError', { message: err.message }));
     }
   };
 
   const handleDelete = async (document, category) => {
     const documentId = String(document.id);
     Alert.alert(
-      i18n.t('confirmDelete') || 'Potwierdź usunięcie',
-      i18n.t('deleteDocumentConfirm') ||
-        'Czy na pewno chcesz usunąć ten dokument?',
+      i18n.t('confirmDelete'),
+      i18n.t('deleteDocumentConfirm', { name: document.name }),
       [
-        { text: i18n.t('cancel') || 'Anuluj', style: 'cancel' },
+        { text: i18n.t('cancel'), style: 'cancel' },
         {
-          text: i18n.t('delete') || 'Usuń',
+          text: i18n.t('delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -520,15 +552,14 @@ export default function DocumentsScreen({ navigation, route }) {
                 ),
               }));
               Alert.alert(
-                i18n.t('success') || 'Sukces',
-                i18n.t('documentDeleted') || 'Dokument został usunięty',
+                i18n.t('success'),
+                i18n.t('documentDeleted', { name: document.name }),
               );
             } catch (err) {
               console.error('Błąd podczas usuwania dokumentu:', err);
               Alert.alert(
-                i18n.t('error') || 'Błąd',
-                i18n.t('deleteError') ||
-                  `Nie udało się usunąć dokumentu: ${err.message}`,
+                i18n.t('error'),
+                i18n.t('deleteError', { message: err.message }),
               );
             }
           },
@@ -549,19 +580,13 @@ export default function DocumentsScreen({ navigation, route }) {
 
   const validateFile = (file) => {
     if (!file) {
-      return i18n.t('noFileSelected') || 'Nie wybrano pliku';
+      return i18n.t('noFileSelected');
     }
     if (file.size > MAX_FILE_SIZE) {
-      return (
-        i18n.t('fileTooLarge') ||
-        `Plik jest za duży (maks. ${MAX_FILE_SIZE / (1024 * 1024)} MB)`
-      );
+      return i18n.t('fileTooLarge', { maxSize: MAX_FILE_SIZE / (1024 * 1024) });
     }
     if (!ALLOWED_MIME_TYPES.includes(file.mimeType)) {
-      return (
-        i18n.t('invalidFileType') ||
-        'Niedozwolony typ pliku (dozwolone: PNG, JPEG, JPG, PDF, GIF, WebP, BMP)'
-      );
+      return i18n.t('invalidFileType');
     }
     return null;
   };
@@ -581,16 +606,12 @@ export default function DocumentsScreen({ navigation, route }) {
         const file = result.assets[0];
         const validationError = validateFile(file);
         if (validationError) {
-          Alert.alert(i18n.t('error') || 'Błąd', validationError);
+          Alert.alert(i18n.t('error'), validationError);
           return;
         }
         const isOnline = await checkNetwork();
         if (!isOnline) {
-          Alert.alert(
-            i18n.t('noNetwork') || 'Brak połączenia z internetem',
-            i18n.t('checkConnection') ||
-              'Sprawdź połączenie i spróbuj ponownie',
-          );
+          Alert.alert(i18n.t('noNetwork'), i18n.t('checkConnection'));
           return;
         }
         setIsUploading(true);
@@ -600,8 +621,8 @@ export default function DocumentsScreen({ navigation, route }) {
     } catch (err) {
       console.error('Błąd podczas wyboru logo:', err);
       Alert.alert(
-        i18n.t('error') || 'Błąd',
-        i18n.t('logoPickError') || `Nie udało się wybrać logo: ${err.message}`,
+        i18n.t('error'),
+        i18n.t('logoPickError', { message: err.message }),
       );
     } finally {
       setIsUploading(false);
@@ -618,16 +639,12 @@ export default function DocumentsScreen({ navigation, route }) {
         const file = result.assets[0];
         const validationError = validateFile(file);
         if (validationError) {
-          Alert.alert(i18n.t('error') || 'Błąd', validationError);
+          Alert.alert(i18n.t('error'), validationError);
           return;
         }
         const isOnline = await checkNetwork();
         if (!isOnline) {
-          Alert.alert(
-            i18n.t('noNetwork') || 'Brak połączenia z internetem',
-            i18n.t('checkConnection') ||
-              'Sprawdź połączenie i spróbuj ponownie',
-          );
+          Alert.alert(i18n.t('noNetwork'), i18n.t('checkConnection'));
           return;
         }
         setIsUploading(true);
@@ -637,9 +654,8 @@ export default function DocumentsScreen({ navigation, route }) {
     } catch (err) {
       console.error('Błąd podczas wyboru podpisu:', err);
       Alert.alert(
-        i18n.t('error') || 'Błąd',
-        i18n.t('signaturePickError') ||
-          `Nie udało się wybrać podpisu: ${err.message}`,
+        i18n.t('error'),
+        i18n.t('signaturePickError', { message: err.message }),
       );
     } finally {
       setIsUploading(false);
@@ -659,10 +675,8 @@ export default function DocumentsScreen({ navigation, route }) {
     };
 
     let lastError;
-    // eslint-disable-next-line
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // eslint-disable-next-line
         return await operation();
       } catch (err) {
         lastError = err;
@@ -670,12 +684,9 @@ export default function DocumentsScreen({ navigation, route }) {
           throw err;
         }
         console.warn(
-          // eslint-disable-next-line
           `Próba ${attempt} nieudana, ponawiam po ${Math.pow(2, attempt) * 1000}ms...`,
         );
-        // eslint-disable-next-line
         await new Promise((resolve) =>
-          // eslint-disable-next-line
           setTimeout(resolve, Math.pow(2, attempt) * 1000),
         );
       }
@@ -686,10 +697,7 @@ export default function DocumentsScreen({ navigation, route }) {
   const updateDocumentWithFile = async (document, fileUri, field) => {
     try {
       if (!document || !fileUri || !field) {
-        throw new Error(
-          i18n.t('missingParams') ||
-            'Brak wymaganych parametrów: dokument, plik lub pole',
-        );
+        throw new Error(i18n.t('missingParams'));
       }
 
       setIsUploading(true);
@@ -708,10 +716,7 @@ export default function DocumentsScreen({ navigation, route }) {
       const uploadOperation = () => uploadImage(formData);
       const { url: fileUrl } = await retryOperation(uploadOperation);
       if (!fileUrl) {
-        throw new Error(
-          i18n.t('imageUploadFailed') ||
-            'Nie udało się uzyskać URL wgranego obrazu',
-        );
+        throw new Error(i18n.t('imageUploadFailed'));
       }
 
       const fetchTemplateOperation = () =>
@@ -720,9 +725,7 @@ export default function DocumentsScreen({ navigation, route }) {
         fetchTemplateOperation,
       );
       if (!templateContent) {
-        throw new Error(
-          i18n.t('noTemplateContent') || 'Brak zawartości szablonu',
-        );
+        throw new Error(i18n.t('noTemplateContent'));
       }
 
       let htmlContent = templateContent;
@@ -742,7 +745,7 @@ export default function DocumentsScreen({ navigation, route }) {
           `,
                 )
                 .join('')
-            : '<tr><td colspan="4">Brak pozycji</td></tr>';
+            : `<tr><td colspan="4">${i18n.t('noItems')}</td></tr>`;
         htmlContent = htmlContent.replace('{{products}}', productsHtml);
       } else if (document.type === 'Faktura VAT') {
         const productsHtml =
@@ -765,40 +768,34 @@ export default function DocumentsScreen({ navigation, route }) {
           `,
                 )
                 .join('')
-            : '<tr><td colspan="5">Brak pozycji</td></tr>';
+            : `<tr><td colspan="5">${i18n.t('noItems')}</td></tr>`;
         htmlContent = htmlContent.replace('{{#each pozycje}}', productsHtml);
       } else if (document.type === 'Umowa o Pracę') {
-        // eslint-disable-next-line
         const obowiazkiHtml =
           Array.isArray(document.obowiazki) && document.obowiazki.length > 0
             ? document.obowiazki
                 .map((obowiazek) => `<li>${obowiazek}</li>`)
                 .join('')
-            : '<li>Brak obowiązków</li>';
-        // eslint-disable-next-line
+            : `<li>${i18n.t('noDuties')}</li>`;
         const ofertyHtml =
           Array.isArray(document.oferty) && document.oferty.length > 0
             ? document.oferty.map((oferta) => `<li>${oferta}</li>`).join('')
-            : '<li>Brak dodatkowych postanowień</li>';
+            : `<li>${i18n.t('noProvisions')}</li>`;
         htmlContent = htmlContent
-          .replace('{{obowiazek_1}}', document.obowiazki[0] || 'Brak')
-          .replace('{{obowiazek_2}}', document.obowiazki[1] || 'Brak')
-          .replace('{{obowiazek_3}}', document.obowiazki[2] || 'Brak')
-          .replace('{{oferta_1}}', document.oferty[0] || 'Brak')
-          .replace('{{oferta_2}}', document.oferty[1] || 'Brak')
-          .replace('{{oferta_3}}', document.oferty[2] || 'Brak');
+          .replace('{{obowiazek_1}}', document.obowiazki[0] || i18n.t('none'))
+          .replace('{{obowiazek_2}}', document.obowiazki[1] || i18n.t('none'))
+          .replace('{{obowiazek_3}}', document.obowiazki[2] || i18n.t('none'))
+          .replace('{{oferta_1}}', document.oferty[0] || i18n.t('none'))
+          .replace('{{oferta_2}}', document.oferty[1] || i18n.t('none'))
+          .replace('{{oferta_3}}', document.oferty[2] || i18n.t('none'));
       }
 
-      // Obliczenie wartosc_vat_suma dla Faktura VAT, jeśli undefined
-      // eslint-disable-next-line
       let wartosc_vat_suma = document.wartosc_vat_suma;
       if (
         document.type === 'Faktura VAT' &&
-        // eslint-disable-next-line
         !wartosc_vat_suma &&
         Array.isArray(document.products)
       ) {
-        // eslint-disable-next-line
         wartosc_vat_suma = document.products
           .reduce(
             (sum, product) => sum + (parseFloat(product.kwota_vat) || 0),
@@ -807,7 +804,6 @@ export default function DocumentsScreen({ navigation, route }) {
           .toFixed(2);
       }
 
-      // Dedykowane mapowanie placeholderów dla Faktura VAT
       const placeholderMapFakturaVAT = {
         firma_sprzedawcy: document.nazwa_firmy_wystawcy || '',
         nip_sprzedawcy: document.nip_wystawcy || '',
@@ -827,12 +823,10 @@ export default function DocumentsScreen({ navigation, route }) {
         numer_konta: document.numer_konta_bankowego || '',
         wystawiajacy: document.wystawiajacy || '',
         razem_netto: document.wartosc_netto_suma || '',
-        // eslint-disable-next-line
         razem_vat: wartosc_vat_suma || '',
         razem_brutto: document.wartosc_brutto_suma || '',
       };
 
-      // Mapowanie wszystkich placeholderów
       const placeholders = [
         'numer_oferty',
         'numer_faktury',
@@ -889,7 +883,6 @@ export default function DocumentsScreen({ navigation, route }) {
         'numer_konta',
       ];
 
-      // Zastąpienie placeholderów dla Faktura VAT
       if (document.type === 'Faktura VAT') {
         Object.entries(placeholderMapFakturaVAT).forEach(([key, value]) => {
           const placeholder = `{{${key}}}`;
@@ -900,7 +893,6 @@ export default function DocumentsScreen({ navigation, route }) {
         });
       }
 
-      // Zastąpienie pozostałych placeholderów
       placeholders.forEach((key) => {
         if (document.type === 'Faktura VAT' && key === 'razem_vat') return;
         const placeholder = `{{${key}}}`;
@@ -908,7 +900,6 @@ export default function DocumentsScreen({ navigation, route }) {
         htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
       });
 
-      // Obsługa logo i podpisu
       const logoValue = field === 'logo' ? fileUrl : document.logo || '';
       const podpisValue = field === 'podpis' ? fileUrl : document.podpis || '';
 
@@ -930,17 +921,13 @@ export default function DocumentsScreen({ navigation, route }) {
         htmlContent = htmlContent.replace(/{{podpis}}/g, podpisValue);
       }
 
-      // Usunięcie wszystkich niewypełnionych placeholderów
       htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri: pdfUri } = await Print.printToFileAsync({
         html: htmlContent,
       });
       if (!pdfUri) {
-        throw new Error(
-          i18n.t('pdfGenerationFailed') ||
-            'Nie udało się wygenerować pliku PDF',
-        );
+        throw new Error(i18n.t('pdfGenerationFailed'));
       }
 
       const updateFormData = new FormData();
@@ -1000,10 +987,7 @@ export default function DocumentsScreen({ navigation, route }) {
       const updateOperation = () => updateDocument(document.id, updateFormData);
       const updatedDoc = await retryOperation(updateOperation);
       if (!updatedDoc?.document?.url) {
-        throw new Error(
-          i18n.t('documentUpdateFailed') ||
-            'Nie udało się uzyskać zaktualizowanego dokumentu',
-        );
+        throw new Error(i18n.t('documentUpdateFailed'));
       }
 
       setDocuments((prev) => ({
@@ -1020,8 +1004,7 @@ export default function DocumentsScreen({ navigation, route }) {
                 oferty: document.oferty,
                 wartosc_vat_suma:
                   document.type === 'Faktura VAT'
-                    ? // eslint-disable-next-line
-                      wartosc_vat_suma
+                    ? wartosc_vat_suma
                     : doc.wartosc_vat_suma,
               }
             : doc,
@@ -1029,19 +1012,21 @@ export default function DocumentsScreen({ navigation, route }) {
       }));
 
       Alert.alert(
-        i18n.t('success') || 'Sukces',
-        i18n.t(field === 'logo' ? 'logoAdded' : 'signatureAdded') ||
-          `${field === 'logo' ? 'Logo' : 'Podpis'} został dodany do dokumentu`,
+        i18n.t('success'),
+        i18n.t(field === 'logo' ? 'logoAdded' : 'signatureAdded', {
+          name: document.name,
+        }),
       );
     } catch (err) {
       console.error(`Błąd podczas aktualizacji dokumentu z ${field}:`, err);
       const message =
         err.response?.status === 413
-          ? i18n.t('fileTooLarge') ||
-            `Plik jest za duży (maks. ${MAX_FILE_SIZE / (1024 * 1024)} MB)`
-          : i18n.t('updateError') ||
-            `Nie udało się dodać ${field}: ${err.message}`;
-      Alert.alert(i18n.t('error') || 'Błąd', message);
+          ? i18n.t('fileTooLarge', { maxSize: MAX_FILE_SIZE / (1024 * 1024) })
+          : i18n.t('updateError', {
+              field: field === 'logo' ? i18n.t('logo') : i18n.t('signature'),
+              message: err.message,
+            });
+      Alert.alert(i18n.t('error'), message);
     } finally {
       setIsUploading(false);
     }
@@ -1083,26 +1068,34 @@ export default function DocumentsScreen({ navigation, route }) {
   };
 
   const sortOptions = [
-    { label: i18n.t('dateAsc') || 'Data rosnąco', value: 'date_asc' },
-    { label: i18n.t('dateDesc') || 'Data malejąco', value: 'date_desc' },
-    { label: i18n.t('nameAsc') || 'Nazwa rosnąco', value: 'name_asc' },
-    { label: i18n.t('nameDesc') || 'Nazwa malejąco', value: 'name_desc' },
+    { label: i18n.t('dateAsc'), value: 'date_asc' },
+    { label: i18n.t('dateDesc'), value: 'date_desc' },
+    { label: i18n.t('nameAsc'), value: 'name_asc' },
+    { label: i18n.t('nameDesc'), value: 'name_desc' },
   ];
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View
+        style={styles.center}
+        accessible
+        accessibilityLabel={i18n.t('loadingDocuments')}
+        accessibilityRole="alert"
+      >
         <ActivityIndicator size="large" color={paperTheme.colors.primary} />
-        <Text style={styles.loadingText}>
-          {i18n.t('loadingDocuments') || 'Ładowanie dokumentów...'}
-        </Text>
+        <Text style={styles.loadingText}>{i18n.t('loadingDocuments')}</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
+      <View
+        style={styles.center}
+        accessible
+        accessibilityLabel={error}
+        accessibilityRole="alert"
+      >
         <Text style={[styles.error, { color: paperTheme.colors.error }]}>
           {error}
         </Text>
@@ -1111,14 +1104,18 @@ export default function DocumentsScreen({ navigation, route }) {
           onPress={fetchData}
           style={styles.button}
           labelStyle={styles.buttonText}
+          accessibilityLabel={i18n.t('retry')}
+          accessibilityRole="button"
+          accessibilityHint={i18n.t('retryHint')}
         >
           <FontAwesome
             name="refresh"
             size={16}
             color="#FFFFFF"
             style={{ marginRight: 8 }}
+            accessibilityLabel={i18n.t('refreshIcon')}
           />
-          {i18n.t('retry') || 'Spróbuj ponownie'}
+          {i18n.t('retry')}
         </Button>
       </View>
     );
@@ -1134,10 +1131,16 @@ export default function DocumentsScreen({ navigation, route }) {
         styles.scrollView,
         { backgroundColor: paperTheme.colors.background },
       ]}
+      accessible
+      accessibilityLabel={i18n.t('documentsScreen')}
     >
       <View style={styles.headerContainer}>
-        <Text style={[styles.header, { color: paperTheme.colors.text }]}>
-          {i18n.t('managementDocuments') || 'Zarządzanie dokumentami'}
+        <Text
+          style={[styles.header, { color: paperTheme.colors.text }]}
+          accessibilityRole="header"
+          accessibilityLabel={i18n.t('managementDocuments')}
+        >
+          {i18n.t('managementDocuments')}
         </Text>
       </View>
       {documentCategories.map((category) => {
@@ -1154,8 +1157,15 @@ export default function DocumentsScreen({ navigation, route }) {
             onPress={() => handleAccordionPress(category.id)}
             style={styles.accordion}
             theme={{ colors: { primary: '#001426FF' } }}
-            // eslint-disable-next-line
-            left={() => <AccordionIcon icon={category.icon} />}
+            left={() => (
+              <AccordionIcon
+                icon={category.icon}
+                accessibilityLabel={i18n.t(`${category.nameKey}_icon`)}
+              />
+            )}
+            accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
+            accessibilityRole="button"
+            accessibilityHint={i18n.t('expandCategoryHint')}
           >
             <View
               style={[
@@ -1164,7 +1174,7 @@ export default function DocumentsScreen({ navigation, route }) {
               ]}
             >
               <Searchbar
-                placeholder={i18n.t('searchDocuments') || 'Szukaj dokumentów'}
+                placeholder={i18n.t('searchDocuments')}
                 onChangeText={(query) =>
                   handleSearchChange(category.category, query)
                 }
@@ -1177,6 +1187,8 @@ export default function DocumentsScreen({ navigation, route }) {
                 placeholderTextColor="#B0BEC5"
                 iconColor="#001426FF"
                 icon={SearchIcon}
+                accessibilityLabel={i18n.t('searchDocuments')}
+                accessibilityHint={i18n.t('searchDocumentsHint')}
               />
               <View style={styles.filterContainer}>
                 <Button
@@ -1191,13 +1203,19 @@ export default function DocumentsScreen({ navigation, route }) {
                   ]}
                   labelStyle={styles.filterButtonText}
                   icon={SortIcon}
+                  accessibilityLabel={i18n.t('sortButton', {
+                    label:
+                      sortOptions.find(
+                        (opt) => opt.value === sortBy[category.category],
+                      )?.label || i18n.t('dateDesc'),
+                  })}
+                  accessibilityRole="button"
+                  accessibilityHint={i18n.t('sortButtonHint')}
                 >
-                  {i18n.t('sort') || 'Sortuj'}:{' '}
+                  {i18n.t('sort')}:{' '}
                   {sortOptions.find(
                     (opt) => opt.value === sortBy[category.category],
-                  )?.label ||
-                    i18n.t('dateDesc') ||
-                    'Data malejąco'}
+                  )?.label || i18n.t('dateDesc')}
                 </Button>
               </View>
               <Modal
@@ -1205,17 +1223,26 @@ export default function DocumentsScreen({ navigation, route }) {
                 transparent
                 visible={sortModalVisible}
                 onRequestClose={handleClose}
+                accessibilityLabel={i18n.t('sortModal')}
+                accessibilityHint={i18n.t('sortModalHint')}
               >
                 <TouchableOpacity
                   style={styles.modalOverlay}
                   onPress={handleClose}
                   activeOpacity={1}
+                  accessibilityLabel={i18n.t('closeModal')}
+                  accessibilityRole="button"
+                  accessibilityHint={i18n.t('closeModalHint')}
                 >
                   <Animated.View
                     style={[styles.modalContent, { opacity: fadeAnim }]}
                   >
-                    <Text style={styles.modalTitle}>
-                      {i18n.t('selectSort') || 'Wybierz sortowanie'}
+                    <Text
+                      style={styles.modalTitle}
+                      accessibilityRole="header"
+                      accessibilityLabel={i18n.t('selectSort')}
+                    >
+                      {i18n.t('selectSort')}
                     </Text>
                     <FlatList
                       data={sortOptions}
@@ -1231,9 +1258,12 @@ export default function DocumentsScreen({ navigation, route }) {
                     <TouchableOpacity
                       style={styles.modalCloseButton}
                       onPress={handleClose}
+                      accessibilityLabel={i18n.t('close')}
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('closeModalHint')}
                     >
                       <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('close') || 'Zamknij'}
+                        {i18n.t('close')}
                       </Text>
                     </TouchableOpacity>
                   </Animated.View>
@@ -1244,17 +1274,26 @@ export default function DocumentsScreen({ navigation, route }) {
                 transparent
                 visible={logoModalVisible}
                 onRequestClose={handleClose}
+                accessibilityLabel={i18n.t('logoModal')}
+                accessibilityHint={i18n.t('logoModalHint')}
               >
                 <TouchableOpacity
                   style={styles.modalOverlay}
                   onPress={handleClose}
                   activeOpacity={1}
+                  accessibilityLabel={i18n.t('closeModal')}
+                  accessibilityRole="button"
+                  accessibilityHint={i18n.t('closeModalHint')}
                 >
                   <Animated.View
                     style={[styles.modalContent, { opacity: fadeAnim }]}
                   >
-                    <Text style={styles.modalTitle}>
-                      {i18n.t('selectLogo') || 'Wybierz logo firmy'}
+                    <Text
+                      style={styles.modalTitle}
+                      accessibilityRole="header"
+                      accessibilityLabel={i18n.t('selectLogo')}
+                    >
+                      {i18n.t('selectLogo')}
                     </Text>
                     <Button
                       mode="contained"
@@ -1262,17 +1301,23 @@ export default function DocumentsScreen({ navigation, route }) {
                       style={styles.modalButton}
                       labelStyle={styles.modalButtonText}
                       disabled={isUploading}
+                      accessibilityLabel={
+                        isUploading ? i18n.t('uploading') : i18n.t('pickImage')
+                      }
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('pickImageHint')}
                     >
-                      {isUploading
-                        ? i18n.t('uploading') || 'Wgrywanie...'
-                        : i18n.t('pickImage') || 'Wybierz obraz z urządzenia'}
+                      {isUploading ? i18n.t('uploading') : i18n.t('pickImage')}
                     </Button>
                     <TouchableOpacity
                       style={styles.modalCloseButton}
                       onPress={handleClose}
+                      accessibilityLabel={i18n.t('cancel')}
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('cancelHint')}
                     >
                       <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('cancel') || 'Anuluj'}
+                        {i18n.t('cancel')}
                       </Text>
                     </TouchableOpacity>
                   </Animated.View>
@@ -1283,17 +1328,26 @@ export default function DocumentsScreen({ navigation, route }) {
                 transparent
                 visible={signatureModalVisible}
                 onRequestClose={handleClose}
+                accessibilityLabel={i18n.t('signatureModal')}
+                accessibilityHint={i18n.t('signatureModalHint')}
               >
                 <TouchableOpacity
                   style={styles.modalOverlay}
                   onPress={handleClose}
                   activeOpacity={1}
+                  accessibilityLabel={i18n.t('closeModal')}
+                  accessibilityRole="button"
+                  accessibilityHint={i18n.t('closeModalHint')}
                 >
                   <Animated.View
                     style={[styles.modalContent, { opacity: fadeAnim }]}
                   >
-                    <Text style={styles.modalTitle}>
-                      {i18n.t('addSignature') || 'Dodaj podpis elektroniczny'}
+                    <Text
+                      style={styles.modalTitle}
+                      accessibilityRole="header"
+                      accessibilityLabel={i18n.t('addSignature')}
+                    >
+                      {i18n.t('addSignature')}
                     </Text>
                     <Button
                       mode="contained"
@@ -1301,28 +1355,45 @@ export default function DocumentsScreen({ navigation, route }) {
                       style={styles.modalButton}
                       labelStyle={styles.modalButtonText}
                       disabled={isUploading}
+                      accessibilityLabel={
+                        isUploading
+                          ? i18n.t('uploading')
+                          : i18n.t('pickSignature')
+                      }
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('pickSignatureHint')}
                     >
                       {isUploading
-                        ? i18n.t('uploading') || 'Wgrywanie...'
-                        : i18n.t('pickSignature') || 'Wybierz obraz podpisu'}
+                        ? i18n.t('uploading')
+                        : i18n.t('pickSignature')}
                     </Button>
                     <TouchableOpacity
                       style={styles.modalCloseButton}
                       onPress={handleClose}
+                      accessibilityLabel={i18n.t('cancel')}
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('cancelHint')}
                     >
                       <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('cancel') || 'Anuluj'}
+                        {i18n.t('cancel')}
                       </Text>
                     </TouchableOpacity>
                   </Animated.View>
                 </TouchableOpacity>
               </Modal>
               {filteredDocuments.length === 0 ? (
-                <Text style={styles.noData}>
-                  {i18n.t('noDocuments') || 'Brak dokumentów'}
+                <Text
+                  style={styles.noData}
+                  accessibilityLabel={i18n.t('noDocuments')}
+                >
+                  {i18n.t('noDocuments')}
                 </Text>
               ) : (
-                <View style={styles.list}>
+                <View
+                  style={styles.list}
+                  accessible
+                  accessibilityLabel={i18n.t('documentList')}
+                >
                   {filteredDocuments.map((item) => (
                     <DocumentCard
                       key={item.id}
@@ -1577,6 +1648,5 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-// good version
-// bb
-// git
+
+//new version

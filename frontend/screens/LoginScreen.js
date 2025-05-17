@@ -11,6 +11,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { setIsLoggedIn } = useContext(AuthContext);
 
   useEffect(() => {
@@ -25,10 +26,14 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     setLoading(true);
+    // Usuwanie spacji przed wysłaniem
+    const cleanedEmail = email.trim();
+    const cleanedPassword = password.trim();
+
     try {
       const response = await API.post('/auth/login', {
-        email,
-        password,
+        email: cleanedEmail,
+        password: cleanedPassword,
       });
 
       await storeToken(response.data.token);
@@ -68,21 +73,28 @@ export default function LoginScreen() {
           mode="outlined"
           label="Your email address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => setEmail(text.trim())}
           left={<TextInput.Icon icon="email" />}
           style={styles.input}
           accessibilityLabel="Adres e-mail"
           accessibilityHint="Wprowadź swój adres e-mail"
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
 
         <TextInput
           mode="outlined"
           label="Enter password"
           value={password}
-          onChangeText={setPassword}
-          secureTextEntry
+          onChangeText={(text) => setPassword(text.trim())}
+          secureTextEntry={!showPassword}
           left={<TextInput.Icon icon="lock" />}
-          right={<TextInput.Icon icon="eye" />}
+          right={
+            <TextInput.Icon
+              icon={showPassword ? 'eye-off' : 'eye'}
+              onPress={() => setShowPassword(!showPassword)}
+            />
+          }
           style={styles.input}
           accessibilityLabel="Hasło"
           accessibilityHint="Wprowadź swoje hasło"
@@ -118,7 +130,6 @@ export default function LoginScreen() {
   );
 }
 
-// Style pozostają без змін
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -167,7 +178,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
   },
-
   image: {
     width: 100,
     height: 100,

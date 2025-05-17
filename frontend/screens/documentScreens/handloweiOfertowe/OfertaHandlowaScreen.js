@@ -594,7 +594,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         style={styles.button}
         labelStyle={{ color: '#fff' }}
       >
-        {i18n.t('save') || 'Zapisz'}
+        {i18n.t('save')}
       </Button>
       <Button
         mode="outlined"

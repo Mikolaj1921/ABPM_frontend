@@ -70,7 +70,7 @@ const HomeScreen = ({ navigation, route }) => {
       setError('');
       const token = await AsyncStorage.getItem('token');
       if (!token || !isLoggedIn) {
-        setError('Brak tokena lub użytkownik nie jest zalogowany');
+        setError(i18n.t('no_token_error'));
         navigation.navigate('Login');
         return;
       }
@@ -78,7 +78,7 @@ const HomeScreen = ({ navigation, route }) => {
       if (!user) {
         const result = await retryFetchUser();
         if (!result.success) {
-          setError('Nie udało się pobrać danych użytkownika');
+          setError(i18n.t('user_fetch_error'));
           navigation.navigate('Login');
           return;
         }
@@ -118,11 +118,11 @@ const HomeScreen = ({ navigation, route }) => {
       setDocuments(documentsData);
     } catch (fetchError) {
       console.error('Błąd podczas pobierania danych:', fetchError);
-      setError('Błąd podczas ładowania danych');
+      setError(i18n.t('data_fetch_error'));
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn, user, retryFetchUser, navigation]);
+  }, [isLoggedIn, user, retryFetchUser, navigation, i18n]);
 
   useEffect(() => {
     fetchData();
@@ -176,37 +176,59 @@ const HomeScreen = ({ navigation, route }) => {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View
+        style={styles.center}
+        accessible
+        accessibilityLabel={i18n.t('loading')}
+        accessibilityRole="alert"
+      >
         <ActivityIndicator size="large" color={paperTheme.colors.primary} />
-        <Text>Ładowanie danych...</Text>
+        <Text style={styles.loadingText}>{i18n.t('loading')}</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={[styles.error, { color: paperTheme.colors.error }]}>
+      <View
+        style={styles.center}
+        accessible
+        accessibilityLabel={error}
+        accessibilityRole="alert"
+      >
+        <Text
+          style={[styles.error, { color: paperTheme.colors.error }]}
+          accessibilityLabel={error}
+        >
           {error}
         </Text>
         <Button
           mode="contained"
           onPress={() => navigation.navigate('Login')}
           style={styles.button}
+          accessibilityLabel={i18n.t('back_to_login')}
+          accessibilityHint={i18n.t('back_to_login_hint')}
+          accessibilityRole="button"
         >
-          Wróć do logowania
+          {i18n.t('back_to_login')}
         </Button>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityLabel={i18n.t('home_screen')}
+    >
       <Modal
         animationType="slide"
         transparent={false}
         visible={modalVisible}
         onRequestClose={handleCloseModal}
+        accessibilityLabel={i18n.t('edit_document_modal')}
+        accessibilityHint={i18n.t('edit_document_modal_hint')}
       >
         {selectedCategory &&
           selectedTemplate &&
@@ -257,9 +279,14 @@ const HomeScreen = ({ navigation, route }) => {
           styles.scrollView,
           { backgroundColor: paperTheme.colors.background },
         ]}
+        accessibilityLabel={i18n.t('document_list')}
       >
         <View style={styles.headerContainer}>
-          <Text style={[styles.header, { color: paperTheme.colors.text }]}>
+          <Text
+            style={[styles.header, { color: paperTheme.colors.text }]}
+            accessibilityRole="header"
+            accessibilityLabel={i18n.t('documentCategories')}
+          >
             {i18n.t('documentCategories')}
           </Text>
         </View>
@@ -274,6 +301,7 @@ const HomeScreen = ({ navigation, route }) => {
                   size={24}
                   color={paperTheme.colors.text}
                   style={styles.icon}
+                  accessibilityLabel={i18n.t(`${category.nameKey}_icon`)}
                 />
                 <Text
                   style={[styles.cardTitle, { color: paperTheme.colors.text }]}
@@ -290,6 +318,9 @@ const HomeScreen = ({ navigation, route }) => {
               { backgroundColor: paperTheme.colors.surface },
             ]}
             theme={{ colors: { background: paperTheme.colors.surface } }}
+            accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
+            accessibilityHint={i18n.t('expand_category_hint')}
+            accessibilityRole="button"
           >
             {(templates[category.category] || []).map((template) => (
               <Card
@@ -298,6 +329,8 @@ const HomeScreen = ({ navigation, route }) => {
                   styles.templateCard,
                   { backgroundColor: paperTheme.colors.surface },
                 ]}
+                accessible
+                accessibilityLabel={`${i18n.t('template')}: ${template.name}`}
               >
                 <Card.Title
                   title={template.name}
@@ -305,6 +338,7 @@ const HomeScreen = ({ navigation, route }) => {
                     styles.templateTitle,
                     { color: paperTheme.colors.text },
                   ]}
+                  accessibilityLabel={template.name}
                 />
                 <Card.Actions style={styles.cardActions}>
                   <Button
@@ -318,6 +352,11 @@ const HomeScreen = ({ navigation, route }) => {
                       styles.buttonText,
                       { color: paperTheme.colors.primary },
                     ]}
+                    accessibilityLabel={i18n.t('edit_template', {
+                      name: template.name,
+                    })}
+                    accessibilityHint={i18n.t('edit_template_hint')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('edit')}
                   </Button>
@@ -415,6 +454,11 @@ const styles = StyleSheet.create({
   error: {
     marginBottom: 10,
     textAlign: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#424242',
   },
 });
 

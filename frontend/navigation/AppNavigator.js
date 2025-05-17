@@ -55,6 +55,8 @@ const SettingsStackNavigator = () => {
 };
 
 const AppNavigator = () => {
+  const { i18n } = useContext(LanguageContext);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -66,6 +68,7 @@ const AppNavigator = () => {
         name="Home"
         component={HomeScreen}
         options={{
+          tabBarLabel: i18n.t('home'),
           tabBarIcon: HomeIcon,
         }}
       />
@@ -73,6 +76,7 @@ const AppNavigator = () => {
         name="Documents"
         component={DocumentNavigator}
         options={{
+          tabBarLabel: i18n.t('documents'),
           tabBarIcon: DocumentsIcon,
         }}
       />
@@ -80,6 +84,7 @@ const AppNavigator = () => {
         name="Settings"
         component={SettingsStackNavigator}
         options={{
+          tabBarLabel: i18n.t('settings'),
           tabBarIcon: SettingsIcon,
         }}
       />

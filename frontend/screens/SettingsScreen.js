@@ -65,13 +65,13 @@ export default function SettingsScreen({ navigation }) {
       setIsLoggedIn(false);
     } catch (error) {
       console.error('Błąd wylogowania:', error);
-      setSnackbarVisible(true);
+      //setSnackbarVisible(true);
     }
   };
 
   const handleAccountManagement = () => {
     navigation.navigate('AccountManagement');
-    setSnackbarVisible(true);
+    //setSnackbarVisible(true);
   };
 
   const toggleLanguage = () => {
@@ -92,7 +92,7 @@ export default function SettingsScreen({ navigation }) {
 
   const handleHelpSupport = () => {
     navigation.navigate('Help');
-    setSnackbarVisible(true);
+    //setSnackbarVisible(true);
   };
 
   const retryFetchUser = async () => {
@@ -335,15 +335,7 @@ export default function SettingsScreen({ navigation }) {
               { textAlign: 'center', color: paperTheme.colors.text },
             ]}
           >
-            {i18n.t('documentsGenerated')}: 42
-          </Text>
-          <Text
-            style={[
-              styles.statItem,
-              { textAlign: 'center', color: paperTheme.colors.text },
-            ]}
-          >
-            {i18n.t('joinedDate')}: 2023-01-15
+            {i18n.t('incomingsoon')}
           </Text>
         </View>
 
