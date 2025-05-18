@@ -24,7 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { AuthContext } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext'; // Import ThemeContext
+import { useTheme } from '../contexts/ThemeContext';
 import { fetchDocuments, fetchTemplates } from '../api';
 import OfertaHandlowaScreen from './documentScreens/handloweiOfertowe/OfertaHandlowaScreen';
 import UmowaOPraceScreen from './documentScreens/kadroweiAdministracyjne/UmowaOPraceScreen';
@@ -32,7 +32,7 @@ import FakturaVATScreen from './documentScreens/finansowe/FakturaVATScreen';
 
 const categoryIcons = {
   Handlowe: 'briefcase',
-  Faktury: 'dollar',
+  Faktury: 'bank',
   Kadrowe: 'users',
 };
 
@@ -57,19 +57,6 @@ const documentCategories = [
   },
 ];
 
-const tips = [
-  {
-    id: '1',
-    text: 'Używaj szablonów, aby zaoszczędzić czas przy powtarzalnych zadaniach!',
-    icon: 'clock-o',
-  },
-  {
-    id: '3',
-    text: 'Sprawdzaj statystyki, aby śledzić swoją aktywność w użytkowaniu naszej aplikacji.',
-    icon: 'check-circle',
-  },
-];
-
 const HomeScreen = ({ navigation, route }) => {
   const [expanded, setExpanded] = useState(null);
   const [templates, setTemplates] = useState({});
@@ -84,12 +71,25 @@ const HomeScreen = ({ navigation, route }) => {
   const paperTheme = usePaperTheme();
   const { i18n } = useContext(LanguageContext);
   const { isLoggedIn, user, retryFetchUser } = useContext(AuthContext);
-  const { colors } = useTheme(); // Pobieramy kolory z ThemeContext
+  const { colors } = useTheme();
+
+  const tips = [
+    {
+      id: '1',
+      text: i18n.t('tip_1'),
+      icon: 'clock-o',
+    },
+    {
+      id: '3',
+      text: i18n.t('tip_3'),
+      icon: 'check-circle',
+    },
+  ];
 
   const fetchData = useCallback(
     async (source = 'initial') => {
       try {
-        console.log(`Rozpoczęto pobieranie danych (${source})`);
+        //console.log(`Rozpoczęto pobieranie danych (${source})`);
         setLoading(true);
         setError('');
         setDocuments({});
@@ -144,10 +144,10 @@ const HomeScreen = ({ navigation, route }) => {
 
         setTemplates(templatesData);
         setDocuments(documentsData);
-        console.log(
+        /*console.log(
           'Pobrano dokumenty:',
           JSON.stringify(documentsData, null, 2),
-        );
+        );*/
       } catch (fetchError) {
         console.error('Błąd podczas pobierania danych:', fetchError);
         setError(i18n.t('data_fetch_error'));
@@ -170,15 +170,15 @@ const HomeScreen = ({ navigation, route }) => {
       allDocs.find((doc) => doc.id === id),
     );
     const totalDocs = uniqueDocs.filter((doc) => doc && doc.id).length;
-    console.log(
+    /*console.log(
       'Aktualny stan dokumentów:',
       JSON.stringify(documents, null, 2),
-    );
+    );*/ /*
     console.log(
       'Unikalne dokumenty:',
       uniqueDocs.map((doc) => ({ id: doc.id, name: doc.name })),
-    );
-    console.log('Liczba dokumentów:', totalDocs);
+    );*/
+    //console.log('Liczba dokumentów:', totalDocs);
   }, [documents]);
 
   const handleAccordionPress = (id) => {
@@ -220,7 +220,7 @@ const HomeScreen = ({ navigation, route }) => {
   };
 
   const handleLogoPress = () => {
-    console.log('Kliknięto logo, wyświetlanie nazwy aplikacji');
+    //console.log('Kliknięto logo, wyświetlanie nazwy aplikacji');
     Alert.alert(i18n.t('app_title'), 'Automation of Bureaucratic Processes', [
       { text: i18n.t('ok'), style: 'default' },
     ]);
@@ -319,7 +319,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                console.log('Zapisano nowy dokument:', newDocument);
+                //console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -335,10 +335,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  console.log(
+                  /*console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );
+                  );*/
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -356,7 +356,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                console.log('Zapisano nowy dokument:', newDocument);
+                //console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -372,10 +372,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  console.log(
+                  /*console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );
+                  );*/
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -393,7 +393,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                console.log('Zapisano nowy dokument:', newDocument);
+                //console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -409,10 +409,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  console.log(
+                  /*console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );
+                  );*/
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -447,7 +447,7 @@ const HomeScreen = ({ navigation, route }) => {
               renderItem={({ item }) => {
                 const iconName =
                   categoryIcons[item.category.category] || 'file';
-                console.log('Ikona w templateItem:', iconName);
+                //console.log('Ikona w templateItem:', iconName);
                 return (
                   <TouchableOpacity
                     style={[
@@ -544,7 +544,7 @@ const HomeScreen = ({ navigation, route }) => {
             data={tips}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => {
-              console.log('Ikona w tip:', item.icon);
+              //console.log('Ikona w tip:', item.icon);
               return (
                 <Card
                   style={[styles.tipCard, { backgroundColor: colors.primary }]}
@@ -819,8 +819,7 @@ const HomeScreen = ({ navigation, route }) => {
             style={styles.streamlineIcon}
           />
           <Text style={[styles.streamlineText, { color: colors.text }]}>
-            Gotowy, by usprawnić obieg dokumentów? Przeglądaj szablony powyżej
-            lub zacznij tworzyć własne!
+            {i18n.t('hint_homescreen')}
           </Text>
         </View>
         <View style={[styles.footer, { backgroundColor: colors.primary }]}>
@@ -1010,6 +1009,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flexDirection: 'row',
+    width: '99%',
     alignItems: 'center',
     height: 70,
     paddingVertical: 0,
@@ -1020,10 +1020,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
+    alignSelf: 'center',
     width: 24,
     height: 24,
-    marginLeft: 8,
-    marginRight: 10,
+    marginLeft: 5,
+    marginRight: 15,
     overflow: 'visible',
   },
   cardTitle: {

@@ -1,8 +1,16 @@
 import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { Image, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { LanguageContext } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -13,42 +21,125 @@ import DocumentNavigator from './DocumentNavigator';
 const Tab = createBottomTabNavigator();
 const SettingsStack = createStackNavigator();
 
-const HomeIcon = ({ color, size }) => (
-  <MaterialCommunityIcons name="home-outline" color={color} size={size} />
-);
+// Custom animated tab icon component
+const AnimatedTabIcon = ({ name, color, size, focused }) => {
+  const scale = useSharedValue(1);
 
-const DocumentsIcon = ({ color, size }) => (
-  <MaterialCommunityIcons
-    name="file-document-outline"
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  return (
+    <Animated.View
+      style={[animatedStyle]}
+      onTouchStart={handlePressIn}
+      onTouchEnd={handlePressOut}
+    >
+      <FontAwesome name={name} size={size} color={color} />
+    </Animated.View>
+  );
+};
+
+// Tab icon definitions
+const HomeIcon = ({ color, focused }) => (
+  <AnimatedTabIcon
+    name={focused ? 'home' : 'home'}
     color={color}
-    size={size}
+    size={24}
+    focused={focused}
   />
 );
 
-const SettingsIcon = ({ color, size }) => (
-  <MaterialCommunityIcons name="cog-outline" color={color} size={size} />
+const DocumentsIcon = ({ color, focused }) => (
+  <AnimatedTabIcon
+    name={focused ? 'file' : 'file-o'}
+    color={color}
+    size={20}
+    focused={focused}
+  />
 );
 
-// Stack dla ustawień
-const SettingsStackNavigator = () => {
-  const { i18n } = useContext(LanguageContext);
+const SettingsIcon = ({ color, focused }) => (
+  <AnimatedTabIcon
+    name={focused ? 'cog' : 'cog'}
+    color={color}
+    size={24}
+    focused={focused}
+  />
+);
+
+// Custom header title with logo
+const CustomHeaderTitle = ({ title }) => {
+  const { colors } = useTheme();
 
   return (
-    <SettingsStack.Navigator>
+    <View style={styles.headerTitleContainer}>
+      <Image
+        source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
+        style={[styles.headerLogo, { tintColor: colors.primary }]}
+      />
+      <Text style={[styles.headerTitleText, { color: colors.text }]}>
+        {title}
+      </Text>
+    </View>
+  );
+};
+
+// Stack for settings
+const SettingsStackNavigator = () => {
+  const { i18n } = useContext(LanguageContext);
+  const { colors } = useTheme();
+
+  return (
+    <SettingsStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.surface,
+          elevation: 4,
+          shadowOpacity: 0.1,
+          shadowColor: '#B0BEC5',
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 5,
+        },
+        headerTintColor: colors.primary,
+        headerTitleStyle: {
+          fontSize: 16,
+          fontWeight: 'bold',
+        },
+      }}
+    >
       <SettingsStack.Screen
         name="SettingsMain"
         component={SettingsScreen}
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+        }}
       />
       <SettingsStack.Screen
         name="AccountManagement"
         component={AccountManagementScreen}
-        options={{ title: i18n.t('accountManagement') }}
+        options={{
+          headerTitle: () => (
+            <CustomHeaderTitle title={i18n.t('accountManagement')} />
+          ),
+        }}
       />
       <SettingsStack.Screen
         name="Help"
         component={HelpScreen}
-        options={{ title: i18n.t('helpSupport') }}
+        options={{
+          headerTitle: () => (
+            <CustomHeaderTitle title={i18n.t('helpSupport')} />
+          ),
+        }}
       />
     </SettingsStack.Navigator>
   );
@@ -56,12 +147,27 @@ const SettingsStackNavigator = () => {
 
 const AppNavigator = () => {
   const { i18n } = useContext(LanguageContext);
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#001426',
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+
+          paddingBottom: 5,
+          paddingTop: 5,
+
+          borderColor: 0,
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.secondaryText,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          marginBottom: 5,
+        },
       }}
     >
       <Tab.Screen
@@ -70,6 +176,7 @@ const AppNavigator = () => {
         options={{
           tabBarLabel: i18n.t('home'),
           tabBarIcon: HomeIcon,
+          tabBarAccessibilityLabel: i18n.t('home_tab'),
         }}
       />
       <Tab.Screen
@@ -78,6 +185,7 @@ const AppNavigator = () => {
         options={{
           tabBarLabel: i18n.t('documents'),
           tabBarIcon: DocumentsIcon,
+          tabBarAccessibilityLabel: i18n.t('documents_tab'),
         }}
       />
       <Tab.Screen
@@ -86,10 +194,28 @@ const AppNavigator = () => {
         options={{
           tabBarLabel: i18n.t('settings'),
           tabBarIcon: SettingsIcon,
+          tabBarAccessibilityLabel: i18n.t('settings_tab'),
         }}
       />
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerLogo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+    borderRadius: 12,
+  },
+  headerTitleText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
 
 export default AppNavigator;

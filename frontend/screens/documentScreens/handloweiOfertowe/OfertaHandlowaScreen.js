@@ -1,19 +1,34 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { StyleSheet, ScrollView, View, Alert } from 'react-native';
-import { TextInput, Button, Text, useTheme } from 'react-native-paper';
+import {
+  StyleSheet,
+  ScrollView,
+  View,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
+import {
+  Card,
+  TextInput,
+  Button,
+  Snackbar,
+  useTheme as usePaperTheme,
+} from 'react-native-paper';
+import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
 import * as ImagePicker from 'expo-image-picker';
+
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { fetchTemplateById, uploadDocument } from '../../../api';
 
 export default function OfertaHandlowaScreen({ route, navigation }) {
-  // eslint-disable-next-line
   const { template: templateParam, document } = route.params || {};
   const { user } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
-  const paperTheme = useTheme();
+  const paperTheme = usePaperTheme();
+  const { colors } = useTheme();
   const [formData, setFormData] = useState({
     nazwa_firmy_klienta: '',
     adres_firmy_klienta: '',
@@ -43,6 +58,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
   });
   const [error, setError] = useState('');
   const [templateHtml, setTemplateHtml] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -54,7 +71,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         if (user) {
           setFormData((prev) => ({
             ...prev,
-            nazwa_firmy_wystawcy: user.firstName || prev.nazwa_firmy_wystawcy,
+            nazwa_firmy_wystawcy: user.first_name || prev.nazwa_firmy_wystawcy,
             nip_wystawcy: prev.nip_wystawcy,
             adres_wystawcy: prev.adres_wystawcy,
           }));
@@ -88,14 +105,13 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         if (selectedTemplate && selectedTemplate.content) {
           setTemplateHtml(selectedTemplate.content);
         } else {
-          throw new Error('Nie znaleziono szablonu o ID 1 w odpowiedzi API');
+          throw new Error(i18n.t('template_not_found'));
         }
       } catch (err) {
         console.error('Error loading data:', err);
-        setError(
-          i18n.t('errorLoading') ||
-            `Błąd podczas ładowania danych: ${err.message}`,
-        );
+        setError(i18n.t('errorLoading'));
+        setSnackbarMessage(i18n.t('errorLoading'));
+        setSnackbarVisible(true);
       }
     };
     loadData();
@@ -108,7 +124,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
   const pickImage = async (field) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Błąd', 'Potrzebne są uprawnienia do galerii zdjęć.');
+      setSnackbarMessage(i18n.t('gallery_permission_error'));
+      setSnackbarVisible(true);
       return;
     }
 
@@ -122,7 +139,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
     if (!result.canceled) {
       setFormData((prev) => ({
         ...prev,
-        [field]: result.assets[0].uri, // Używamy URI zamiast base64, zgodnie z updateDocumentWithFile
+        [field]: result.assets[0].uri,
       }));
     }
   };
@@ -150,9 +167,9 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       }));
       setError('');
     } else {
-      setError(
-        i18n.t('fillProductFields') || 'Wypełnij wszystkie pola produktu',
-      );
+      setError(i18n.t('fillProductFields'));
+      setSnackbarMessage(i18n.t('fillProductFields'));
+      setSnackbarVisible(true);
     }
   };
 
@@ -172,11 +189,9 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         !formData.nip_wystawcy ||
         !formData.wartosc_brutto_suma
       ) {
-        Alert.alert(
-          'Błąd',
-          i18n.t('fillAllFields') || 'Wypełnij wszystkie wymagane pola',
-        );
-        setError(i18n.t('fillAllFields') || 'Wypełnij wszystkie wymagane pola');
+        setError(i18n.t('fillAllFields'));
+        setSnackbarMessage(i18n.t('fillAllFields'));
+        setSnackbarVisible(true);
         return;
       }
 
@@ -193,7 +208,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
       );
 
       if (!templateHtml) {
-        throw new Error('Szablon nie został załadowany');
+        throw new Error(i18n.t('template_not_loaded'));
       }
 
       let htmlContent = templateHtml;
@@ -236,7 +251,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         forma_platnosci: formData.forma_platnosci,
         logo: formData.logo || '',
         podpis: formData.podpis || '',
-        products: formData.products || [], // Dodajemy products do templateFields
+        products: formData.products || [],
       };
 
       Object.entries(templateFields).forEach(([key, value]) => {
@@ -252,7 +267,7 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
             '',
           );
         } else if (key === 'products') {
-          // Pomijamy zastępowanie placeholderów dla products, ponieważ jest obsługiwane przez productsHtml
+          // Skip products as it's handled by productsHtml
         } else {
           htmlContent = htmlContent.replace(
             new RegExp(placeholder, 'g'),
@@ -261,7 +276,6 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         }
       });
 
-      // Usunięcie wszystkich niewypełnionych placeholderów
       htmlContent = htmlContent.replace(/{{[^{}]+}}/g, '');
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
@@ -291,15 +305,11 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         }
       });
 
-      // Dodanie obiektu data dla spójności z updateDocumentWithFile
       formDataToSend.append('data', JSON.stringify(templateFields));
-
-      console.log('Products to send:', formData.products);
-      console.log('FormData fields:', Array.from(formDataToSend.entries()));
 
       const response = await uploadDocument(formDataToSend);
       if (!response?.document?.id) {
-        throw new Error('Nie udało się zapisać dokumentu');
+        throw new Error(i18n.t('document_save_error'));
       }
 
       const newDocument = {
@@ -315,331 +325,748 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         ...templateFields,
       };
 
-      console.log('New document products:', newDocument.products);
-
-      Alert.alert(
-        i18n.t('success') || 'Sukces',
-        i18n.t('documentSaved') || 'Dokument został zapisany.',
-      );
+      setSnackbarMessage(i18n.t('documentSaved'));
+      setSnackbarVisible(true);
       navigation.navigate('Documents', {
         newDocument,
         category: 'Handlowe',
       });
+      return;
     } catch (err) {
-      console.error('Error in saveDocument:', err);
-      Alert.alert(
-        i18n.t('error') || 'Błąd',
-        i18n.t('errorSaving') ||
-          `Błąd podczas zapisywania dokumentu: ${err.message}`,
+      console.warn(
+        `Attempt ${attempt} failed: ${err.message}. ${
+          attempt < maxRetries
+            ? `Retrying after ${2 ** attempt * 2000}ms...`
+            : 'No more retries.'
+        }`,
       );
-      setError(
-        i18n.t('errorSaving') ||
-          `Błąd podczas zapisywania dokumentu: ${err.message}`,
-      );
+      if (attempt === maxRetries) {
+        console.error('All retry attempts failed:', err);
+        setError(`${i18n.t('errorSaving')}: ${err.message}`);
+        setSnackbarMessage(`${i18n.t('errorSaving')}: ${err.message}`);
+        setSnackbarVisible(true);
+        return;
+      }
+      await delay(2 ** attempt * 2000); // Exponential backoff: 2s, 4s, 8s
+      attempt += 1;
     }
   };
 
   const handleSavePress = () => {
-    console.log('Save button pressed');
     saveDocument();
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={[styles.header, { color: paperTheme.colors.text }]}>
-        {document
-          ? i18n.t('editDocument') || 'Edytuj Dokument'
-          : i18n.t('createOffer') || 'Twórz Ofertę Handlową'}
-      </Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <Text style={styles.sectionTitle}>
-        {i18n.t('clientData') || 'Dane Klienta'}
-      </Text>
-      <TextInput
-        label={i18n.t('clientCompanyName') || 'Nazwa firmy klienta'}
-        value={formData.nazwa_firmy_klienta}
-        onChangeText={(text) => handleInputChange('nazwa_firmy_klienta', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('clientAddress') || 'Adres firmy klienta'}
-        value={formData.adres_firmy_klienta}
-        onChangeText={(text) => handleInputChange('adres_firmy_klienta', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('clientNip') || 'NIP klienta'}
-        value={formData.nip_klienta}
-        onChangeText={(text) => handleInputChange('nip_klienta', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('clientEmail') || 'Email klienta'}
-        value={formData.clientEmail}
-        onChangeText={(text) => handleInputChange('clientEmail', text)}
-        style={styles.input}
-        theme={paperTheme}
-        keyboardType="email-address"
-      />
-
-      <Text style={styles.sectionTitle}>
-        {i18n.t('offerData') || 'Dane Oferty'}
-      </Text>
-      <TextInput
-        label={i18n.t('issueDate') || 'Data wystawienia (YYYY-MM-DD)'}
-        value={formData.data_wystawienia}
-        onChangeText={(text) => handleInputChange('data_wystawienia', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('validityDate') || 'Data ważności (YYYY-MM-DD)'}
-        value={formData.data_waznosci}
-        onChangeText={(text) => handleInputChange('data_waznosci', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('offerNumber') || 'Numer oferty'}
-        value={formData.numer_oferty}
-        onChangeText={(text) => handleInputChange('numer_oferty', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-
-      <Text style={styles.sectionTitle}>
-        {i18n.t('logoAndSignature') || 'Logo i Podpis'}
-      </Text>
-      <Button
-        mode="outlined"
-        onPress={() => pickImage('logo')}
-        style={styles.button}
-        labelStyle={{ color: paperTheme.colors.primary }}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
       >
-        {formData.logo
-          ? i18n.t('changeLogo') || 'Zmień Logo'
-          : i18n.t('uploadLogo') || 'Prześlij Logo'}
-      </Button>
-      <Button
-        mode="outlined"
-        onPress={() => pickImage('podpis')}
-        style={styles.button}
-        labelStyle={{ color: paperTheme.colors.primary }}
-      >
-        {formData.podpis
-          ? i18n.t('changeSignature') || 'Zmień Podpis'
-          : i18n.t('uploadSignature') || 'Prześlij Podpis'}
-      </Button>
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={document ? i18n.t('editDocument') : i18n.t('createOffer')}
+            titleStyle={[styles.header, { color: colors.text }]}
+          />
+        </Card>
 
-      <Text style={styles.sectionTitle}>
-        {i18n.t('offerItems') || 'Pozycje Oferty'}
-      </Text>
-      <TextInput
-        label={i18n.t('serviceProductName') || 'Nazwa usługi/towaru'}
-        value={formData.nazwa_uslugi_towaru}
-        onChangeText={(text) => handleInputChange('nazwa_uslugi_towaru', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('quantity') || 'Ilość'}
-        value={formData.ilosc}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('ilosc', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('netPrice') || 'Cena netto'}
-        value={formData.cena_netto}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('cena_netto', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('netValue') || 'Wartość netto'}
-        value={formData.wartosc_netto}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('wartosc_netto', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <Button
-        mode="outlined"
-        onPress={addProduct}
-        style={styles.button}
-        labelStyle={{ color: paperTheme.colors.primary }}
-      >
-        {i18n.t('addProduct') || 'Dodaj Produkt'}
-      </Button>
-      {formData.products.map((product, index) => (
-        <View
-          key={product.nazwa_uslugi_towaru || `product-${index}`}
-          style={styles.productItem}
-        >
-          <Text>
-            {product.nazwa_uslugi_towaru} | {product.ilosc} |{' '}
-            {product.cena_netto} | {product.wartosc_netto}
+        {/* Client Data */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('clientData')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <TextInput
+              label={i18n.t('clientCompanyName')}
+              value={formData.nazwa_firmy_klienta}
+              onChangeText={(text) =>
+                handleInputChange('nazwa_firmy_klienta', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('clientCompanyName')}
+            />
+            <TextInput
+              label={i18n.t('clientAddress')}
+              value={formData.adres_firmy_klienta}
+              onChangeText={(text) =>
+                handleInputChange('adres_firmy_klienta', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('clientAddress')}
+            />
+            <TextInput
+              label={i18n.t('clientNip')}
+              value={formData.nip_klienta}
+              onChangeText={(text) => handleInputChange('nip_klienta', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('clientNip')}
+            />
+            <TextInput
+              label={i18n.t('clientEmail')}
+              value={formData.clientEmail}
+              onChangeText={(text) => handleInputChange('clientEmail', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              keyboardType="email-address"
+              accessibilityLabel={i18n.t('clientEmail')}
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Offer Data */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('offerData')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <TextInput
+              label={i18n.t('issueDate')}
+              value={formData.data_wystawienia}
+              onChangeText={(text) =>
+                handleInputChange('data_wystawienia', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('issueDate')}
+            />
+            <TextInput
+              label={i18n.t('validityDate')}
+              value={formData.data_waznosci}
+              onChangeText={(text) => handleInputChange('data_waznosci', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('validityDate')}
+            />
+            <TextInput
+              label={i18n.t('offerNumber')}
+              value={formData.numer_oferty}
+              onChangeText={(text) => handleInputChange('numer_oferty', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('offerNumber')}
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Logo and Signature */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('logoAndSignature')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <Button
+              mode="outlined"
+              onPress={() => pickImage('logo')}
+              style={[styles.button, { borderColor: colors.primary }]}
+              labelStyle={[styles.buttonText, { color: colors.primary }]}
+              icon={() => (
+                <FontAwesome name="image" size={16} color={colors.primary} />
+              )}
+              accessibilityLabel={
+                formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')
+              }
+            >
+              {formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')}
+            </Button>
+            <Button
+              mode="outlined"
+              onPress={() => pickImage('podpis')}
+              style={[styles.button, { borderColor: colors.primary }]}
+              labelStyle={[styles.buttonText, { color: colors.primary }]}
+              icon={() => (
+                <FontAwesome name="pencil" size={16} color={colors.primary} />
+              )}
+              accessibilityLabel={
+                formData.podpis
+                  ? i18n.t('changeSignature')
+                  : i18n.t('uploadSignature')
+              }
+            >
+              {formData.podpis
+                ? i18n.t('changeSignature')
+                : i18n.t('uploadSignature')}
+            </Button>
+          </Card.Content>
+        </Card>
+
+        {/* Offer Items */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('offerItems')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <TextInput
+              label={i18n.t('serviceProductName')}
+              value={formData.nazwa_uslugi_towaru}
+              onChangeText={(text) =>
+                handleInputChange('nazwa_uslugi_towaru', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('serviceProductName')}
+            />
+            <TextInput
+              label={i18n.t('quantity')}
+              value={formData.ilosc}
+              keyboardType="numeric"
+              onChangeText={(text) => handleInputChange('ilosc', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('quantity')}
+            />
+            <TextInput
+              label={i18n.t('netPrice')}
+              value={formData.cena_netto}
+              keyboardType="numeric"
+              onChangeText={(text) => handleInputChange('cena_netto', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('netPrice')}
+            />
+            <TextInput
+              label={i18n.t('netValue')}
+              value={formData.wartosc_netto}
+              keyboardType="numeric"
+              onChangeText={(text) => handleInputChange('wartosc_netto', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('netValue')}
+            />
+            <Button
+              mode="outlined"
+              onPress={addProduct}
+              style={[styles.button, { borderColor: colors.primary }]}
+              labelStyle={[styles.buttonText, { color: colors.primary }]}
+              icon={() => (
+                <FontAwesome name="plus" size={16} color={colors.primary} />
+              )}
+              accessibilityLabel={i18n.t('addProduct')}
+            >
+              {i18n.t('addProduct')}
+            </Button>
+            {formData.products.map((product, index) => (
+              <Card
+                key={product.nazwa_uslugi_towaru || `product-${index}`}
+                style={[styles.productCard, { backgroundColor: colors.accent }]}
+              >
+                <Card.Content style={styles.productContent}>
+                  <Text style={[styles.productText, { color: colors.text }]}>
+                    {product.nazwa_uslugi_towaru} | {product.ilosc} |{' '}
+                    {product.cena_netto} | {product.wartosc_netto}
+                  </Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => removeProduct(index)}
+                    style={[styles.removeButton, { borderColor: colors.error }]}
+                    labelStyle={[styles.buttonText, { color: colors.error }]}
+                    icon={() => (
+                      <FontAwesome
+                        name="trash"
+                        size={16}
+                        color={colors.error}
+                      />
+                    )}
+                    accessibilityLabel={i18n.t('remove')}
+                  >
+                    {i18n.t('remove')}
+                  </Button>
+                </Card.Content>
+              </Card>
+            ))}
+          </Card.Content>
+        </Card>
+
+        {/* Summary */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('summary')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <TextInput
+              label={i18n.t('totalNetValue')}
+              value={formData.wartosc_netto_suma}
+              keyboardType="numeric"
+              onChangeText={(text) =>
+                handleInputChange('wartosc_netto_suma', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('totalNetValue')}
+            />
+            <TextInput
+              label={i18n.t('vatRate')}
+              value={formData.stawka_vat}
+              keyboardType="numeric"
+              onChangeText={(text) => handleInputChange('stawka_vat', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('vatRate')}
+            />
+            <TextInput
+              label={i18n.t('vatValue')}
+              value={formData.wartosc_vat}
+              keyboardType="numeric"
+              onChangeText={(text) => handleInputChange('wartosc_vat', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('vatValue')}
+            />
+            <TextInput
+              label={i18n.t('totalGrossValue')}
+              value={formData.wartosc_brutto_suma}
+              keyboardType="numeric"
+              onChangeText={(text) =>
+                handleInputChange('wartosc_brutto_suma', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('totalGrossValue')}
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Issuer Data */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('issuerData')}
+            titleStyle={[styles.sectionTitle, { color: colors.text }]}
+          />
+          <Card.Content>
+            <TextInput
+              label={i18n.t('issuerCompanyName')}
+              value={formData.nazwa_firmy_wystawcy}
+              onChangeText={(text) =>
+                handleInputChange('nazwa_firmy_wystawcy', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('issuerCompanyName')}
+            />
+            <TextInput
+              label={i18n.t('issuerNip')}
+              value={formData.nip_wystawcy}
+              onChangeText={(text) => handleInputChange('nip_wystawcy', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('issuerNip')}
+            />
+            <TextInput
+              label={i18n.t('issuerAddress')}
+              value={formData.adres_wystawcy}
+              onChangeText={(text) => handleInputChange('adres_wystawcy', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('issuerAddress')}
+            />
+            <TextInput
+              label={i18n.t('bankName')}
+              value={formData.nazwa_banku}
+              onChangeText={(text) => handleInputChange('nazwa_banku', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('bankName')}
+            />
+            <TextInput
+              label={i18n.t('bankAccountNumber')}
+              value={formData.numer_konta_bankowego}
+              onChangeText={(text) =>
+                handleInputChange('numer_konta_bankowego', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('bankAccountNumber')}
+            />
+            <TextInput
+              label={i18n.t('swiftBic')}
+              value={formData.swift_bic}
+              onChangeText={(text) => handleInputChange('swift_bic', text)}
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('swiftBic')}
+            />
+            <TextInput
+              label={i18n.t('paymentMethod')}
+              value={formData.forma_platnosci}
+              onChangeText={(text) =>
+                handleInputChange('forma_platnosci', text)
+              }
+              style={[
+                styles.input,
+                { borderColor: colors.accent, backgroundColor: colors.surface },
+              ]}
+              theme={{
+                colors: {
+                  background: colors.surface,
+                  text: colors.text,
+                  primary: colors.primary,
+                },
+              }}
+              accessibilityLabel={i18n.t('paymentMethod')}
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Footer */}
+        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+          <FontAwesome
+            name="info-circle"
+            size={20}
+            color={colors.surface}
+            style={styles.footerIcon}
+          />
+          <Text style={[styles.footerText, { color: colors.surface }]}>
+            © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
           </Text>
-          <Button
-            mode="outlined"
-            onPress={() => removeProduct(index)}
-            style={styles.removeButton}
-            labelStyle={{ color: paperTheme.colors.error }}
-          >
-            {i18n.t('remove') || 'Usuń'}
-          </Button>
         </View>
-      ))}
+      </ScrollView>
 
-      <Text style={styles.sectionTitle}>
-        {i18n.t('summary') || 'Podsumowanie'}
-      </Text>
-      <TextInput
-        label={i18n.t('totalNetValue') || 'Wartość netto suma'}
-        value={formData.wartosc_netto_suma}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('wartosc_netto_suma', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('vatRate') || 'Stawka VAT (%)'}
-        value={formData.stawka_vat}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('stawka_vat', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('vatValue') || 'Wartość VAT'}
-        value={formData.wartosc_vat}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('wartosc_vat', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('totalGrossValue') || 'Wartość brutto suma'}
-        value={formData.wartosc_brutto_suma}
-        keyboardType="numeric"
-        onChangeText={(text) => handleInputChange('wartosc_brutto_suma', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-
-      <Text style={styles.sectionTitle}>
-        {i18n.t('issuerData') || 'Dane Wystawcy'}
-      </Text>
-      <TextInput
-        label={i18n.t('issuerCompanyName') || 'Nazwa firmy wystawcy'}
-        value={formData.nazwa_firmy_wystawcy}
-        onChangeText={(text) => handleInputChange('nazwa_firmy_wystawcy', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('issuerNip') || 'NIP wystawcy'}
-        value={formData.nip_wystawcy}
-        onChangeText={(text) => handleInputChange('nip_wystawcy', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('issuerAddress') || 'Adres wystawcy'}
-        value={formData.adres_wystawcy}
-        onChangeText={(text) => handleInputChange('adres_wystawcy', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('bankName') || 'Nazwa banku'}
-        value={formData.nazwa_banku}
-        onChangeText={(text) => handleInputChange('nazwa_banku', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('bankAccountNumber') || 'Numer konta bankowego'}
-        value={formData.numer_konta_bankowego}
-        onChangeText={(text) =>
-          handleInputChange('numer_konta_bankowego', text)
-        }
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('swiftBic') || 'SWIFT/BIC'}
-        value={formData.swift_bic}
-        onChangeText={(text) => handleInputChange('swift_bic', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-      <TextInput
-        label={i18n.t('paymentMethod') || 'Forma płatności'}
-        value={formData.forma_platnosci}
-        onChangeText={(text) => handleInputChange('forma_platnosci', text)}
-        style={styles.input}
-        theme={paperTheme}
-      />
-
-      <Button
-        mode="contained"
+      {/* FAB for Save */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={handleSavePress}
-        style={styles.button}
-        labelStyle={{ color: '#fff' }}
+        accessible
+        accessibilityLabel={i18n.t('save')}
+        accessibilityHint={i18n.t('save_document_hint')}
       >
-        {i18n.t('save')}
-      </Button>
-      <Button
-        mode="outlined"
+        <FontAwesome name="save" size={24} color={colors.surface} />
+      </TouchableOpacity>
+
+      {/* Cancel Button */}
+      <TouchableOpacity
+        style={[styles.fabCancel, { backgroundColor: colors.error }]}
         onPress={() => navigation.navigate('Home')}
-        style={styles.cancelButton}
-        labelStyle={{ color: paperTheme.colors.primary }}
+        accessible
+        accessibilityLabel={i18n.t('cancel')}
+        accessibilityHint={i18n.t('cancel_hint')}
       >
-        {i18n.t('cancel') || 'Anuluj'}
-      </Button>
-    </ScrollView>
+        <FontAwesome name="times" size={24} color={colors.surface} />
+      </TouchableOpacity>
+
+      {/* Snackbar */}
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+        style={{ backgroundColor: colors.surface }}
+      >
+        <Text style={{ color: colors.text }}>{snackbarMessage}</Text>
+      </Snackbar>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flexGrow: 1, backgroundColor: '#F5F5F5' },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    marginTop: 50,
+    paddingBottom: 80,
+  },
+  card: {
     marginBottom: 20,
+    borderRadius: 12,
+    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+  },
+  header: {
+    marginTop: 10,
+    fontSize: 20,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 10,
-    color: '#001426FF',
   },
-  input: { marginBottom: 15 },
+  input: {
+    marginVertical: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+  },
   button: {
     marginVertical: 10,
-    backgroundColor: '#001426FF',
-    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderRadius: 8,
   },
-  cancelButton: { marginVertical: 5, borderColor: '#001426FF' },
-  error: { color: 'red', marginBottom: 10, textAlign: 'center' },
-  productItem: {
-    marginVertical: 5,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 5,
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  productCard: {
+    marginVertical: 6,
+    borderRadius: 10,
+    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+  },
+  productContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
   },
-  removeButton: { marginLeft: 10 },
+  productText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  removeButton: {
+    marginLeft: 10,
+    borderWidth: 1.5,
+    borderRadius: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 20,
+    elevation: 3,
+  },
+  footerIcon: {
+    marginRight: 10,
+  },
+  footerText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  fabCancel: {
+    position: 'absolute',
+    bottom: 30,
+    right: 100,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
 });
-// git

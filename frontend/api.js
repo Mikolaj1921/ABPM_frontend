@@ -129,4 +129,33 @@ export const deleteDocument = (documentId) => {
     });
 };
 
+export const updateUserProfile = (data) =>
+  API.put('/auth/me', data)
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          'Błąd aktualizacji profilu',
+      );
+    });
+
+export const deleteUserAccount = () =>
+  API.delete('/auth/me')
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error || error.message || 'Błąd usuwania konta',
+      );
+    });
+
+export const changePassword = (data) =>
+  API.post('/auth/change-password', data)
+    .then((res) => res.data)
+    .catch((error) => {
+      throw new Error(
+        error.response?.data?.error || error.message || 'Błąd zmiany hasła',
+      );
+    });
+
 export default API;

@@ -20,12 +20,14 @@ import {
   Button,
   List,
   useTheme as usePaperTheme,
+  ProgressBar,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Print from 'expo-print';
 import { AuthContext } from '../contexts/AuthContext';
 import { LanguageContext } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   fetchDocuments,
   deleteDocument,
@@ -39,10 +41,15 @@ const documentCategories = [
     id: '1',
     nameKey: 'handloweiOfertowe',
     category: 'Handlowe',
-    icon: 'file-text',
+    icon: 'shopping-cart',
   },
-  { id: '2', nameKey: 'finansowe', category: 'Faktury', icon: 'money' },
-  { id: '3', nameKey: 'kadrowe', category: 'Kadrowe', icon: 'user' },
+  {
+    id: '2',
+    nameKey: 'finansowe',
+    category: 'Faktury',
+    icon: 'bank',
+  },
+  { id: '3', nameKey: 'kadrowe', category: 'Kadrowe', icon: 'users' },
 ];
 
 const validCategories = documentCategories.map((cat) => cat.category);
@@ -64,40 +71,41 @@ const ALLOWED_MIME_TYPES = [
   'image/bmp',
 ];
 
-const AccordionIcon = ({ icon, accessibilityLabel }) => (
+const AccordionIcon = ({ icon, accessibilityLabel, color }) => (
   <FontAwesome
     name={icon}
     size={20}
-    color="#001426FF"
-    style={{ justifyContent: 'center', alignSelf: 'center', marginLeft: 10 }}
+    color={color}
+    style={styles.icon}
     accessibilityLabel={accessibilityLabel}
   />
 );
-const SearchIcon = () => (
+const SearchIcon = ({ color }) => (
   <FontAwesome
     name="search"
     size={20}
-    color="#001426FF"
+    color={color}
     accessibilityLabel="Ikona wyszukiwania"
   />
 );
-const SortIcon = () => (
+const SortIcon = ({ color }) => (
   <FontAwesome
     name="sort"
     size={16}
     style={{ marginRight: 8 }}
+    color={color}
     accessibilityLabel="Ikona sortowania"
   />
 );
-const LeftIcon = () => (
+const LeftIcon = ({ color }) => (
   <FontAwesome
     name="check-circle"
     size={24}
-    color="#001426FF"
+    color={color}
     accessibilityLabel="Ikona dokumentu"
   />
 );
-const MenuIcon = ({ onPress, accessibilityLabel }) => (
+const MenuIcon = ({ onPress, accessibilityLabel, color }) => (
   <TouchableOpacity
     onPress={onPress}
     accessibilityLabel={accessibilityLabel}
@@ -107,20 +115,22 @@ const MenuIcon = ({ onPress, accessibilityLabel }) => (
     <FontAwesome
       name="ellipsis-v"
       size={24}
-      color="#001426FF"
+      color={color}
       style={{ marginRight: 10 }}
     />
   </TouchableOpacity>
 );
-const SortOption = ({ item, selectedCategory, handleSortChange }) => (
+const SortOption = ({ item, selectedCategory, handleSortChange, colors }) => (
   <TouchableOpacity
-    style={styles.modalItem}
+    style={[styles.modalItem, { borderBottomColor: colors.accent }]}
     onPress={() => handleSortChange(selectedCategory, item.value)}
     accessibilityLabel={item.label}
     accessibilityRole="button"
     accessibilityHint="Wybierz tę opcję sortowania"
   >
-    <Text style={styles.modalItemText}>{item.label}</Text>
+    <Text style={[styles.modalItemText, { color: colors.text }]}>
+      {item.label}
+    </Text>
   </TouchableOpacity>
 );
 
@@ -137,6 +147,7 @@ const CardMenu = ({
   menuFadeAnim,
   handleAddLogo,
   handleAddSignature,
+  colors,
 }) => {
   const handleShare = async (document) => {
     try {
@@ -149,7 +160,7 @@ const CardMenu = ({
       const encodedUrl = encodeURIComponent(shareUrl);
       const canOpen = await Linking.canOpenURL('https://');
       if (canOpen) {
-        await Linking.openURL(`https://t.me/share/url?url=${encodedUrl}`);
+        await Linking.openURL(`>;</`);
       } else {
         Alert.alert(i18n.t('sharingNotAvailable'));
       }
@@ -164,6 +175,7 @@ const CardMenu = ({
       <MenuIcon
         onPress={() => setMenuVisible((prev) => ({ ...prev, [item.id]: true }))}
         accessibilityLabel={i18n.t('openDocumentMenu', { name: item.name })}
+        color={colors.primary}
       />
       <Modal
         animationType="fade"
@@ -182,7 +194,10 @@ const CardMenu = ({
           accessibilityHint={i18n.t('closeModalHint')}
         >
           <Animated.View
-            style={[styles.modalContent, { opacity: menuFadeAnim }]}
+            style={[
+              styles.modalContent,
+              { opacity: menuFadeAnim, backgroundColor: colors.surface },
+            ]}
           >
             <TouchableOpacity
               style={styles.menuItem}
@@ -199,8 +214,10 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('previewDocumentHint')}
             >
-              <FontAwesome name="eye" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('preview')}</Text>
+              <FontAwesome name="eye" size={20} color={colors.primary} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                {i18n.t('preview')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -214,8 +231,10 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('downloadDocumentHint')}
             >
-              <FontAwesome name="download" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('download')}</Text>
+              <FontAwesome name="download" size={20} color={colors.primary} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                {i18n.t('download')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -227,8 +246,10 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('shareDocumentHint')}
             >
-              <FontAwesome name="telegram" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('shareTelegram')}</Text>
+              <FontAwesome name="telegram" size={20} color={colors.primary} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                {i18n.t('shareTelegram')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -242,8 +263,10 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('addLogoToDocumentHint')}
             >
-              <FontAwesome name="image" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('addLogo')}</Text>
+              <FontAwesome name="image" size={20} color={colors.primary} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                {i18n.t('addLogo')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -257,10 +280,14 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('addSignatureToDocumentHint')}
             >
-              <FontAwesome name="pencil" size={20} color="#001426FF" />
-              <Text style={styles.menuItemText}>{i18n.t('addSignature')}</Text>
+              <FontAwesome name="pencil" size={20} color={colors.primary} />
+              <Text style={[styles.menuItemText, { color: colors.text }]}>
+                {i18n.t('addSignature')}
+              </Text>
             </TouchableOpacity>
-            <View style={styles.menuDivider} />
+            <View
+              style={[styles.menuDivider, { backgroundColor: colors.accent }]}
+            />
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
@@ -271,8 +298,8 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('deleteDocumentHint')}
             >
-              <FontAwesome name="trash" size={20} color="#FF4D4F" />
-              <Text style={[styles.menuItemText, { color: '#FF4D4F' }]}>
+              <FontAwesome name="trash" size={20} color={colors.error} />
+              <Text style={[styles.menuItemText, { color: colors.error }]}>
                 {i18n.t('delete')}
               </Text>
             </TouchableOpacity>
@@ -297,8 +324,10 @@ const DocumentCard = ({
   menuFadeAnim,
   handleAddLogo,
   handleAddSignature,
+  colors,
+  fadeAnim,
 }) => {
-  let subtitle = `${new Date(item.created_at || Date.now()).toLocaleDateString()} | ${i18n.t('template')}: ${item.template_name || i18n.t('none')}`;
+  let subtitle = `${i18n.t('template')}: ${item.template_name || i18n.t('none')}`;
   if (item.type === 'Umowa o Pracę') {
     const obowiazkiCount = Array.isArray(item.obowiazki)
       ? item.obowiazki.length
@@ -313,43 +342,50 @@ const DocumentCard = ({
   }
 
   return (
-    <Card
-      style={[styles.card, { backgroundColor: paperTheme.colors.surface }]}
-      key={item.id}
-      accessible
-      accessibilityLabel={`${i18n.t('document')}: ${item.name}, ${i18n.t('created')}: ${new Date(item.created_at || Date.now()).toLocaleDateString()}`}
-    >
-      <Card.Title
-        title={item.name}
-        subtitle={subtitle}
-        titleStyle={styles.cardTitle}
-        subtitleStyle={styles.cardSubtitle}
-        left={LeftIcon}
-        leftStyle={{ marginRight: 2.5 }}
-        right={() => (
-          <CardMenu
-            item={item}
-            menuVisible={menuVisible}
-            setMenuVisible={setMenuVisible}
-            handleMenuClose={handleMenuClose}
-            navigation={navigation}
-            i18n={i18n}
-            handleDownload={handleDownload}
-            handleDelete={handleDelete}
-            category={category}
-            menuFadeAnim={menuFadeAnim}
-            handleAddLogo={handleAddLogo}
-            handleAddSignature={handleAddSignature}
-          />
-        )}
-      />
-    </Card>
+    <Animated.View style={{ opacity: fadeAnim }}>
+      <Card
+        style={[
+          styles.card,
+          { backgroundColor: colors.surface, borderColor: colors.accent },
+        ]}
+        key={item.id}
+        accessible
+        accessibilityLabel={`${i18n.t('document')}: ${item.name}, ${i18n.t('created')}: ${new Date(item.created_at || Date.now()).toLocaleDateString()}`}
+      >
+        <Card.Title
+          title={item.name}
+          subtitle={subtitle}
+          titleStyle={[styles.cardTitle, { color: colors.text }]}
+          subtitleStyle={[styles.cardSubtitle, { color: colors.secondaryText }]}
+          left={() => <LeftIcon color={colors.primary} />}
+          leftStyle={{ marginRight: 10 }}
+          right={() => (
+            <CardMenu
+              item={item}
+              menuVisible={menuVisible}
+              setMenuVisible={setMenuVisible}
+              handleMenuClose={handleMenuClose}
+              navigation={navigation}
+              i18n={i18n}
+              handleDownload={handleDownload}
+              handleDelete={handleDelete}
+              category={category}
+              menuFadeAnim={menuFadeAnim}
+              handleAddLogo={handleAddLogo}
+              handleAddSignature={handleAddSignature}
+              colors={colors}
+            />
+          )}
+        />
+      </Card>
+    </Animated.View>
   );
 };
 
 export default function DocumentsScreen({ navigation, route }) {
   const { isLoggedIn, user, retryFetchUser } = useContext(AuthContext);
   const { i18n } = useContext(LanguageContext);
+  const { colors } = useTheme();
   const [documents, setDocuments] = useState({});
   const [searchQueries, setSearchQueries] = useState({});
   const [filters, setFilters] = useState({});
@@ -365,6 +401,7 @@ export default function DocumentsScreen({ navigation, route }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const paperTheme = usePaperTheme();
+  const [cardAnimations, setCardAnimations] = useState({});
 
   const [fadeAnim] = useState(new Animated.Value(0));
   const [menuFadeAnim] = useState(new Animated.Value(0));
@@ -457,6 +494,14 @@ export default function DocumentsScreen({ navigation, route }) {
       }, {});
       console.log('Załadowane dokumenty:', documentsData);
       setDocuments(documentsData);
+      // Initialize card animations
+      const animations = {};
+      Object.values(documentsData).forEach((docs) => {
+        docs.forEach((doc) => {
+          animations[doc.id] = new Animated.Value(0);
+        });
+      });
+      setCardAnimations(animations);
     } catch (fetchError) {
       console.error('Błąd podczas pobierania dokumentów:', fetchError);
       setError(i18n.t('fetchDocumentsError', { message: fetchError.message }));
@@ -504,6 +549,24 @@ export default function DocumentsScreen({ navigation, route }) {
       }
     }
   }, [route.params]);
+
+  useEffect(() => {
+    if (expanded) {
+      const category = documentCategories.find((cat) => cat.id === expanded);
+      if (category) {
+        (documents[category.category] || []).forEach((doc, index) => {
+          if (cardAnimations[doc.id]) {
+            Animated.timing(cardAnimations[doc.id], {
+              toValue: 1,
+              duration: 200,
+              delay: index * 50,
+              useNativeDriver: true,
+            }).start();
+          }
+        });
+      }
+    }
+  }, [expanded, documents, cardAnimations]);
 
   const handleAccordionPress = (id) => {
     setExpanded(expanded === id ? null : id);
@@ -675,7 +738,7 @@ export default function DocumentsScreen({ navigation, route }) {
     };
 
     let lastError;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxRetries; _attempt++) {
       try {
         return await operation();
       } catch (err) {
@@ -1037,9 +1100,11 @@ export default function DocumentsScreen({ navigation, route }) {
     const query = searchQueries[category] || '';
     const filter = filters[category] || {};
     const sort = sortBy[category] || 'date_desc';
+
+    // Apply filters
     if (query) {
       filteredDocs = filteredDocs.filter((doc) =>
-        doc.name.toLowerCase().includes(query.toLowerCase()),
+        doc.name?.toLowerCase().includes(query.toLowerCase()),
       );
     }
     if (filter.type) {
@@ -1055,15 +1120,41 @@ export default function DocumentsScreen({ navigation, route }) {
         (doc) => new Date(doc.created_at || 0) <= new Date(filter.dateTo),
       );
     }
+
+    // Apply sorting
     filteredDocs.sort((a, b) => {
-      const dateA = new Date(a.created_at || 0);
-      const dateB = new Date(b.created_at || 0);
-      if (sort === 'date_asc') return dateA - dateB;
-      if (sort === 'date_desc') return dateB - dateA;
-      if (sort === 'name_asc') return a.name.localeCompare(b.name);
-      if (sort === 'name_desc') return b.name.localeCompare(a.name);
-      return 0;
+      // Handle date sorting
+      if (sort === 'date_asc' || sort === 'date_desc') {
+        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+        // Validate dates
+        const isValidDateA = !isNaN(dateA.getTime());
+        const isValidDateB = !isNaN(dateB.getTime());
+
+        if (!isValidDateA && !isValidDateB) return 0;
+        if (!isValidDateA) return sort === 'date_asc' ? 1 : -1;
+        if (!isValidDateB) return sort === 'date_asc' ? -1 : 1;
+
+        return sort === 'date_asc' ? dateA - dateB : dateB - dateA;
+      }
+
+      // Handle name sorting
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+      return sort === 'name_asc'
+        ? nameA.localeCompare(nameB, 'pl', { sensitivity: 'base' })
+        : nameB.localeCompare(nameA, 'pl', { sensitivity: 'base' });
     });
+
+    console.log(
+      `Sorted documents for ${category}:`,
+      filteredDocs.map((doc) => ({
+        id: doc.id,
+        name: doc.name,
+        created_at: doc.created_at,
+      })),
+    );
+
     return filteredDocs;
   };
 
@@ -1074,16 +1165,23 @@ export default function DocumentsScreen({ navigation, route }) {
     { label: i18n.t('nameDesc'), value: 'name_desc' },
   ];
 
+  const totalDocuments = Object.values(documents).flat().length;
+  const activeCategories = documentCategories.filter(
+    (cat) => (documents[cat.category] || []).length > 0,
+  ).length;
+
   if (loading) {
     return (
       <View
-        style={styles.center}
+        style={[styles.center, { backgroundColor: colors.background }]}
         accessible
         accessibilityLabel={i18n.t('loadingDocuments')}
         accessibilityRole="alert"
       >
-        <ActivityIndicator size="large" color={paperTheme.colors.primary} />
-        <Text style={styles.loadingText}>{i18n.t('loadingDocuments')}</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          {i18n.t('loadingDocuments')}
+        </Text>
       </View>
     );
   }
@@ -1091,19 +1189,17 @@ export default function DocumentsScreen({ navigation, route }) {
   if (error) {
     return (
       <View
-        style={styles.center}
+        style={[styles.center, { backgroundColor: colors.background }]}
         accessible
         accessibilityLabel={error}
         accessibilityRole="alert"
       >
-        <Text style={[styles.error, { color: paperTheme.colors.error }]}>
-          {error}
-        </Text>
+        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
         <Button
           mode="contained"
           onPress={fetchData}
-          style={styles.button}
-          labelStyle={styles.buttonText}
+          style={[styles.button, { backgroundColor: colors.primary }]}
+          labelStyle={[styles.buttonText, { color: colors.surface }]}
           accessibilityLabel={i18n.t('retry')}
           accessibilityRole="button"
           accessibilityHint={i18n.t('retryHint')}
@@ -1111,7 +1207,7 @@ export default function DocumentsScreen({ navigation, route }) {
           <FontAwesome
             name="refresh"
             size={16}
-            color="#FFFFFF"
+            color={colors.surface}
             style={{ marginRight: 8 }}
             accessibilityLabel={i18n.t('refreshIcon')}
           />
@@ -1122,379 +1218,638 @@ export default function DocumentsScreen({ navigation, route }) {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: paperTheme.colors.background },
-      ]}
-      style={[
-        styles.scrollView,
-        { backgroundColor: paperTheme.colors.background },
-      ]}
-      accessible
-      accessibilityLabel={i18n.t('documentsScreen')}
-    >
-      <View style={styles.headerContainer}>
-        <Text
-          style={[styles.header, { color: paperTheme.colors.text }]}
-          accessibilityRole="header"
-          accessibilityLabel={i18n.t('managementDocuments')}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContainer]}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
+        accessible
+        accessibilityLabel={i18n.t('documentsScreen')}
+      >
+        <View
+          style={[
+            styles.statsCard,
+            { backgroundColor: colors.surface, borderColor: colors.accent },
+          ]}
+          accessible
+          accessibilityLabel={i18n.t('quick_stats')}
         >
-          {i18n.t('managementDocuments')}
-        </Text>
-      </View>
-      {documentCategories.map((category) => {
-        const filteredDocuments = applyFiltersAndSort(
-          category.category,
-          documents[category.category] || [],
-        );
-        return (
-          <List.Accordion
-            key={category.id}
-            title={i18n.t(category.nameKey)}
-            titleStyle={styles.accordionTitle}
-            expanded={expanded === category.id}
-            onPress={() => handleAccordionPress(category.id)}
-            style={styles.accordion}
-            theme={{ colors: { primary: '#001426FF' } }}
-            left={() => (
-              <AccordionIcon
-                icon={category.icon}
-                accessibilityLabel={i18n.t(`${category.nameKey}_icon`)}
-              />
-            )}
-            accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
-            accessibilityRole="button"
-            accessibilityHint={i18n.t('expandCategoryHint')}
-          >
+          <Card.Title
+            title={i18n.t('quick_stats')}
+            titleStyle={[styles.statsTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('quick_stats')}
+          />
+          <Card.Content style={styles.statsContent}>
             <View
               style={[
-                styles.accordionContent,
-                { backgroundColor: paperTheme.colors.background },
+                styles.statItem,
+                { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
             >
-              <Searchbar
-                placeholder={i18n.t('searchDocuments')}
-                onChangeText={(query) =>
-                  handleSearchChange(category.category, query)
-                }
-                value={searchQueries[category.category] || ''}
-                style={[
-                  styles.searchbar,
-                  { backgroundColor: paperTheme.colors.surface },
-                ]}
-                inputStyle={styles.searchbarInput}
-                placeholderTextColor="#B0BEC5"
-                iconColor="#001426FF"
-                icon={SearchIcon}
-                accessibilityLabel={i18n.t('searchDocuments')}
-                accessibilityHint={i18n.t('searchDocumentsHint')}
+              <FontAwesome
+                name="file-text-o"
+                size={24}
+                color={colors.primary}
               />
-              <View style={styles.filterContainer}>
-                <Button
-                  mode="outlined"
-                  onPress={() => {
-                    setSelectedCategory(category.category);
-                    setSortModalVisible(true);
-                  }}
-                  style={[
-                    styles.filterButton,
-                    { backgroundColor: paperTheme.colors.surface },
-                  ]}
-                  labelStyle={styles.filterButtonText}
-                  icon={SortIcon}
-                  accessibilityLabel={i18n.t('sortButton', {
-                    label:
-                      sortOptions.find(
-                        (opt) => opt.value === sortBy[category.category],
-                      )?.label || i18n.t('dateDesc'),
-                  })}
-                  accessibilityRole="button"
-                  accessibilityHint={i18n.t('sortButtonHint')}
-                >
-                  {i18n.t('sort')}:{' '}
-                  {sortOptions.find(
-                    (opt) => opt.value === sortBy[category.category],
-                  )?.label || i18n.t('dateDesc')}
-                </Button>
-              </View>
-              <Modal
-                animationType="fade"
-                transparent
-                visible={sortModalVisible}
-                onRequestClose={handleClose}
-                accessibilityLabel={i18n.t('sortModal')}
-                accessibilityHint={i18n.t('sortModalHint')}
-              >
-                <TouchableOpacity
-                  style={styles.modalOverlay}
-                  onPress={handleClose}
-                  activeOpacity={1}
-                  accessibilityLabel={i18n.t('closeModal')}
-                  accessibilityRole="button"
-                  accessibilityHint={i18n.t('closeModalHint')}
-                >
-                  <Animated.View
-                    style={[styles.modalContent, { opacity: fadeAnim }]}
-                  >
-                    <Text
-                      style={styles.modalTitle}
-                      accessibilityRole="header"
-                      accessibilityLabel={i18n.t('selectSort')}
-                    >
-                      {i18n.t('selectSort')}
-                    </Text>
-                    <FlatList
-                      data={sortOptions}
-                      renderItem={({ item }) => (
-                        <SortOption
-                          item={item}
-                          selectedCategory={selectedCategory}
-                          handleSortChange={handleSortChange}
-                        />
-                      )}
-                      keyExtractor={(item) => item.value}
+              <Text style={[styles.statNumber, { color: colors.primary }]}>
+                {totalDocuments}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.secondaryText }]}>
+                {i18n.t('documents_created')}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.statItem,
+                { backgroundColor: colors.accent, borderColor: colors.accent },
+              ]}
+            >
+              <FontAwesome
+                name="folder-open"
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={[styles.statNumber, { color: colors.primary }]}>
+                {activeCategories}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.secondaryText }]}>
+                {i18n.t('active_categories')}
+              </Text>
+            </View>
+          </Card.Content>
+        </View>
+        <View style={styles.headerContainer}>
+          <Text
+            style={[styles.header, { color: colors.text }]}
+            accessibilityRole="header"
+            accessibilityLabel={i18n.t('managementDocuments')}
+          >
+            {i18n.t('managementDocuments')}
+          </Text>
+        </View>
+        {documentCategories.map((category) => {
+          const filteredDocuments = applyFiltersAndSort(
+            category.category,
+            documents[category.category] || [],
+          );
+          const docCount = filteredDocuments.length;
+          const maxDocs = 10; // Arbitrary threshold for progress
+          const progress = Math.min(docCount / maxDocs, 1);
+          return (
+            <View key={category.id} style={styles.categoryContainer}>
+              <List.Accordion
+                title={
+                  <View style={styles.titleContainer}>
+                    <AccordionIcon
+                      icon={category.icon}
+                      accessibilityLabel={i18n.t(`${category.nameKey}_icon`)}
+                      color={colors.primary}
                     />
+                    <View style={styles.titleWrapper}>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>
+                        {i18n.t(category.nameKey)}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.templateCount,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {i18n.t('documents_count')}
+                        {docCount}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.circleIndicator,
+                        { backgroundColor: colors.primary },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.circleText, { color: colors.surface }]}
+                      >
+                        {docCount}
+                      </Text>
+                    </View>
+                  </View>
+                }
+                right={(props) => (
+                  <FontAwesome
+                    name={props.isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={colors.text}
+                    style={styles.accordionArrow}
+                  />
+                )}
+                expanded={expanded === category.id}
+                onPress={() => handleAccordionPress(category.id)}
+                style={[
+                  styles.accordion,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.accent,
+                  },
+                ]}
+                theme={{ colors: { background: colors.surface } }}
+                accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
+                accessibilityRole="button"
+                accessibilityHint={i18n.t('expandCategoryHint')}
+              >
+                <ProgressBar
+                  progress={progress}
+                  color={colors.primary}
+                  style={styles.progressBar}
+                  accessibilityLabel={i18n.t('category_progress', {
+                    count: docCount,
+                    total: maxDocs,
+                  })}
+                />
+                <View
+                  style={[
+                    styles.accordionContent,
+                    { backgroundColor: colors.surface },
+                  ]}
+                >
+                  <Searchbar
+                    placeholder={i18n.t('searchDocuments')}
+                    onChangeText={(query) =>
+                      handleSearchChange(category.category, query)
+                    }
+                    value={searchQueries[category.category] || ''}
+                    style={[
+                      styles.searchbar,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.accent,
+                      },
+                    ]}
+                    inputStyle={[styles.searchbarInput, { color: colors.text }]}
+                    placeholderTextColor={colors.secondaryText}
+                    icon={() => <SearchIcon color={colors.primary} />}
+                    accessibilityLabel={i18n.t('searchDocuments')}
+                    accessibilityHint={i18n.t('searchDocumentsHint')}
+                  />
+                  <View style={styles.filterContainer}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => {
+                        setSelectedCategory(category.category);
+                        setSortModalVisible(true);
+                      }}
+                      style={[
+                        styles.filterButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.accent,
+                        },
+                      ]}
+                      labelStyle={[
+                        styles.filterButtonText,
+                        { color: colors.primary },
+                      ]}
+                      icon={() => <SortIcon color={colors.primary} />}
+                      accessibilityLabel={i18n.t('sortButton', {
+                        label:
+                          sortOptions.find(
+                            (opt) => opt.value === sortBy[category.category],
+                          )?.label || i18n.t('dateDesc'),
+                      })}
+                      accessibilityRole="button"
+                      accessibilityHint={i18n.t('sortButtonHint')}
+                    >
+                      {i18n.t('sort')}:{' '}
+                      {sortOptions.find(
+                        (opt) => opt.value === sortBy[category.category],
+                      )?.label || i18n.t('dateDesc')}
+                    </Button>
+                  </View>
+                  <Modal
+                    animationType="fade"
+                    transparent
+                    visible={sortModalVisible}
+                    onRequestClose={handleClose}
+                    accessibilityLabel={i18n.t('sortModal')}
+                    accessibilityHint={i18n.t('sortModalHint')}
+                  >
                     <TouchableOpacity
-                      style={styles.modalCloseButton}
+                      style={styles.modalOverlay}
                       onPress={handleClose}
-                      accessibilityLabel={i18n.t('close')}
+                      activeOpacity={1}
+                      accessibilityLabel={i18n.t('closeModal')}
                       accessibilityRole="button"
                       accessibilityHint={i18n.t('closeModalHint')}
                     >
-                      <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('close')}
-                      </Text>
+                      <Animated.View
+                        style={[
+                          styles.modalContent,
+                          {
+                            opacity: fadeAnim,
+                            backgroundColor: colors.surface,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.modalTitle, { color: colors.text }]}
+                          accessibilityRole="header"
+                          accessibilityLabel={i18n.t('selectSort')}
+                        >
+                          {i18n.t('selectSort')}
+                        </Text>
+                        <FlatList
+                          data={sortOptions}
+                          renderItem={({ item }) => (
+                            <SortOption
+                              item={item}
+                              selectedCategory={selectedCategory}
+                              handleSortChange={handleSortChange}
+                              colors={colors}
+                            />
+                          )}
+                          keyExtractor={(item) => item.value}
+                        />
+                        <TouchableOpacity
+                          style={[
+                            styles.modalCloseButton,
+                            { backgroundColor: colors.accent },
+                          ]}
+                          onPress={handleClose}
+                          accessibilityLabel={i18n.t('close')}
+                          accessibilityRole="button"
+                          accessibilityHint={i18n.t('closeModalHint')}
+                        >
+                          <Text
+                            style={[
+                              styles.modalCloseButtonText,
+                              { color: colors.text },
+                            ]}
+                          >
+                            {i18n.t('close')}
+                          </Text>
+                        </TouchableOpacity>
+                      </Animated.View>
                     </TouchableOpacity>
-                  </Animated.View>
-                </TouchableOpacity>
-              </Modal>
-              <Modal
-                animationType="fade"
-                transparent
-                visible={logoModalVisible}
-                onRequestClose={handleClose}
-                accessibilityLabel={i18n.t('logoModal')}
-                accessibilityHint={i18n.t('logoModalHint')}
-              >
-                <TouchableOpacity
-                  style={styles.modalOverlay}
-                  onPress={handleClose}
-                  activeOpacity={1}
-                  accessibilityLabel={i18n.t('closeModal')}
-                  accessibilityRole="button"
-                  accessibilityHint={i18n.t('closeModalHint')}
-                >
-                  <Animated.View
-                    style={[styles.modalContent, { opacity: fadeAnim }]}
+                  </Modal>
+                  <Modal
+                    animationType="fade"
+                    transparent
+                    visible={logoModalVisible}
+                    onRequestClose={handleClose}
+                    accessibilityLabel={i18n.t('logoModal')}
+                    accessibility
+                    WILLIAM={i18n.t('logoModalHint')}
                   >
-                    <Text
-                      style={styles.modalTitle}
-                      accessibilityRole="header"
-                      accessibilityLabel={i18n.t('selectLogo')}
-                    >
-                      {i18n.t('selectLogo')}
-                    </Text>
-                    <Button
-                      mode="contained"
-                      onPress={handlePickLogo}
-                      style={styles.modalButton}
-                      labelStyle={styles.modalButtonText}
-                      disabled={isUploading}
-                      accessibilityLabel={
-                        isUploading ? i18n.t('uploading') : i18n.t('pickImage')
-                      }
-                      accessibilityRole="button"
-                      accessibilityHint={i18n.t('pickImageHint')}
-                    >
-                      {isUploading ? i18n.t('uploading') : i18n.t('pickImage')}
-                    </Button>
                     <TouchableOpacity
-                      style={styles.modalCloseButton}
+                      style={styles.modalOverlay}
                       onPress={handleClose}
-                      accessibilityLabel={i18n.t('cancel')}
+                      activeOpacity={1}
+                      accessibilityLabel={i18n.t('closeModal')}
                       accessibilityRole="button"
-                      accessibilityHint={i18n.t('cancelHint')}
+                      accessibilityHint={i18n.t('closeModalHint')}
                     >
-                      <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('cancel')}
-                      </Text>
+                      <Animated.View
+                        style={[
+                          styles.modalContent,
+                          {
+                            opacity: fadeAnim,
+                            backgroundColor: colors.surface,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.modalTitle, { color: colors.text }]}
+                          accessibilityRole="header"
+                          accessibilityLabel={i18n.t('selectLogo')}
+                        >
+                          {i18n.t('selectLogo')}
+                        </Text>
+                        <Button
+                          mode="contained"
+                          onPress={handlePickLogo}
+                          style={[
+                            styles.modalButton,
+                            { backgroundColor: colors.primary },
+                          ]}
+                          labelStyle={[
+                            styles.modalButtonText,
+                            { color: colors.surface },
+                          ]}
+                          disabled={isUploading}
+                          accessibilityLabel={
+                            isUploading
+                              ? i18n.t('uploading')
+                              : i18n.t('pickImage')
+                          }
+                          accessibilityRole="button"
+                          accessibilityHint={i18n.t('pickImageHint')}
+                        >
+                          {isUploading
+                            ? i18n.t('uploading')
+                            : i18n.t('pickImage')}
+                        </Button>
+                        <TouchableOpacity
+                          style={[
+                            styles.modalCloseButton,
+                            { backgroundColor: colors.accent },
+                          ]}
+                          onPress={handleClose}
+                          accessibilityLabel={i18n.t('cancel')}
+                          accessibilityRole="button"
+                          accessibilityHint={i18n.t('cancelHint')}
+                        >
+                          <Text
+                            style={[
+                              styles.modalCloseButtonText,
+                              { color: colors.text },
+                            ]}
+                          >
+                            {i18n.t('cancel')}
+                          </Text>
+                        </TouchableOpacity>
+                      </Animated.View>
                     </TouchableOpacity>
-                  </Animated.View>
-                </TouchableOpacity>
-              </Modal>
-              <Modal
-                animationType="fade"
-                transparent
-                visible={signatureModalVisible}
-                onRequestClose={handleClose}
-                accessibilityLabel={i18n.t('signatureModal')}
-                accessibilityHint={i18n.t('signatureModalHint')}
-              >
-                <TouchableOpacity
-                  style={styles.modalOverlay}
-                  onPress={handleClose}
-                  activeOpacity={1}
-                  accessibilityLabel={i18n.t('closeModal')}
-                  accessibilityRole="button"
-                  accessibilityHint={i18n.t('closeModalHint')}
-                >
-                  <Animated.View
-                    style={[styles.modalContent, { opacity: fadeAnim }]}
+                  </Modal>
+                  <Modal
+                    animationType="fade"
+                    transparent
+                    visible={signatureModalVisible}
+                    onRequestClose={handleClose}
+                    accessibilityLabel={i18n.t('signatureModal')}
+                    accessibilityHint={i18n.t('signatureModalHint')}
                   >
-                    <Text
-                      style={styles.modalTitle}
-                      accessibilityRole="header"
-                      accessibilityLabel={i18n.t('addSignature')}
-                    >
-                      {i18n.t('addSignature')}
-                    </Text>
-                    <Button
-                      mode="contained"
-                      onPress={handlePickSignature}
-                      style={styles.modalButton}
-                      labelStyle={styles.modalButtonText}
-                      disabled={isUploading}
-                      accessibilityLabel={
-                        isUploading
-                          ? i18n.t('uploading')
-                          : i18n.t('pickSignature')
-                      }
-                      accessibilityRole="button"
-                      accessibilityHint={i18n.t('pickSignatureHint')}
-                    >
-                      {isUploading
-                        ? i18n.t('uploading')
-                        : i18n.t('pickSignature')}
-                    </Button>
                     <TouchableOpacity
-                      style={styles.modalCloseButton}
+                      style={styles.modalOverlay}
                       onPress={handleClose}
-                      accessibilityLabel={i18n.t('cancel')}
+                      activeOpacity={1}
+                      accessibilityLabel={i18n.t('closeModal')}
                       accessibilityRole="button"
-                      accessibilityHint={i18n.t('cancelHint')}
+                      accessibilityHint={i18n.t('closeModalHint')}
                     >
-                      <Text style={styles.modalCloseButtonText}>
-                        {i18n.t('cancel')}
-                      </Text>
+                      <Animated.View
+                        style={[
+                          styles.modalContent,
+                          {
+                            opacity: fadeAnim,
+                            backgroundColor: colors.surface,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.modalTitle, { color: colors.text }]}
+                          accessibilityRole="header"
+                          accessibilityLabel={i18n.t('addSignature')}
+                        >
+                          {i18n.t('addSignature')}
+                        </Text>
+                        <Button
+                          mode="contained"
+                          onPress={handlePickSignature}
+                          style={[
+                            styles.modalButton,
+                            { backgroundColor: colors.primary },
+                          ]}
+                          labelStyle={[
+                            styles.modalButtonText,
+                            { color: colors.surface },
+                          ]}
+                          disabled={isUploading}
+                          accessibilityLabel={
+                            isUploading
+                              ? i18n.t('uploading')
+                              : i18n.t('pickSignature')
+                          }
+                          accessibilityRole="button"
+                          accessibilityHint={i18n.t('pickSignatureHint')}
+                        >
+                          {isUploading
+                            ? i18n.t('uploading')
+                            : i18n.t('pickSignature')}
+                        </Button>
+                        <TouchableOpacity
+                          style={[
+                            styles.modalCloseButton,
+                            { backgroundColor: colors.accent },
+                          ]}
+                          onPress={handleClose}
+                          accessibilityLabel={i18n.t('cancel')}
+                          accessibilityRole="button"
+                          accessibilityHint={i18n.t('cancelHint')}
+                        >
+                          <Text
+                            style={[
+                              styles.modalCloseButtonText,
+                              { color: colors.text },
+                            ]}
+                          >
+                            {i18n.t('cancel')}
+                          </Text>
+                        </TouchableOpacity>
+                      </Animated.View>
                     </TouchableOpacity>
-                  </Animated.View>
-                </TouchableOpacity>
-              </Modal>
-              {filteredDocuments.length === 0 ? (
-                <Text
-                  style={styles.noData}
-                  accessibilityLabel={i18n.t('noDocuments')}
-                >
-                  {i18n.t('noDocuments')}
-                </Text>
-              ) : (
-                <View
-                  style={styles.list}
-                  accessible
-                  accessibilityLabel={i18n.t('documentList')}
-                >
-                  {filteredDocuments.map((item) => (
-                    <DocumentCard
-                      key={item.id}
-                      category={category.category}
-                      item={item}
-                      menuVisible={menuVisible}
-                      setMenuVisible={setMenuVisible}
-                      handleMenuClose={handleMenuClose}
-                      navigation={navigation}
-                      i18n={i18n}
-                      handleDownload={handleDownload}
-                      handleDelete={handleDelete}
-                      paperTheme={paperTheme}
-                      menuFadeAnim={menuFadeAnim}
-                      handleAddLogo={handleAddLogo}
-                      handleAddSignature={handleAddSignature}
-                    />
-                  ))}
+                  </Modal>
+                  {filteredDocuments.length === 0 ? (
+                    <Text
+                      style={[styles.noData, { color: colors.secondaryText }]}
+                      accessibilityLabel={i18n.t('noDocuments')}
+                    >
+                      {i18n.t('noDocuments')}
+                    </Text>
+                  ) : (
+                    <View
+                      style={styles.list}
+                      accessible
+                      accessibilityLabel={i18n.t('documentList')}
+                    >
+                      {filteredDocuments.map((item) => (
+                        <DocumentCard
+                          key={item.id}
+                          category={category.category}
+                          item={item}
+                          menuVisible={menuVisible}
+                          setMenuVisible={setMenuVisible}
+                          handleMenuClose={handleMenuClose}
+                          navigation={navigation}
+                          i18n={i18n}
+                          handleDownload={handleDownload}
+                          handleDelete={handleDelete}
+                          paperTheme={paperTheme}
+                          menuFadeAnim={menuFadeAnim}
+                          handleAddLogo={handleAddLogo}
+                          handleAddSignature={handleAddSignature}
+                          colors={colors}
+                          fadeAnim={
+                            cardAnimations[item.id] || new Animated.Value(1)
+                          }
+                        />
+                      ))}
+                    </View>
+                  )}
                 </View>
-              )}
+              </List.Accordion>
             </View>
-          </List.Accordion>
-        );
-      })}
-    </ScrollView>
+          );
+        })}
+        <View
+          style={[
+            styles.streamlineBox,
+            { backgroundColor: colors.accent, borderColor: colors.primary },
+          ]}
+        >
+          <FontAwesome
+            name="lightbulb-o"
+            size={20}
+            color={colors.primary}
+            style={styles.streamlineIcon}
+          />
+          <Text style={[styles.streamlineText, { color: colors.text }]}>
+            {i18n.t('hint_docscreen')}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 50,
-    paddingBottom: 70,
-    flexGrow: 1,
-    backgroundColor: '#F5F5F5',
-    paddingLeft: 15,
-    paddingRight: 15,
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    marginTop: 50,
+    paddingBottom: 80,
+  },
+  statDescription: {
+    fontSize: 10,
+    fontWeight: '400',
+    marginTop: 4,
+    textAlign: 'center',
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 15,
     marginTop: 5,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  accordion: {
-    marginBottom: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    borderRadius: 10,
-    elevation: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#CCC',
-    flexDirection: 'row',
-  },
-  accordionTitle: {
-    fontFamily: 'Roboto',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#001426FF',
-    paddingVertical: 8,
+    textAlign: 'left',
+  },
+  statsCard: {
+    borderRadius: 15,
+    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    borderWidth: 0,
+    marginBottom: 20,
+  },
+  statsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingTop: 15,
+  },
+  statsContent: {
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    padding: 15,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    padding: 12,
+    marginVertical: 6,
+    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    borderWidth: 1,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginHorizontal: 10,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+  },
+  categoryContainer: {
+    marginBottom: 10,
+  },
+  accordion: {
+    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    borderWidth: 0,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    width: '99%',
+    alignItems: 'center',
+    height: 70,
+    paddingVertical: 0,
+  },
+  titleWrapper: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    flex: 1,
+    fontWeight: 'bold',
+    fontSize: 16,
+    overflow: 'visible',
+  },
+  templateCount: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  circleIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  circleText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  accordionArrow: {
+    marginLeft: 2.5,
+    marginTop: 20,
   },
   accordionContent: {
-    paddingLeft: 7.5,
-    paddingRight: 7.5,
-    backgroundColor: '#FFFFFF',
+    padding: 10,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
-    padding: 10,
-    width: '100%',
   },
   searchbar: {
     width: '100%',
-    height: 60,
+    height: 50,
     marginBottom: 15,
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#CCC',
     paddingHorizontal: 15,
-    justifyContent: 'center',
   },
   searchbarInput: {
     flex: 1,
-    color: '#001426',
     fontFamily: 'Roboto',
     fontSize: 16,
   },
@@ -1507,14 +1862,11 @@ const styles = StyleSheet.create({
   filterButton: {
     marginRight: 10,
     marginBottom: 10,
-    borderColor: '#CCC',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
     elevation: 2,
   },
   filterButtonText: {
-    color: '#001426FF',
     fontFamily: 'Roboto',
     fontSize: 14,
   },
@@ -1523,26 +1875,18 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 10,
-    borderRadius: 8,
-    elevation: 0,
-    shadowOpacity: 0,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 0,
+    borderRadius: 12,
+    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
     borderWidth: 1,
-    borderColor: '#CCC',
     padding: 10,
-  },
-  cardTitle: {
-    fontFamily: 'Roboto',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#001426FF',
   },
   cardSubtitle: {
     fontFamily: 'Roboto',
-    fontSize: 14,
-    color: '#607D8B',
+    fontSize: 12,
   },
   menuItem: {
     flexDirection: 'row',
@@ -1553,12 +1897,10 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontFamily: 'Roboto',
     fontSize: 16,
-    color: '#001426FF',
     marginLeft: 10,
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
     marginVertical: 5,
   },
   modalOverlay: {
@@ -1568,7 +1910,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
     width: '80%',
@@ -1578,7 +1919,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#001426FF',
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -1586,12 +1926,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   modalItemText: {
     fontFamily: 'Roboto',
     fontSize: 16,
-    color: '#001426FF',
+  },
+  icon: {
+    alignSelf: 'center',
+    width: 24,
+    height: 24,
+    marginLeft: 5,
+    marginRight: 15,
+    overflow: 'visible',
   },
   modalButton: {
     marginVertical: 10,
@@ -1604,31 +1950,26 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     marginTop: 15,
     paddingVertical: 10,
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     alignItems: 'center',
   },
   modalCloseButtonText: {
     fontFamily: 'Roboto',
     fontSize: 16,
-    color: '#001426FF',
   },
   button: {
     width: '80%',
     borderRadius: 8,
-    backgroundColor: '#001426FF',
     marginVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
     fontFamily: 'Roboto',
     fontSize: 16,
   },
   error: {
-    color: '#FF4D4F',
     marginBottom: 10,
     textAlign: 'center',
     fontFamily: 'Roboto',
@@ -1638,15 +1979,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 20,
     fontSize: 16,
-    color: '#607D8B',
     fontFamily: 'Roboto',
   },
   loadingText: {
-    color: '#001426FF',
     fontFamily: 'Roboto',
     fontSize: 16,
     marginTop: 10,
   },
+  streamlineBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
+    marginHorizontal: 0,
+    borderWidth: 1,
+  },
+  streamlineIcon: {
+    marginRight: 10,
+  },
+  progressBar: {
+    marginHorizontal: 10,
+    marginVertical: 5,
+    height: 6,
+    borderRadius: 3,
+  },
 });
-
-//new version
