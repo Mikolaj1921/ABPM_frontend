@@ -1,413 +1,779 @@
-import React, { useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
-  Alert,
+  View,
   StyleSheet,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  View,
-  Modal,
+  Switch,
+  Animated,
+  TouchableOpacity,
+  FlatList,
 } from 'react-native';
-import { TextInput, Button, Text, Menu, Checkbox } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import API from '../api';
+import {
+  Button,
+  Card,
+  Text,
+  useTheme as usePaperTheme,
+  Snackbar,
+} from 'react-native-paper';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+import { AuthContext } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { LanguageContext } from '../contexts/LanguageContext';
 
-const RegisterScreen = ({ navigation }) => {
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    dob: new Date(),
-    showDatePicker: false,
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone_number: '',
-    phone_prefix: '+48',
-    rodo: false,
-  });
-
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [rodoModalVisible, setRodoModalVisible] = useState(false);
-
-  const phonePrefixes = [
-    { code: '+48', country: 'Poland' },
-    { code: '+49', country: 'Germany' },
-    { code: '+44', country: 'UK' },
-    { code: '+1', country: 'USA' },
-    { code: '+380', country: 'Ukraine' },
-    { code: '+33', country: 'France' },
+const TipsSection = ({ i18n, colors }) => {
+  const tips = [
+    {
+      id: '1',
+      text: i18n.t('settings_tip_1'),
+      icon: 'eye',
+    },
+    {
+      id: '2',
+      text: i18n.t('settings_tip_2'),
+      icon: 'adjust',
+      solid: true,
+    },
   ];
 
-  const handleChange = (field, value) => {
-    // Usuwanie spacji dla email i phone_number
-    if (field === 'email' || field === 'phone_number') {
-      value = value.trim();
-    }
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleRegister = async () => {
-    // Walidacja
-    if (
-      !form.firstName ||
-      !form.lastName ||
-      !form.email ||
-      !form.phone_number
-    ) {
-      Alert.alert('Error', 'All fields are required');
-      return;
-    }
-
-    // Walidacja e-maila
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(form.email)) {
-      Alert.alert(
-        'Error',
-        'Please enter a valid email address (e.g., user@example.com)',
-      );
-      return;
-    }
-
-    // Walidacja numeru telefonu
-    const phoneRegex = /^\d{7,15}$/;
-    if (!phoneRegex.test(form.phone_number)) {
-      Alert.alert(
-        'Error',
-        'Phone number must contain 7 to 15 digits and no other characters',
-      );
-      return;
-    }
-
-    if (form.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-    if (!form.rodo) {
-      Alert.alert('Error', 'RODO consent is required');
-      return;
-    }
-
-    try {
-      await API.post('/auth/register', {
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
-        password: form.password,
-        phone_number: form.phone_number,
-        phone_prefix: form.phone_prefix,
-        date_of_birth: form.dob.toISOString().split('T')[0],
-        rodo: form.rodo,
-      });
-
-      Alert.alert('Account created', 'You can now log in');
-      navigation.navigate('Login');
-    } catch (err) {
-      console.error(err);
-      Alert.alert(
-        'Registration failed',
-        err.response?.data?.message || 'Server error',
-      );
-    }
-  };
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <Card
+      style={[
+        styles.tipsCard,
+        { backgroundColor: colors.surface, borderColor: colors.accent },
+      ]}
+      accessible
+      accessibilityLabel={i18n.t('tipsSection')}
+      accessibilityRole="region"
     >
-      <ScrollView contentContainerStyle={styles.form}>
-        <Text style={styles.title}>Create Account</Text>
-
-        <TextInput
-          label="First Name"
-          value={form.firstName}
-          onChangeText={(text) => handleChange('firstName', text)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Last Name"
-          value={form.lastName}
-          onChangeText={(text) => handleChange('lastName', text)}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <TextInput
-          label="Date of Birth"
-          value={form.dob.toLocaleDateString()}
-          mode="outlined"
-          style={styles.input}
-          onFocus={() => handleChange('showDatePicker', true)}
-        />
-
-        {form.showDatePicker && (
-          <DateTimePicker
-            value={form.dob}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={(event, selectedDate) => {
-              handleChange('showDatePicker', false);
-              if (selectedDate) handleChange('dob', selectedDate);
-            }}
-          />
-        )}
-
-        <View style={styles.phoneRow}>
-          <Menu
-            visible={menuVisible}
-            onDismiss={() => setMenuVisible(false)}
-            anchor={
-              <Button
-                mode="outlined"
-                onPress={() => setMenuVisible(true)}
-                style={styles.prefixSelector}
-                contentStyle={{ flexDirection: 'row', alignItems: 'center' }}
-                labelStyle={{ color: '#888' }}
-              >
-                {form.phone_prefix}
-              </Button>
-            }
-          >
-            {phonePrefixes.map((item) => (
-              <Menu.Item
-                key={item.code}
-                onPress={() => {
-                  handleChange('phone_prefix', item.code);
-                  setMenuVisible(false);
-                }}
-                title={`${item.country} (${item.code})`}
-              />
-            ))}
-          </Menu>
-
-          <TextInput
-            label="Phone Number"
-            value={form.phone_number}
-            onChangeText={(text) => handleChange('phone_number', text)}
-            mode="outlined"
-            style={styles.phoneInput}
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <TextInput
-          label="Email"
-          value={form.email}
-          onChangeText={(text) => handleChange('email', text)}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          label="Password"
-          value={form.password}
-          onChangeText={(text) => handleChange('password', text)}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry
-        />
-
-        <TextInput
-          label="Confirm Password"
-          value={form.confirmPassword}
-          onChangeText={(text) => handleChange('confirmPassword', text)}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry
-        />
-
-        <View style={styles.rodoContainer}>
-          <Checkbox
-            status={form.rodo ? 'checked' : 'unchecked'}
-            onPress={() => handleChange('rodo', !form.rodo)}
-          />
-          <Text style={styles.rodoText}>
-            I agree to the{' '}
-            <Text
-              style={styles.rodoLink}
-              onPress={() => setRodoModalVisible(true)}
+      <Card.Title
+        title={i18n.t('pro_tips')}
+        titleStyle={[styles.tipsTitle, { color: colors.text }]}
+        accessibilityLabel={i18n.t('pro_tips')}
+        accessibilityRole="header"
+      />
+      <Card.Content>
+        <FlatList
+          horizontal
+          data={tips}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.tipItem,
+                { backgroundColor: colors.accent, borderColor: colors.primary },
+              ]}
+              accessible
+              accessibilityLabel={`${i18n.t(`settings_tip_${item.id}`)}`}
+              accessibilityRole="text"
             >
-              RODO terms
-            </Text>
-          </Text>
-        </View>
-
-        <Modal
-          visible={rodoModalVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setRodoModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <ScrollView>
-                <Text style={styles.modalTitle}>RODO Information</Text>
-                <Text style={styles.modalText}>
-                  In accordance with the General Data Protection Regulation
-                  (GDPR), we inform you that your personal data will be
-                  processed for the purpose of creating and managing your
-                  account. Your data, including first name, last name, email,
-                  phone number, and date of birth, will be stored securely and
-                  used solely for the purposes of providing our services.
-                </Text>
-                <Text style={styles.modalText}>
-                  By agreeing to these terms, you consent to the processing of
-                  your personal data as described above. You have the right to
-                  access, rectify, or delete your data at any time by contacting
-                  our support team.
-                </Text>
-                <Text style={styles.modalText}>
-                  For more information, please refer to our Privacy Policy.
-                </Text>
-              </ScrollView>
-              <View style={styles.modalButtons}>
-                <Button
-                  mode="outlined"
-                  onPress={() => setRodoModalVisible(false)}
-                  style={styles.modalButton}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  mode="contained"
-                  onPress={() => {
-                    handleChange('rodo', true);
-                    setRodoModalVisible(false);
-                  }}
-                  style={styles.modalButton}
-                >
-                  Agree
-                </Button>
-              </View>
+              <FontAwesome
+                name={item.icon}
+                size={16}
+                color={colors.primary}
+                style={styles.tipIcon}
+                accessibilityLabel={i18n.t(`settings_tip_${item.id}_icon`)}
+                accessibilityRole="image"
+              />
+              <Text style={[styles.tipText, { color: colors.text }]}>
+                {item.text}
+              </Text>
             </View>
-          </View>
-        </Modal>
-
-        <Button
-          mode="contained"
-          onPress={handleRegister}
-          rippleColor="#ffffff"
-          style={styles.button}
-        >
-          <Text style={{ color: '#FFFFFF' }}>Register</Text>
-        </Button>
-
-        <Button
-          onPress={() => navigation.navigate('Login')}
-          style={styles.link}
-        >
-          <Text style={{ color: '#000000' }}>
-            Already have an account? Log In
-          </Text>
-        </Button>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          )}
+          showsHorizontalScrollIndicator={false}
+          style={styles.tipsList}
+          accessibilityLabel={i18n.t('tips_list')}
+          accessibilityRole="list"
+        />
+      </Card.Content>
+    </Card>
   );
 };
 
+export default function SettingsScreen({ navigation }) {
+  const { setIsLoggedIn, user, loading, login } = useContext(AuthContext);
+  const {
+    isDarkMode,
+    toggleTheme,
+    colorScheme,
+    changeColorScheme,
+    colors,
+    colorSchemes,
+  } = useTheme();
+  const { i18n, locale, changeLanguage } = useContext(LanguageContext);
+  const paperTheme = usePaperTheme();
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [fadeAnims, setFadeAnims] = useState({
+    userInfo: new Animated.Value(0),
+    settings: new Animated.Value(0),
+    stats: new Animated.Value(0),
+    actions: new Animated.Value(0),
+  });
+  const [scaleAnims, setScaleAnims] = useState({
+    blue: new Animated.Value(1),
+    darkBlue: new Animated.Value(1),
+    grey: new Animated.Value(1),
+  });
+
+  useEffect(() => {
+    console.log('SettingsScreen colorSchemes:', colorSchemes);
+  }, [colorSchemes]);
+
+  useEffect(() => {
+    Object.values(fadeAnims).forEach((anim, index) => {
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 300,
+        delay: index * 100,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [fadeAnims]);
+
+  useEffect(() => {
+    // Debug logs
+  }, [locale, i18n, user, loading, colorScheme, isDarkMode, colors]);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error('Błąd wylogowania:', error);
+      setSnackbarVisible(true);
+    }
+  };
+
+  const handleAccountManagement = () => {
+    navigation.navigate('AccountManagement');
+  };
+
+  const toggleLanguage = () => {
+    const nextLanguage = locale === 'en' ? 'pl' : 'en';
+    changeLanguage(nextLanguage);
+    console.log('Zmieniono język na:', nextLanguage);
+  };
+
+  const handleHelpSupport = () => {
+    navigation.navigate('Help');
+  };
+
+  const retryFetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        await login(null, null, token);
+      } else {
+        setSnackbarVisible(true);
+      }
+    } catch (error) {
+      console.error('Retry fetch user error:', error);
+      setSnackbarVisible(true);
+    }
+  };
+
+  const handleColorSchemePress = (scheme) => {
+    changeColorScheme(scheme);
+    Animated.sequence([
+      Animated.timing(scaleAnims[scheme], {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnims[scheme], {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  return (
+    <>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContainer]}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
+        accessibilityLabel={i18n.t('settings_screen')}
+        accessibilityRole="main"
+      >
+        {/* Sekcja danych użytkownika */}
+        <Animated.View style={{ opacity: fadeAnims.userInfo }}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.accent },
+            ]}
+            accessible
+            accessibilityLabel={i18n.t('userInfo')}
+            accessibilityRole="region"
+          >
+            <Card.Title
+              title={i18n.t('userInfo')}
+              titleStyle={[styles.header, { color: colors.text }]}
+              accessibilityLabel={i18n.t('userInfo')}
+              accessibilityRole="header"
+            />
+            <Card.Content>
+              {loading ? (
+                <Text
+                  style={[styles.loadingText, { color: colors.text }]}
+                  accessibilityLabel={i18n.t('loading')}
+                  accessibilityRole="text"
+                >
+                  {i18n.t('loading')}
+                </Text>
+              ) : user ? (
+                <>
+                  <View style={styles.userInfoRow}>
+                    <View style={styles.labelContainer}>
+                      <FontAwesome
+                        name="user"
+                        size={16}
+                        color={colors.primary}
+                        style={styles.icon}
+                        accessibilityLabel={i18n.t('userIcon')}
+                        accessibilityRole="image"
+                      />
+                      <Text
+                        style={[styles.userLabel, { color: colors.text }]}
+                        accessibilityLabel={i18n.t('fullNameLabel')}
+                        accessibilityRole="text"
+                      >
+                        {i18n.t('fullName')}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[styles.userValue, { color: colors.text }]}
+                      accessibilityLabel={`${i18n.t('fullName')} ${user.firstName} ${user.lastName}`}
+                      accessibilityRole="text"
+                    >
+                      {`${user.firstName} ${user.lastName}`}
+                    </Text>
+                  </View>
+                  <View style={styles.userInfoRow}>
+                    <View style={styles.labelContainer}>
+                      <FontAwesome
+                        name="envelope"
+                        size={16}
+                        color={colors.primary}
+                        style={styles.icon}
+                        accessibilityLabel={i18n.t('emailIcon')}
+                        accessibilityRole="image"
+                      />
+                      <Text
+                        style={[styles.userLabel, { color: colors.text }]}
+                        accessibilityLabel={i18n.t('emailLabel')}
+                        accessibilityRole="text"
+                      >
+                        {i18n.t('email')}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.userValue,
+                        { color: colors.secondaryText },
+                      ]}
+                      accessibilityLabel={`${i18n.t('email')} ${user.email}`}
+                      accessibilityRole="text"
+                    >
+                      {user.email}
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.errorContainer}>
+                  <Text
+                    style={[styles.errorText, { color: colors.error }]}
+                    accessibilityLabel={i18n.t('userFetchError')}
+                    accessibilityRole="alert"
+                  >
+                    {i18n.t('userFetchError')}
+                  </Text>
+                  <Button
+                    mode="outlined"
+                    onPress={retryFetchUser}
+                    style={[
+                      styles.retryButton,
+                      { borderColor: colors.primary },
+                    ]}
+                    labelStyle={{ color: colors.primary }}
+                    accessibilityLabel={i18n.t('retry')}
+                    accessibilityHint={i18n.t('retryHint')}
+                    accessibilityRole="button"
+                  >
+                    {i18n.t('retry')}
+                  </Button>
+                </View>
+              )}
+            </Card.Content>
+          </Card>
+        </Animated.View>
+
+        {/* Sekcja porad */}
+        <Animated.View style={{ opacity: fadeAnims.settings }}>
+          <TipsSection i18n={i18n} colors={colors} />
+        </Animated.View>
+
+        {/* Sekcja ustawień */}
+        <Animated.View style={{ opacity: fadeAnims.settings }}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.accent },
+            ]}
+            accessible
+            accessibilityLabel={i18n.t('settings')}
+            accessibilityRole="region"
+          >
+            <Card.Title
+              title={i18n.t('settings')}
+              titleStyle={[styles.header, { color: colors.text }]}
+              accessibilityLabel={i18n.t('settings')}
+              accessibilityRole="header"
+            />
+            <Card.Content>
+              <View style={styles.settingItem}>
+                <View style={styles.labelContainer}>
+                  <FontAwesome
+                    name="moon-o"
+                    size={16}
+                    color={colors.primary}
+                    style={styles.icon}
+                    accessibilityLabel={i18n.t('dark_mode_icon')}
+                    accessibilityRole="image"
+                  />
+                  <Text
+                    style={[styles.label, { color: colors.text }]}
+                    accessibilityLabel={i18n.t('darkMode')}
+                    accessibilityRole="text"
+                  >
+                    {i18n.t('darkMode')}
+                  </Text>
+                </View>
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={toggleTheme}
+                  trackColor={{
+                    false: colors.secondaryText,
+                    true: colors.primary,
+                  }}
+                  thumbColor={colors.surface}
+                  accessibilityLabel={i18n.t('darkMode')}
+                  accessibilityHint={i18n.t('darkModeHint')}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: isDarkMode }}
+                />
+              </View>
+              <View style={styles.settingItem}>
+                <View style={styles.labelContainer}>
+                  <FontAwesome
+                    name="globe"
+                    size={16}
+                    color={colors.primary}
+                    style={styles.icon}
+                    accessibilityLabel={i18n.t('language_icon')}
+                    accessibilityRole="image"
+                  />
+                  <Text
+                    style={[styles.label, { color: colors.text }]}
+                    accessibilityLabel={i18n.t('language')}
+                    accessibilityRole="text"
+                  >
+                    {i18n.t('language')}
+                  </Text>
+                </View>
+                <Button
+                  mode="outlined"
+                  onPress={toggleLanguage}
+                  style={[styles.button, { borderColor: colors.primary }]}
+                  labelStyle={{ color: colors.primary }}
+                  accessibilityLabel={i18n.t('language')}
+                  accessibilityHint={i18n.t('toggleLanguageHint')}
+                  accessibilityRole="button"
+                >
+                  {locale === 'en' ? 'Polski' : 'English'}
+                </Button>
+              </View>
+
+              <View style={styles.colorSchemeContainer}>
+                <View style={styles.labelContainer}>
+                  <FontAwesome
+                    name="paint-brush"
+                    size={16}
+                    color={colors.primary}
+                    style={styles.icon}
+                    accessibilityLabel={i18n.t('color_scheme_icon')}
+                    accessibilityRole="image"
+                  />
+                  <Text
+                    style={[styles.label, { color: colors.text }]}
+                    accessibilityLabel={i18n.t('colorScheme')}
+                    accessibilityRole="text"
+                  >
+                    {i18n.t('colorScheme')}
+                  </Text>
+                </View>
+                <View
+                  style={styles.colorSchemePreviews}
+                  accessible
+                  accessibilityLabel={i18n.t('color_scheme_options')}
+                  accessibilityRole="group"
+                >
+                  {['blue', 'darkBlue', 'grey'].map((scheme) => (
+                    <Animated.View key={scheme}>
+                      <TouchableOpacity
+                        onPress={() => handleColorSchemePress(scheme)}
+                        style={[
+                          styles.colorPreview,
+                          {
+                            borderColor:
+                              colorScheme === scheme
+                                ? colors.activeSchemeIndicator
+                                : colors.secondaryText,
+                            borderWidth: colorScheme === scheme ? 2 : 1,
+                          },
+                        ]}
+                        accessible
+                        accessibilityLabel={i18n.t(`${scheme}Theme`)}
+                        accessibilityHint={i18n.t('selectColorSchemeHint')}
+                        accessibilityRole="button"
+                        accessibilityState={{
+                          selected: colorScheme === scheme,
+                        }}
+                      >
+                        <View
+                          style={[
+                            styles.colorPreviewInner,
+                            {
+                              backgroundColor:
+                                colorSchemes[scheme][
+                                  isDarkMode ? 'dark' : 'light'
+                                ].primary,
+                            },
+                          ]}
+                          accessibilityLabel={i18n.t(`${scheme}_primary_color`)}
+                          accessibilityRole="image"
+                        />
+                        <View
+                          style={[
+                            styles.colorPreviewInner,
+                            {
+                              backgroundColor:
+                                colorSchemes[scheme][
+                                  isDarkMode ? 'dark' : 'light'
+                                ].accent,
+                            },
+                          ]}
+                          accessibilityLabel={i18n.t(`${scheme}_accent_color`)}
+                          accessibilityRole="image"
+                        />
+                      </TouchableOpacity>
+                    </Animated.View>
+                  ))}
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        </Animated.View>
+
+        {/* Sekcja statystyk */}
+        <Animated.View style={{ opacity: fadeAnims.stats }}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.accent },
+            ]}
+            accessible
+            accessibilityLabel={i18n.t('stats')}
+            accessibilityRole="region"
+          >
+            <Card.Title
+              title={i18n.t('stats')}
+              titleStyle={[styles.header, { color: colors.text }]}
+              accessibilityLabel={i18n.t('stats')}
+              accessibilityRole="header"
+            />
+            <Card.Content>
+              <Text
+                style={[styles.statItem, { color: colors.text }]}
+                accessibilityLabel={i18n.t('incomingsoon')}
+                accessibilityRole="text"
+              >
+                {i18n.t('incomingsoon')}
+              </Text>
+            </Card.Content>
+          </Card>
+        </Animated.View>
+
+        {/* Sekcja akcji */}
+        <Animated.View style={{ opacity: fadeAnims.actions }}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.accent },
+            ]}
+            accessible
+            accessibilityLabel={i18n.t('actions')}
+            accessibilityRole="region"
+          >
+            <Card.Content>
+              <Button
+                mode="outlined"
+                onPress={handleAccountManagement}
+                style={[styles.button, { borderColor: colors.primary }]}
+                labelStyle={{ color: colors.primary }}
+                accessibilityLabel={i18n.t('accountManagement')}
+                accessibilityHint={i18n.t('accountManagementHint')}
+                accessibilityRole="button"
+              >
+                {i18n.t('accountManagement')}
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={handleHelpSupport}
+                style={[styles.button, { borderColor: colors.primary }]}
+                labelStyle={{ color: colors.primary }}
+                accessibilityLabel={i18n.t('helpSupport')}
+                accessibilityHint={i18n.t('helpSupportHint')}
+                accessibilityRole="button"
+              >
+                {i18n.t('helpSupport')}
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleLogout}
+                style={[
+                  styles.logoutButton,
+                  { backgroundColor: colors.primary },
+                ]}
+                labelStyle={{ color: colors.surface }}
+                accessibilityLabel={i18n.t('logout')}
+                accessibilityHint={i18n.t('logoutHint')}
+                accessibilityRole="button"
+              >
+                {i18n.t('logout')}
+              </Button>
+            </Card.Content>
+          </Card>
+        </Animated.View>
+
+        {/* Stopka */}
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessible
+          accessibilityLabel={i18n.t('footer_label')}
+          accessibilityRole="contentinfo"
+        >
+          <FontAwesome
+            name="info-circle"
+            size={16}
+            color={colors.surface}
+            style={styles.footerIcon}
+            accessibilityLabel={i18n.t('footer_icon_label')}
+            accessibilityRole="image"
+          />
+          <Text
+            style={[styles.footerText, { color: colors.surface }]}
+            accessibilityLabel={`${i18n.t('appVersion')} ${Constants?.manifest?.version || '1.0.0'} © 2025`}
+            accessibilityRole="text"
+          >
+            {i18n.t('appVersion')}: {Constants?.manifest?.version || '1.0.0'} ©
+            2025
+          </Text>
+        </View>
+      </ScrollView>
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        action={{
+          label: 'OK',
+          onPress: () => setSnackbarVisible(false),
+          accessibilityLabel: i18n.t('dismiss_snackbar'),
+          accessibilityHint: i18n.t('dismiss_snackbar_hint'),
+        }}
+        style={{ backgroundColor: colors.error }}
+        accessibilityLabel={i18n.t('snackbar_message_label')}
+        accessibilityRole="alert"
+      >
+        <Text
+          style={{ color: colors.surface }}
+          accessibilityLabel={i18n.t('underDev')}
+        >
+          {i18n.t('underDev')}
+        </Text>
+      </Snackbar>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
+  scrollContainer: {
+    paddingLeft: 20,
+    paddingRight: 20,
     marginTop: 50,
+    paddingBottom: 80,
+    flexGrow: 1,
   },
-  form: {
-    padding: 20,
+  scrollView: {
+    flex: 1,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    color: '#001426',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  input: {
-    marginBottom: 15,
-    backgroundColor: '#fff',
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  prefixSelector: {
-    marginTop: 5,
-    marginRight: 10,
-    textAlign: 'center',
-    justifyContent: 'center',
+  card: {
+    borderRadius: 12,
+    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
     borderWidth: 1,
-    borderColor: '#999',
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    height: 56,
+    marginBottom: 20,
   },
-  phoneInput: {
-    flex: 1,
-    backgroundColor: '#fff',
+  header: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
   },
-  button: {
-    backgroundColor: '#001426',
-    marginTop: 10,
-  },
-  link: {
-    marginTop: 15,
-    backgroundColor: '#fff',
-  },
-  rodoContainer: {
+  userInfoRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  rodoText: {
-    fontSize: 16,
-    color: '#001426',
-  },
-  rodoLink: {
-    color: '#001426',
-    textDecorationLine: 'underline',
-  },
-  modalOverlay: {
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
+  },
+  icon: {
+    marginRight: 10,
+  },
+  userLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
+  },
+  userValue: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
+    textAlign: 'right',
+    flex: 1,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
+    textAlign: 'center',
+  },
+  errorContainer: {
     alignItems: 'center',
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
+  retryButton: {
+    marginTop: 10,
+    borderWidth: 1.5,
+    borderRadius: 8,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#001426',
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#001426',
+  label: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
   },
-  modalButtons: {
+  colorSchemeContainer: {
+    marginBottom: 15,
+  },
+  colorSchemePreviews: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  modalButton: {
+  colorPreview: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginHorizontal: 10,
+    marginTop: 10,
+  },
+  colorPreviewInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    margin: 5,
+  },
+  statItem: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
+    textAlign: 'center',
+  },
+  button: {
+    marginVertical: 10,
+    borderWidth: 1.5,
+    borderRadius: 8,
+  },
+  logoutButton: {
+    marginVertical: 10,
+    borderRadius: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    elevation: 3,
+  },
+  footerIcon: {
+    marginRight: 10,
+  },
+  footerText: {
+    fontSize: 12,
+    fontFamily: 'Roboto',
+    fontWeight: '500',
+  },
+  tipsCard: {
+    borderRadius: 12,
+    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowColor: '#B0BEC5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  tipsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
+  },
+  tipsList: {
+    paddingVertical: 5,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    padding: 10,
+    marginRight: 10,
+    borderWidth: 1,
+    width: 200,
+  },
+  tipIcon: {
+    marginRight: 10,
+  },
+  tipText: {
+    fontSize: 14,
+    fontFamily: 'Roboto',
     flex: 1,
-    marginHorizontal: 5,
   },
 });
-
-export default RegisterScreen;

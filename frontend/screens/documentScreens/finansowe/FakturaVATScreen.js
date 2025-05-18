@@ -423,24 +423,11 @@ export default function FakturaVATScreen({ route, navigation }) {
         newDocument,
         category: 'Faktury',
       });
-      return;
     } catch (err) {
-      console.warn(
-        `Attempt ${attempt} failed: ${err.message}. ${
-          attempt < maxRetries
-            ? `Retrying after ${2 ** attempt * 2000}ms...`
-            : 'No more retries.'
-        }`,
-      );
-      if (attempt === maxRetries) {
-        console.error('All retry attempts failed:', err);
-        setError(`${i18n.t('errorSaving')}: ${err.message}`);
-        setSnackbarMessage(`${i18n.t('errorSaving')}: ${err.message}`);
-        setSnackbarVisible(true);
-        return;
-      }
-      await delay(2 ** attempt * 2000); // Exponential backoff: 2s, 4s, 8s
-      attempt += 1;
+      console.error('Error saving document:', err);
+      setError(`${i18n.t('errorSaving')}: ${err.message}`);
+      setSnackbarMessage(`${i18n.t('errorSaving')}: ${err.message}`);
+      setSnackbarVisible(true);
     }
   };
 
@@ -449,23 +436,39 @@ export default function FakturaVATScreen({ route, navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      accessible={false}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         style={[styles.scrollView, { backgroundColor: colors.background }]}
+        accessible={false}
       >
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={document ? i18n.t('editInvoice') : i18n.t('createInvoice')}
             titleStyle={[styles.header, { color: colors.text }]}
+            accessibilityLabel={
+              document ? i18n.t('editInvoice') : i18n.t('createInvoice')
+            }
+            accessibilityRole="header"
           />
         </Card>
 
         {/* Seller Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('sellerDetails')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('sellerDetails')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -484,6 +487,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('invoiceNumber')}
+              accessibilityHint={i18n.t('invoiceNumber_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('companyName')}
@@ -503,6 +508,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('companyName')}
+              accessibilityHint={i18n.t('companyName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('nip')}
@@ -521,6 +528,8 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="numeric"
               accessibilityLabel={i18n.t('nip')}
+              accessibilityHint={i18n.t('nip_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('address')}
@@ -538,6 +547,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('address')}
+              accessibilityHint={i18n.t('address_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('phone')}
@@ -558,6 +569,8 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="phone-pad"
               accessibilityLabel={i18n.t('phone')}
+              accessibilityHint={i18n.t('phone_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('email')}
@@ -576,15 +589,22 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="email-address"
               accessibilityLabel={i18n.t('email')}
+              accessibilityHint={i18n.t('email_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Buyer Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('buyerDetails')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('buyerDetails')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -605,6 +625,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('companyName')}
+              accessibilityHint={i18n.t('companyName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('nip')}
@@ -623,6 +645,8 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="numeric"
               accessibilityLabel={i18n.t('nip')}
+              accessibilityHint={i18n.t('nip_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('address')}
@@ -642,6 +666,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('address')}
+              accessibilityHint={i18n.t('address_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('phone')}
@@ -662,6 +688,8 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="phone-pad"
               accessibilityLabel={i18n.t('phone')}
+              accessibilityHint={i18n.t('phone_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('email')}
@@ -680,15 +708,22 @@ export default function FakturaVATScreen({ route, navigation }) {
               }}
               keyboardType="email-address"
               accessibilityLabel={i18n.t('email')}
+              accessibilityHint={i18n.t('email_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Invoice Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('invoiceDetails')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('invoiceDetails')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -709,6 +744,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issueDate')}
+              accessibilityHint={i18n.t('issueDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('saleDate')}
@@ -726,6 +763,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('saleDate')}
+              accessibilityHint={i18n.t('saleDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('paymentDueDate')}
@@ -745,6 +784,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('paymentDueDate')}
+              accessibilityHint={i18n.t('paymentDueDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('paymentMethod')}
@@ -764,6 +805,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('paymentMethod')}
+              accessibilityHint={i18n.t('paymentMethod_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('bankAccountNumber')}
@@ -783,6 +826,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('bankAccountNumber')}
+              accessibilityHint={i18n.t('bankAccountNumber_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('issuer')}
@@ -800,15 +845,22 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issuer')}
+              accessibilityHint={i18n.t('issuer_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Logo and Signature */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('logoAndSignature')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('logoAndSignature')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <Button
@@ -822,6 +874,12 @@ export default function FakturaVATScreen({ route, navigation }) {
               accessibilityLabel={
                 formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')
               }
+              accessibilityHint={
+                formData.logo
+                  ? i18n.t('changeLogo_hint')
+                  : i18n.t('uploadLogo_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')}
             </Button>
@@ -838,6 +896,12 @@ export default function FakturaVATScreen({ route, navigation }) {
                   ? i18n.t('changeSignature')
                   : i18n.t('uploadSignature')
               }
+              accessibilityHint={
+                formData.podpis
+                  ? i18n.t('changeSignature_hint')
+                  : i18n.t('uploadSignature_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.podpis
                 ? i18n.t('changeSignature')
@@ -847,10 +911,15 @@ export default function FakturaVATScreen({ route, navigation }) {
         </Card>
 
         {/* Invoice Items */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('invoiceItems')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('invoiceItems')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -871,6 +940,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('serviceProductName')}
+              accessibilityHint={i18n.t('serviceProductName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('unit')}
@@ -888,6 +959,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('unit')}
+              accessibilityHint={i18n.t('unit_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('quantity')}
@@ -906,6 +979,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('quantity')}
+              accessibilityHint={i18n.t('quantity_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('netPrice')}
@@ -924,6 +999,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('netPrice')}
+              accessibilityHint={i18n.t('netPrice_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('vatRate')}
@@ -942,6 +1019,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('vatRate')}
+              accessibilityHint={i18n.t('vatRate_hint')}
+              accessibilityRole="edit"
             />
             <Button
               mode="outlined"
@@ -952,6 +1031,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 <FontAwesome name="plus" size={16} color={colors.primary} />
               )}
               accessibilityLabel={i18n.t('addProduct')}
+              accessibilityHint={i18n.t('addProduct_hint')}
+              accessibilityRole="button"
             >
               {i18n.t('addProduct')}
             </Button>
@@ -959,9 +1040,14 @@ export default function FakturaVATScreen({ route, navigation }) {
               <Card
                 key={product.nazwa || `product-${index}`}
                 style={[styles.productCard, { backgroundColor: colors.accent }]}
+                accessible={false}
               >
                 <Card.Content style={styles.productContent}>
-                  <Text style={[styles.productText, { color: colors.text }]}>
+                  <Text
+                    style={[styles.productText, { color: colors.text }]}
+                    accessibilityLabel={`${product.nazwa}, jednostka ${product.jednostka}, ilość ${product.ilosc}, cena netto ${product.cena_netto}, stawka VAT ${product.stawka_vat}%, wartość netto ${product.wartosc_netto}, kwota VAT ${product.kwota_vat}, wartość brutto ${product.wartosc_brutto}`}
+                    accessibilityRole="text"
+                  >
                     {product.nazwa} | {product.jednostka} | {product.ilosc} |{' '}
                     {product.cena_netto} | {product.stawka_vat}% |{' '}
                     {product.wartosc_netto} | {product.kwota_vat} |{' '}
@@ -980,6 +1066,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                       />
                     )}
                     accessibilityLabel={i18n.t('remove')}
+                    accessibilityHint={i18n.t('remove_hint')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('remove')}
                   </Button>
@@ -990,10 +1078,15 @@ export default function FakturaVATScreen({ route, navigation }) {
         </Card>
 
         {/* Summary */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('summary')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('summary')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -1015,6 +1108,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('totalNetValue')}
+              accessibilityHint={i18n.t('totalNetValue_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('totalVATValue')}
@@ -1035,6 +1130,8 @@ export default function FakturaVATScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('totalVATValue')}
+              accessibilityHint={i18n.t('totalVATValue_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('totalGrossValue')}
@@ -1050,24 +1147,33 @@ export default function FakturaVATScreen({ route, navigation }) {
               theme={{
                 colors: {
                   background: colors.surface,
-                  textNIC: colors.text,
+                  text: colors.text,
                   primary: colors.primary,
                 },
               }}
               accessibilityLabel={i18n.t('totalGrossValue')}
+              accessibilityHint={i18n.t('totalGrossValue_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Footer */}
-        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessible={false}
+        >
           <FontAwesome
             name="info-circle"
             size={20}
             color={colors.surface}
             style={styles.footerIcon}
+            accessible={false}
           />
-          <Text style={[styles.footerText, { color: colors.surface }]}>
+          <Text
+            style={[styles.footerText, { color: colors.surface }]}
+            accessible={false}
+          >
             © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
           </Text>
         </View>
@@ -1080,8 +1186,14 @@ export default function FakturaVATScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('save')}
         accessibilityHint={i18n.t('save_document_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="save" size={24} color={colors.surface} />
+        <FontAwesome
+          name="save"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Cancel Button */}
@@ -1091,18 +1203,37 @@ export default function FakturaVATScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('cancel')}
         accessibilityHint={i18n.t('cancel_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="times" size={24} color={colors.surface} />
+        <FontAwesome
+          name="times"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Snackbar */}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
-        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+        action={{
+          label: 'OK',
+          onPress: () => setSnackbarVisible(false),
+          accessibilityLabel: i18n.t('ok'),
+          accessibilityHint: i18n.t('dismiss_snackbar_hint'),
+          accessibilityRole: 'button',
+        }}
         style={{ backgroundColor: colors.surface }}
+        accessibilityLiveRegion="polite"
       >
-        <Text style={{ color: colors.text }}>{snackbarMessage}</Text>
+        <Text
+          style={{ color: colors.text }}
+          accessibilityLabel={snackbarMessage}
+          accessibilityRole="alert"
+        >
+          {snackbarMessage}
+        </Text>
       </Snackbar>
     </View>
   );

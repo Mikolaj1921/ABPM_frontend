@@ -428,15 +428,22 @@ const HomeScreen = ({ navigation, route }) => {
         onRequestClose={handleCloseTemplateModal}
         accessibilityLabel={i18n.t('select_template_modal')}
         accessibilityHint={i18n.t('select_template_modal_hint')}
+        accessibilityViewIsModal={true}
       >
         <View
           style={[
             styles.modalOverlay,
             { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
           ]}
+          accessible
+          accessibilityLabel={i18n.t('modal_background')}
+          accessibilityRole="none"
         >
           <View
             style={[styles.modalContent, { backgroundColor: colors.surface }]}
+            accessible
+            accessibilityLabel={i18n.t('select_template_modal_content')}
+            accessibilityRole="dialog"
           >
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {i18n.t('select_template')}
@@ -447,7 +454,6 @@ const HomeScreen = ({ navigation, route }) => {
               renderItem={({ item }) => {
                 const iconName =
                   categoryIcons[item.category.category] || 'file';
-                //console.log('Ikona w templateItem:', iconName);
                 return (
                   <TouchableOpacity
                     style={[
@@ -458,16 +464,19 @@ const HomeScreen = ({ navigation, route }) => {
                       handleSelectTemplate(item.category, item.template)
                     }
                     accessible
-                    accessibilityLabel={`${i18n.t('template')}: ${
-                      item.template.name
-                    }`}
+                    accessibilityLabel={`${i18n.t('template')}: ${item.template.name}`}
                     accessibilityHint={i18n.t('select_template_hint')}
+                    accessibilityRole="button"
                   >
                     <FontAwesome
                       name={iconName}
                       size={20}
                       color={colors.primary}
                       style={styles.templateIcon}
+                      accessibilityLabel={i18n.t(
+                        `${item.category.nameKey}_icon`,
+                      )}
+                      accessibilityRole="image"
                     />
                     <Text
                       style={[
@@ -481,6 +490,8 @@ const HomeScreen = ({ navigation, route }) => {
                 );
               }}
               style={styles.templateList}
+              accessibilityLabel={i18n.t('template_list')}
+              accessibilityRole="list"
             />
             <Button
               mode="outlined"
@@ -489,6 +500,7 @@ const HomeScreen = ({ navigation, route }) => {
               labelStyle={[styles.modalButtonText, { color: colors.primary }]}
               accessibilityLabel={i18n.t('cancel')}
               accessibilityHint={i18n.t('cancel_hint')}
+              accessibilityRole="button"
             >
               {i18n.t('cancel')}
             </Button>
@@ -502,19 +514,38 @@ const HomeScreen = ({ navigation, route }) => {
       >
         <View
           style={[styles.profileContainer, { backgroundColor: colors.surface }]}
+          accessible
+          accessibilityLabel={i18n.t('user_profile')}
+          accessibilityRole="group"
         >
-          <View style={styles.profileInfo}>
+          <View
+            style={styles.profileInfo}
+            accessible
+            accessibilityLabel={i18n.t('profile_info')}
+          >
             <Avatar.Text
               size={44}
               label={user?.name?.charAt(0) || 'U'}
               style={[styles.avatar, { backgroundColor: colors.primary }]}
+              accessibilityLabel={i18n.t('user_avatar', {
+                name: user?.name || 'User',
+              })}
+              accessibilityRole="image"
             />
             <View style={styles.profileText}>
-              <Text style={[styles.profileName, { color: colors.text }]}>
+              <Text
+                style={[styles.profileName, { color: colors.text }]}
+                accessibilityLabel={i18n.t('profile_name', {
+                  name: user?.name || 'User',
+                })}
+              >
                 {user?.name || 'User'}
               </Text>
               <Text
                 style={[styles.profileEmail, { color: colors.secondaryText }]}
+                accessibilityLabel={i18n.t('profile_email', {
+                  email: user?.email || '',
+                })}
               >
                 {user?.email || ''}
               </Text>
@@ -525,18 +556,30 @@ const HomeScreen = ({ navigation, route }) => {
               accessible
               accessibilityLabel={i18n.t('app_logo')}
               accessibilityHint={i18n.t('view_app_name')}
+              accessibilityRole="button"
             >
               <Image
                 source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
                 style={styles.profileLogoImage}
                 tintColor={colors.primary}
+                accessibilityLabel={i18n.t('app_logo_image')}
+                accessibilityRole="image"
               />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.tipsContainer}>
-          <Text style={[styles.tipsTitle, { color: colors.text }]}>
+        <View
+          style={styles.tipsContainer}
+          accessible
+          accessibilityLabel={i18n.t('pro_tips_section')}
+          accessibilityRole="group"
+        >
+          <Text
+            style={[styles.tipsTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('pro_tips')}
+            accessibilityRole="header"
+          >
             {i18n.t('pro_tips')}
           </Text>
           <FlatList
@@ -544,10 +587,12 @@ const HomeScreen = ({ navigation, route }) => {
             data={tips}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => {
-              //console.log('Ikona w tip:', item.icon);
               return (
                 <Card
                   style={[styles.tipCard, { backgroundColor: colors.primary }]}
+                  accessible
+                  accessibilityLabel={`${i18n.t('tip')}: ${item.text}`}
+                  accessibilityRole="text"
                 >
                   <Card.Content style={styles.tipContent}>
                     <FontAwesome
@@ -555,6 +600,8 @@ const HomeScreen = ({ navigation, route }) => {
                       size={24}
                       color={colors.surface}
                       style={styles.tipIcon}
+                      accessibilityLabel={i18n.t(`tip_${item.id}_icon`)}
+                      accessibilityRole="image"
                     />
                     <Text style={[styles.tipText, { color: colors.surface }]}>
                       {item.text}
@@ -565,6 +612,8 @@ const HomeScreen = ({ navigation, route }) => {
             }}
             showsHorizontalScrollIndicator={false}
             style={styles.tipsList}
+            accessibilityLabel={i18n.t('tips_list')}
+            accessibilityRole="list"
           />
         </View>
         <View style={styles.headerContainer}>
@@ -584,7 +633,13 @@ const HomeScreen = ({ navigation, route }) => {
             : 0;
 
           return (
-            <View key={category.id} style={styles.categoryContainer}>
+            <View
+              key={category.id}
+              style={styles.categoryContainer}
+              accessible
+              accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
+              accessibilityRole="group"
+            >
               <List.Accordion
                 title={
                   <View style={styles.titleContainer}>
@@ -594,9 +649,13 @@ const HomeScreen = ({ navigation, route }) => {
                       color={colors.text}
                       style={styles.icon}
                       accessibilityLabel={i18n.t(`${category.nameKey}_icon`)}
+                      accessibilityRole="image"
                     />
                     <View style={styles.titleWrapper}>
-                      <Text style={[styles.cardTitle, { color: colors.text }]}>
+                      <Text
+                        style={[styles.cardTitle, { color: colors.text }]}
+                        accessibilityLabel={i18n.t(category.nameKey)}
+                      >
                         {i18n.t(category.nameKey)}
                       </Text>
                       <Text
@@ -604,6 +663,9 @@ const HomeScreen = ({ navigation, route }) => {
                           styles.templateCount,
                           { color: colors.secondaryText },
                         ]}
+                        accessibilityLabel={i18n.t('templates_count', {
+                          count: templateCount,
+                        })}
                       >
                         {i18n.t('templates_count', { count: templateCount })}
                       </Text>
@@ -613,6 +675,11 @@ const HomeScreen = ({ navigation, route }) => {
                         styles.circleIndicator,
                         { backgroundColor: colors.primary },
                       ]}
+                      accessible
+                      accessibilityLabel={i18n.t('templates_count', {
+                        count: templateCount,
+                      })}
+                      accessibilityRole="text"
                     >
                       <Text
                         style={[styles.circleText, { color: colors.surface }]}
@@ -628,6 +695,12 @@ const HomeScreen = ({ navigation, route }) => {
                     size={16}
                     color={colors.text}
                     style={styles.accordionArrow}
+                    accessibilityLabel={
+                      props.isExpanded
+                        ? i18n.t('collapse_category')
+                        : i18n.t('expand_category')
+                    }
+                    accessibilityRole="image"
                   />
                 )}
                 expanded={expanded === category.id}
@@ -646,6 +719,7 @@ const HomeScreen = ({ navigation, route }) => {
                     count: docCount,
                     total: templateCount,
                   })}
+                  accessibilityRole="progressbar"
                 />
                 {(templates[category.category] || []).map((template) => {
                   const isTemplateUsed = (
@@ -660,6 +734,7 @@ const HomeScreen = ({ navigation, route }) => {
                       ]}
                       accessible
                       accessibilityLabel={`${i18n.t('template')}: ${template.name}`}
+                      accessibilityRole="listitem"
                     >
                       <Card.Title
                         title={template.name}
@@ -675,6 +750,8 @@ const HomeScreen = ({ navigation, route }) => {
                             name="file-pdf-o"
                             size={16}
                             color={colors.secondaryText}
+                            accessibilityLabel={i18n.t('pdf_format')}
+                            accessibilityRole="image"
                           />
                           <Text
                             style={[
@@ -689,6 +766,8 @@ const HomeScreen = ({ navigation, route }) => {
                             size={16}
                             color={colors.secondaryText}
                             style={styles.infoIcon}
+                            accessibilityLabel={i18n.t('signature')}
+                            accessibilityRole="image"
                           />
                           <Text
                             style={[
@@ -703,6 +782,8 @@ const HomeScreen = ({ navigation, route }) => {
                             size={16}
                             color={colors.secondaryText}
                             style={styles.infoIcon}
+                            accessibilityLabel={i18n.t('logo')}
+                            accessibilityRole="image"
                           />
                           <Text
                             style={[
@@ -747,11 +828,15 @@ const HomeScreen = ({ navigation, route }) => {
             styles.statsCard,
             { backgroundColor: colors.surface, borderColor: colors.accent },
           ]}
+          accessible
+          accessibilityLabel={i18n.t('quick_stats')}
+          accessibilityRole="group"
         >
           <Card.Title
             title={i18n.t('quick_stats')}
             titleStyle={[styles.statsTitle, { color: colors.text }]}
             accessibilityLabel={i18n.t('quick_stats')}
+            accessibilityRole="header"
           />
           <Card.Content style={styles.statsContent}>
             <View
@@ -759,11 +844,16 @@ const HomeScreen = ({ navigation, route }) => {
                 styles.statItem,
                 { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
+              accessible
+              accessibilityLabel={`${i18n.t('documents_created')}: ${totalDocuments}`}
+              accessibilityRole="text"
             >
               <FontAwesome
                 name="file-text-o"
                 size={32}
                 color={colors.primary}
+                accessibilityLabel={i18n.t('documents_icon')}
+                accessibilityRole="image"
               />
               <Text style={[styles.statNumber, { color: colors.primary }]}>
                 {totalDocuments}
@@ -777,8 +867,17 @@ const HomeScreen = ({ navigation, route }) => {
                 styles.statItem,
                 { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
+              accessible
+              accessibilityLabel={`${i18n.t('templates_used')}: ${totalTemplates}`}
+              accessibilityRole="text"
             >
-              <FontAwesome name="copy" size={32} color={colors.primary} />
+              <FontAwesome
+                name="copy"
+                size={32}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('templates_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.statNumber, { color: colors.primary }]}>
                 {totalTemplates}
               </Text>
@@ -791,11 +890,16 @@ const HomeScreen = ({ navigation, route }) => {
                 styles.statItem,
                 { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
+              accessible
+              accessibilityLabel={`${i18n.t('active_categories')}: ${activeCategories}`}
+              accessibilityRole="text"
             >
               <FontAwesome
                 name="folder-open"
                 size={32}
                 color={colors.primary}
+                accessibilityLabel={i18n.t('categories_icon')}
+                accessibilityRole="image"
               />
               <Text style={[styles.statNumber, { color: colors.primary }]}>
                 {activeCategories}
@@ -811,25 +915,40 @@ const HomeScreen = ({ navigation, route }) => {
             styles.streamlineBox,
             { backgroundColor: colors.accent, borderColor: colors.primary },
           ]}
+          accessible
+          accessibilityLabel={i18n.t('hint_homescreen')}
+          accessibilityRole="text"
         >
           <FontAwesome
             name="lightbulb-o"
             size={20}
             color={colors.primary}
             style={styles.streamlineIcon}
+            accessibilityLabel={i18n.t('hint_icon')}
+            accessibilityRole="image"
           />
           <Text style={[styles.streamlineText, { color: colors.text }]}>
             {i18n.t('hint_homescreen')}
           </Text>
         </View>
-        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessible
+          accessibilityLabel={i18n.t('footer_label')}
+          accessibilityRole="contentinfo"
+        >
           <FontAwesome
             name="info-circle"
             size={20}
             color={colors.surface}
             style={styles.footerIcon}
+            accessibilityLabel={i18n.t('footer_icon')}
+            accessibilityRole="image"
           />
-          <Text style={[styles.footerText, { color: colors.surface }]}>
+          <Text
+            style={[styles.footerText, { color: colors.surface }]}
+            accessibilityLabel={i18n.t('footer_label')}
+          >
             © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
           </Text>
         </View>
@@ -842,7 +961,13 @@ const HomeScreen = ({ navigation, route }) => {
         accessibilityHint={i18n.t('create_new_document_hint')}
         accessibilityRole="button"
       >
-        <FontAwesome name="plus" size={24} color={colors.surface} />
+        <FontAwesome
+          name="plus"
+          size={24}
+          color={colors.surface}
+          accessibilityLabel={i18n.t('create_new_document_icon')}
+          accessibilityRole="image"
+        />
       </TouchableOpacity>
     </View>
   );

@@ -17,7 +17,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
 import * as ImagePicker from 'expo-image-picker';
-
 import { AuthContext } from '../../../contexts/AuthContext';
 import { LanguageContext } from '../../../contexts/LanguageContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -331,24 +330,11 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         newDocument,
         category: 'Handlowe',
       });
-      return;
     } catch (err) {
-      console.warn(
-        `Attempt ${attempt} failed: ${err.message}. ${
-          attempt < maxRetries
-            ? `Retrying after ${2 ** attempt * 2000}ms...`
-            : 'No more retries.'
-        }`,
-      );
-      if (attempt === maxRetries) {
-        console.error('All retry attempts failed:', err);
-        setError(`${i18n.t('errorSaving')}: ${err.message}`);
-        setSnackbarMessage(`${i18n.t('errorSaving')}: ${err.message}`);
-        setSnackbarVisible(true);
-        return;
-      }
-      await delay(2 ** attempt * 2000); // Exponential backoff: 2s, 4s, 8s
-      attempt += 1;
+      console.error('Error saving document:', err);
+      setError(`${i18n.t('errorSaving')}: ${err.message}`);
+      setSnackbarMessage(`${i18n.t('errorSaving')}: ${err.message}`);
+      setSnackbarVisible(true);
     }
   };
 
@@ -357,23 +343,39 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      accessible={false}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         style={[styles.scrollView, { backgroundColor: colors.background }]}
+        accessible={false}
       >
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={document ? i18n.t('editDocument') : i18n.t('createOffer')}
             titleStyle={[styles.header, { color: colors.text }]}
+            accessibilityLabel={
+              document ? i18n.t('editDocument') : i18n.t('createOffer')
+            }
+            accessibilityRole="header"
           />
         </Card>
 
         {/* Client Data */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('clientData')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('clientData')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -394,6 +396,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('clientCompanyName')}
+              accessibilityHint={i18n.t('clientCompanyName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('clientAddress')}
@@ -413,6 +417,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('clientAddress')}
+              accessibilityHint={i18n.t('clientAddress_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('clientNip')}
@@ -430,6 +436,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('clientNip')}
+              accessibilityHint={i18n.t('clientNip_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('clientEmail')}
@@ -448,15 +456,22 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
               }}
               keyboardType="email-address"
               accessibilityLabel={i18n.t('clientEmail')}
+              accessibilityHint={i18n.t('clientEmail_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Offer Data */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('offerData')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('offerData')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -477,6 +492,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issueDate')}
+              accessibilityHint={i18n.t('issueDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('validityDate')}
@@ -494,6 +511,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('validityDate')}
+              accessibilityHint={i18n.t('validityDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('offerNumber')}
@@ -511,15 +530,22 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('offerNumber')}
+              accessibilityHint={i18n.t('offerNumber_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Logo and Signature */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('logoAndSignature')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('logoAndSignature')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <Button
@@ -533,6 +559,12 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
               accessibilityLabel={
                 formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')
               }
+              accessibilityHint={
+                formData.logo
+                  ? i18n.t('changeLogo_hint')
+                  : i18n.t('uploadLogo_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')}
             </Button>
@@ -549,6 +581,12 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                   ? i18n.t('changeSignature')
                   : i18n.t('uploadSignature')
               }
+              accessibilityHint={
+                formData.podpis
+                  ? i18n.t('changeSignature_hint')
+                  : i18n.t('uploadSignature_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.podpis
                 ? i18n.t('changeSignature')
@@ -558,10 +596,15 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         </Card>
 
         {/* Offer Items */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('offerItems')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('offerItems')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -582,6 +625,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('serviceProductName')}
+              accessibilityHint={i18n.t('serviceProductName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('quantity')}
@@ -600,6 +645,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('quantity')}
+              accessibilityHint={i18n.t('quantity_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('netPrice')}
@@ -618,6 +665,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('netPrice')}
+              accessibilityHint={i18n.t('netPrice_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('netValue')}
@@ -636,6 +685,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('netValue')}
+              accessibilityHint={i18n.t('netValue_hint')}
+              accessibilityRole="edit"
             />
             <Button
               mode="outlined"
@@ -646,6 +697,9 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 <FontAwesome name="plus" size={16} color={colors.primary} />
               )}
               accessibilityLabel={i18n.t('addProduct')}
+              fram
+              accessibilityHint={i18n.t('addProduct_hint')}
+              accessibilityRole="button"
             >
               {i18n.t('addProduct')}
             </Button>
@@ -653,9 +707,14 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
               <Card
                 key={product.nazwa_uslugi_towaru || `product-${index}`}
                 style={[styles.productCard, { backgroundColor: colors.accent }]}
+                accessible={false}
               >
                 <Card.Content style={styles.productContent}>
-                  <Text style={[styles.productText, { color: colors.text }]}>
+                  <Text
+                    style={[styles.productText, { color: colors.text }]}
+                    accessibilityLabel={`${product.nazwa_uslugi_towaru}, ilość ${product.ilosc}, cena netto ${product.cena_netto}, wartość netto ${product.wartosc_netto}`}
+                    accessibilityRole="text"
+                  >
                     {product.nazwa_uslugi_towaru} | {product.ilosc} |{' '}
                     {product.cena_netto} | {product.wartosc_netto}
                   </Text>
@@ -672,6 +731,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                       />
                     )}
                     accessibilityLabel={i18n.t('remove')}
+                    accessibilityHint={i18n.t('remove_hint')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('remove')}
                   </Button>
@@ -682,10 +743,15 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         </Card>
 
         {/* Summary */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('summary')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('summary')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -707,6 +773,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('totalNetValue')}
+              accessibilityHint={i18n.t('totalNetValue_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('vatRate')}
@@ -725,6 +793,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('vatRate')}
+              accessibilityHint={i18n.t('vatRate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('vatValue')}
@@ -743,6 +813,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('vatValue')}
+              accessibilityHint={i18n.t('vatValue_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('totalGrossValue')}
@@ -763,15 +835,22 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('totalGrossValue')}
+              accessibilityHint={i18n.t('totalGrossValue_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Issuer Data */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('issuerData')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('issuerData')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -792,6 +871,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issuerCompanyName')}
+              accessibilityHint={i18n.t('issuerCompanyName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('issuerNip')}
@@ -809,6 +890,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issuerNip')}
+              accessibilityHint={i18n.t('issuerNip_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('issuerAddress')}
@@ -826,6 +909,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('issuerAddress')}
+              accessibilityHint={i18n.t('issuerAddress_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('bankName')}
@@ -843,6 +928,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('bankName')}
+              accessibilityHint={i18n.t('bankName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('bankAccountNumber')}
@@ -862,6 +949,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('bankAccountNumber')}
+              accessibilityHint={i18n.t('bankAccountNumber_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('swiftBic')}
@@ -879,6 +968,8 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('swiftBic')}
+              accessibilityHint={i18n.t('swiftBic_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('paymentMethod')}
@@ -898,19 +989,28 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('paymentMethod')}
+              accessibilityHint={i18n.t('paymentMethod_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Footer */}
-        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessible={false}
+        >
           <FontAwesome
             name="info-circle"
             size={20}
             color={colors.surface}
             style={styles.footerIcon}
+            accessible={false}
           />
-          <Text style={[styles.footerText, { color: colors.surface }]}>
+          <Text
+            style={[styles.footerText, { color: colors.surface }]}
+            accessible={false}
+          >
             © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
           </Text>
         </View>
@@ -923,8 +1023,14 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('save')}
         accessibilityHint={i18n.t('save_document_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="save" size={24} color={colors.surface} />
+        <FontAwesome
+          name="save"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Cancel Button */}
@@ -934,18 +1040,37 @@ export default function OfertaHandlowaScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('cancel')}
         accessibilityHint={i18n.t('cancel_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="times" size={24} color={colors.surface} />
+        <FontAwesome
+          name="times"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Snackbar */}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
-        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+        action={{
+          label: 'OK',
+          onPress: () => setSnackbarVisible(false),
+          accessibilityLabel: i18n.t('ok'),
+          accessibilityHint: i18n.t('dismiss_snackbar_hint'),
+          accessibilityRole: 'button',
+        }}
         style={{ backgroundColor: colors.surface }}
+        accessibilityLiveRegion="polite"
       >
-        <Text style={{ color: colors.text }}>{snackbarMessage}</Text>
+        <Text
+          style={{ color: colors.text }}
+          accessibilityLabel={snackbarMessage}
+          accessibilityRole="alert"
+        >
+          {snackbarMessage}
+        </Text>
       </Snackbar>
     </View>
   );

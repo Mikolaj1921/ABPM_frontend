@@ -78,6 +78,7 @@ const AccordionIcon = ({ icon, accessibilityLabel, color }) => (
     color={color}
     style={styles.icon}
     accessibilityLabel={accessibilityLabel}
+    accessibilityRole="image"
   />
 );
 const SearchIcon = ({ color }) => (
@@ -85,7 +86,8 @@ const SearchIcon = ({ color }) => (
     name="search"
     size={20}
     color={color}
-    accessibilityLabel="Ikona wyszukiwania"
+    accessibilityLabel={i18n.t('search_icon')}
+    accessibilityRole="image"
   />
 );
 const SortIcon = ({ color }) => (
@@ -94,7 +96,8 @@ const SortIcon = ({ color }) => (
     size={16}
     style={{ marginRight: 8 }}
     color={color}
-    accessibilityLabel="Ikona sortowania"
+    accessibilityLabel={i18n.t('sort_icon')}
+    accessibilityRole="image"
   />
 );
 const LeftIcon = ({ color }) => (
@@ -102,7 +105,8 @@ const LeftIcon = ({ color }) => (
     name="check-circle"
     size={24}
     color={color}
-    accessibilityLabel="Ikona dokumentu"
+    accessibilityLabel={i18n.t('document_icon')}
+    accessibilityRole="image"
   />
 );
 const MenuIcon = ({ onPress, accessibilityLabel, color }) => (
@@ -110,16 +114,19 @@ const MenuIcon = ({ onPress, accessibilityLabel, color }) => (
     onPress={onPress}
     accessibilityLabel={accessibilityLabel}
     accessibilityRole="button"
-    accessibilityHint="Otwórz menu opcji dokumentu"
+    accessibilityHint={i18n.t('open_document_menu_hint')}
   >
     <FontAwesome
       name="ellipsis-v"
       size={24}
       color={color}
       style={{ marginRight: 10 }}
+      accessibilityLabel={i18n.t('menu_icon')}
+      accessibilityRole="image"
     />
   </TouchableOpacity>
 );
+
 const SortOption = ({ item, selectedCategory, handleSortChange, colors }) => (
   <TouchableOpacity
     style={[styles.modalItem, { borderBottomColor: colors.accent }]}
@@ -160,7 +167,7 @@ const CardMenu = ({
       const encodedUrl = encodeURIComponent(shareUrl);
       const canOpen = await Linking.canOpenURL('https://');
       if (canOpen) {
-        await Linking.openURL(`>;</`);
+        await Linking.openURL(`https://t.me/share/url?url=${encodedUrl}`);
       } else {
         Alert.alert(i18n.t('sharingNotAvailable'));
       }
@@ -184,6 +191,7 @@ const CardMenu = ({
         onRequestClose={() => handleMenuClose(item.id)}
         accessibilityLabel={i18n.t('documentMenuModal', { name: item.name })}
         accessibilityHint={i18n.t('documentMenuModalHint')}
+        accessibilityViewIsModal={true}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
@@ -198,6 +206,11 @@ const CardMenu = ({
               styles.modalContent,
               { opacity: menuFadeAnim, backgroundColor: colors.surface },
             ]}
+            accessible
+            accessibilityLabel={i18n.t('document_menu_content', {
+              name: item.name,
+            })}
+            accessibilityRole="dialog"
           >
             <TouchableOpacity
               style={styles.menuItem}
@@ -214,7 +227,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('previewDocumentHint')}
             >
-              <FontAwesome name="eye" size={20} color={colors.primary} />
+              <FontAwesome
+                name="eye"
+                size={20}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('preview_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 {i18n.t('preview')}
               </Text>
@@ -231,7 +250,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('downloadDocumentHint')}
             >
-              <FontAwesome name="download" size={20} color={colors.primary} />
+              <FontAwesome
+                name="download"
+                size={20}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('download_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 {i18n.t('download')}
               </Text>
@@ -246,7 +271,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('shareDocumentHint')}
             >
-              <FontAwesome name="telegram" size={20} color={colors.primary} />
+              <FontAwesome
+                name="telegram"
+                size={20}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('share_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 {i18n.t('shareTelegram')}
               </Text>
@@ -263,7 +294,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('addLogoToDocumentHint')}
             >
-              <FontAwesome name="image" size={20} color={colors.primary} />
+              <FontAwesome
+                name="image"
+                size={20}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('logo_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 {i18n.t('addLogo')}
               </Text>
@@ -280,7 +317,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('addSignatureToDocumentHint')}
             >
-              <FontAwesome name="pencil" size={20} color={colors.primary} />
+              <FontAwesome
+                name="pencil"
+                size={20}
+                color={colors.primary}
+                accessibilityLabel={i18n.t('signature_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.text }]}>
                 {i18n.t('addSignature')}
               </Text>
@@ -298,7 +341,13 @@ const CardMenu = ({
               accessibilityRole="button"
               accessibilityHint={i18n.t('deleteDocumentHint')}
             >
-              <FontAwesome name="trash" size={20} color={colors.error} />
+              <FontAwesome
+                name="trash"
+                size={20}
+                color={colors.error}
+                accessibilityLabel={i18n.t('delete_icon')}
+                accessibilityRole="image"
+              />
               <Text style={[styles.menuItemText, { color: colors.error }]}>
                 {i18n.t('delete')}
               </Text>
@@ -351,6 +400,7 @@ const DocumentCard = ({
         key={item.id}
         accessible
         accessibilityLabel={`${i18n.t('document')}: ${item.name}, ${i18n.t('created')}: ${new Date(item.created_at || Date.now()).toLocaleDateString()}`}
+        accessibilityRole="listitem"
       >
         <Card.Title
           title={item.name}
@@ -376,6 +426,8 @@ const DocumentCard = ({
               colors={colors}
             />
           )}
+          accessibilityLabel={`${i18n.t('document')}: ${item.name}`}
+          subtitleAccessibilityLabel={subtitle}
         />
       </Card>
     </Animated.View>
@@ -1232,11 +1284,13 @@ export default function DocumentsScreen({ navigation, route }) {
           ]}
           accessible
           accessibilityLabel={i18n.t('quick_stats')}
+          accessibilityRole="group"
         >
           <Card.Title
             title={i18n.t('quick_stats')}
             titleStyle={[styles.statsTitle, { color: colors.text }]}
             accessibilityLabel={i18n.t('quick_stats')}
+            accessibilityRole="header"
           />
           <Card.Content style={styles.statsContent}>
             <View
@@ -1244,11 +1298,16 @@ export default function DocumentsScreen({ navigation, route }) {
                 styles.statItem,
                 { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
+              accessible
+              accessibilityLabel={`${i18n.t('documents_created')}: ${totalDocuments}`}
+              accessibilityRole="text"
             >
               <FontAwesome
                 name="file-text-o"
                 size={24}
                 color={colors.primary}
+                accessibilityLabel={i18n.t('documents_icon')}
+                accessibilityRole="image"
               />
               <Text style={[styles.statNumber, { color: colors.primary }]}>
                 {totalDocuments}
@@ -1262,11 +1321,16 @@ export default function DocumentsScreen({ navigation, route }) {
                 styles.statItem,
                 { backgroundColor: colors.accent, borderColor: colors.accent },
               ]}
+              accessible
+              accessibilityLabel={`${i18n.t('active_categories')}: ${activeCategories}`}
+              accessibilityRole="text"
             >
               <FontAwesome
                 name="folder-open"
                 size={24}
                 color={colors.primary}
+                accessibilityLabel={i18n.t('categories_icon')}
+                accessibilityRole="image"
               />
               <Text style={[styles.statNumber, { color: colors.primary }]}>
                 {activeCategories}
@@ -1295,7 +1359,13 @@ export default function DocumentsScreen({ navigation, route }) {
           const maxDocs = 10; // Arbitrary threshold for progress
           const progress = Math.min(docCount / maxDocs, 1);
           return (
-            <View key={category.id} style={styles.categoryContainer}>
+            <View
+              key={category.id}
+              style={styles.categoryContainer}
+              accessible
+              accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
+              accessibilityRole="group"
+            >
               <List.Accordion
                 title={
                   <View style={styles.titleContainer}>
@@ -1305,7 +1375,10 @@ export default function DocumentsScreen({ navigation, route }) {
                       color={colors.primary}
                     />
                     <View style={styles.titleWrapper}>
-                      <Text style={[styles.cardTitle, { color: colors.text }]}>
+                      <Text
+                        style={[styles.cardTitle, { color: colors.text }]}
+                        accessibilityLabel={i18n.t(category.nameKey)}
+                      >
                         {i18n.t(category.nameKey)}
                       </Text>
                       <Text
@@ -1313,9 +1386,11 @@ export default function DocumentsScreen({ navigation, route }) {
                           styles.templateCount,
                           { color: colors.secondaryText },
                         ]}
+                        accessibilityLabel={i18n.t('documents_count', {
+                          count: docCount,
+                        })}
                       >
-                        {i18n.t('documents_count')}
-                        {docCount}
+                        {i18n.t('documents_count')} {docCount}
                       </Text>
                     </View>
                     <View
@@ -1323,6 +1398,11 @@ export default function DocumentsScreen({ navigation, route }) {
                         styles.circleIndicator,
                         { backgroundColor: colors.primary },
                       ]}
+                      accessible
+                      accessibilityLabel={i18n.t('documents_count', {
+                        count: docCount,
+                      })}
+                      accessibilityRole="text"
                     >
                       <Text
                         style={[styles.circleText, { color: colors.surface }]}
@@ -1338,6 +1418,12 @@ export default function DocumentsScreen({ navigation, route }) {
                     size={16}
                     color={colors.text}
                     style={styles.accordionArrow}
+                    accessibilityLabel={
+                      props.isExpanded
+                        ? i18n.t('collapse_category')
+                        : i18n.t('expand_category')
+                    }
+                    accessibilityRole="image"
                   />
                 )}
                 expanded={expanded === category.id}
@@ -1362,12 +1448,18 @@ export default function DocumentsScreen({ navigation, route }) {
                     count: docCount,
                     total: maxDocs,
                   })}
+                  accessibilityRole="progressbar"
                 />
                 <View
                   style={[
                     styles.accordionContent,
                     { backgroundColor: colors.surface },
                   ]}
+                  accessible
+                  accessibilityLabel={i18n.t('category_content', {
+                    name: i18n.t(category.nameKey),
+                  })}
+                  accessibilityRole="group"
                 >
                   <Searchbar
                     placeholder={i18n.t('searchDocuments')}
@@ -1429,6 +1521,7 @@ export default function DocumentsScreen({ navigation, route }) {
                     onRequestClose={handleClose}
                     accessibilityLabel={i18n.t('sortModal')}
                     accessibilityHint={i18n.t('sortModalHint')}
+                    accessibilityViewIsModal={true}
                   >
                     <TouchableOpacity
                       style={styles.modalOverlay}
@@ -1446,6 +1539,9 @@ export default function DocumentsScreen({ navigation, route }) {
                             backgroundColor: colors.surface,
                           },
                         ]}
+                        accessible
+                        accessibilityLabel={i18n.t('sort_modal_content')}
+                        accessibilityRole="dialog"
                       >
                         <Text
                           style={[styles.modalTitle, { color: colors.text }]}
@@ -1465,6 +1561,8 @@ export default function DocumentsScreen({ navigation, route }) {
                             />
                           )}
                           keyExtractor={(item) => item.value}
+                          accessibilityLabel={i18n.t('sort_options_list')}
+                          accessibilityRole="list"
                         />
                         <TouchableOpacity
                           style={[
@@ -1494,8 +1592,8 @@ export default function DocumentsScreen({ navigation, route }) {
                     visible={logoModalVisible}
                     onRequestClose={handleClose}
                     accessibilityLabel={i18n.t('logoModal')}
-                    accessibility
-                    WILLIAM={i18n.t('logoModalHint')}
+                    accessibilityHint={i18n.t('logoModalHint')}
+                    accessibilityViewIsModal={true}
                   >
                     <TouchableOpacity
                       style={styles.modalOverlay}
@@ -1513,6 +1611,9 @@ export default function DocumentsScreen({ navigation, route }) {
                             backgroundColor: colors.surface,
                           },
                         ]}
+                        accessible
+                        accessibilityLabel={i18n.t('logo_modal_content')}
+                        accessibilityRole="dialog"
                       >
                         <Text
                           style={[styles.modalTitle, { color: colors.text }]}
@@ -1574,6 +1675,7 @@ export default function DocumentsScreen({ navigation, route }) {
                     onRequestClose={handleClose}
                     accessibilityLabel={i18n.t('signatureModal')}
                     accessibilityHint={i18n.t('signatureModalHint')}
+                    accessibilityViewIsModal={true}
                   >
                     <TouchableOpacity
                       style={styles.modalOverlay}
@@ -1591,6 +1693,9 @@ export default function DocumentsScreen({ navigation, route }) {
                             backgroundColor: colors.surface,
                           },
                         ]}
+                        accessible
+                        accessibilityLabel={i18n.t('signature_modal_content')}
+                        accessibilityRole="dialog"
                       >
                         <Text
                           style={[styles.modalTitle, { color: colors.text }]}
@@ -1657,6 +1762,7 @@ export default function DocumentsScreen({ navigation, route }) {
                       style={styles.list}
                       accessible
                       accessibilityLabel={i18n.t('documentList')}
+                      accessibilityRole="list"
                     >
                       {filteredDocuments.map((item) => (
                         <DocumentCard
@@ -1692,12 +1798,17 @@ export default function DocumentsScreen({ navigation, route }) {
             styles.streamlineBox,
             { backgroundColor: colors.accent, borderColor: colors.primary },
           ]}
+          accessible
+          accessibilityLabel={i18n.t('hint_docscreen')}
+          accessibilityRole="text"
         >
           <FontAwesome
             name="lightbulb-o"
             size={20}
             color={colors.primary}
             style={styles.streamlineIcon}
+            accessibilityLabel={i18n.t('hint_icon')}
+            accessibilityRole="image"
           />
           <Text style={[styles.streamlineText, { color: colors.text }]}>
             {i18n.t('hint_docscreen')}

@@ -1,27 +1,52 @@
 import React from 'react';
-import { Text, StyleSheet, Image } from 'react-native'; // Dodano import Image
+import { Text, StyleSheet, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import FadeInView from '../components/animations/FadeInView'; // Ensure this exists
+import { LanguageContext } from '../contexts/LanguageContext';
+import FadeInView from '../components/animations/FadeInView';
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
+  const { i18n } = React.useContext(LanguageContext);
 
   return (
-    <FadeInView style={styles.container}>
+    <FadeInView
+      style={styles.container}
+      accessibilityLabel={i18n.t('welcome_screen_label')}
+      accessibilityRole="dialog"
+    >
       <Image
-        source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')} // Poprawiona ścieżka
+        source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
         style={styles.image}
+        accessible
+        accessibilityLabel={i18n.t('app_logo_label')}
+        accessibilityHint={i18n.t('app_logo_hint')}
+        accessibilityRole="image"
       />
-      <Text style={styles.logo}>Automation of Bureaucratic Processes</Text>
-      <Text style={styles.tagline}>Document automation at your fingertips</Text>
+      <Text
+        style={styles.logo}
+        accessibilityRole="header"
+        accessibilityLabel={i18n.t('app_name_label')}
+      >
+        {i18n.t('app_name')}
+      </Text>
+      <Text
+        style={styles.tagline}
+        accessibilityLabel={i18n.t('tagline_label')}
+        accessibilityRole="text"
+      >
+        {i18n.t('tagline')}
+      </Text>
       <Button
         mode="contained"
         onPress={() => navigation.navigate('Login')}
         style={styles.button}
         labelStyle={styles.buttonText}
+        accessibilityLabel={i18n.t('get_started_button_label')}
+        accessibilityHint={i18n.t('get_started_button_hint')}
+        accessibilityRole="button"
       >
-        <Text>Get Started</Text>
+        {i18n.t('get_started')}
       </Button>
     </FadeInView>
   );
@@ -30,7 +55,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#001426FF', // Dark blue background from image
+    backgroundColor: '#001426FF',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -52,10 +77,10 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     borderRadius: 8,
-    backgroundColor: '#FFFFFF', // White button
+    backgroundColor: '#FFFFFF',
   },
   buttonText: {
-    color: '#1A2525', // Dark blue text on button
+    color: '#1A2525',
     fontSize: 16,
   },
   image: {

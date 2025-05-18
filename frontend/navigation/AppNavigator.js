@@ -22,7 +22,14 @@ const Tab = createBottomTabNavigator();
 const SettingsStack = createStackNavigator();
 
 // Custom animated tab icon component
-const AnimatedTabIcon = ({ name, color, size, focused }) => {
+const AnimatedTabIcon = ({
+  name,
+  color,
+  size,
+  focused,
+  accessibilityLabel,
+  accessibilityHint,
+}) => {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -42,6 +49,9 @@ const AnimatedTabIcon = ({ name, color, size, focused }) => {
       style={[animatedStyle]}
       onTouchStart={handlePressIn}
       onTouchEnd={handlePressOut}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
     >
       <FontAwesome name={name} size={size} color={color} />
     </Animated.View>
@@ -55,6 +65,8 @@ const HomeIcon = ({ color, focused }) => (
     color={color}
     size={24}
     focused={focused}
+    accessibilityLabel={i18n.t('home_icon_label')}
+    accessibilityHint={i18n.t('home_icon_hint')}
   />
 );
 
@@ -64,6 +76,8 @@ const DocumentsIcon = ({ color, focused }) => (
     color={color}
     size={20}
     focused={focused}
+    accessibilityLabel={i18n.t('documents_icon_label')}
+    accessibilityHint={i18n.t('documents_icon_hint')}
   />
 );
 
@@ -73,18 +87,28 @@ const SettingsIcon = ({ color, focused }) => (
     color={color}
     size={24}
     focused={focused}
+    accessibilityLabel={i18n.t('settings_icon_label')}
+    accessibilityHint={i18n.t('settings_icon_hint')}
   />
 );
 
 // Custom header title with logo
 const CustomHeaderTitle = ({ title }) => {
   const { colors } = useTheme();
+  const { i18n } = useContext(LanguageContext);
 
   return (
-    <View style={styles.headerTitleContainer}>
+    <View
+      style={styles.headerTitleContainer}
+      accessibilityLabel={`${i18n.t('header_logo_label')}, ${title}`}
+      accessibilityRole="header"
+    >
       <Image
         source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
         style={[styles.headerLogo, { tintColor: colors.primary }]}
+        accessibilityLabel={i18n.t('header_logo_label')}
+        accessibilityHint={i18n.t('header_logo_hint')}
+        accessibilityRole="image"
       />
       <Text style={[styles.headerTitleText, { color: colors.text }]}>
         {title}
@@ -155,10 +179,8 @@ const AppNavigator = () => {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.surface,
-
           paddingBottom: 5,
           paddingTop: 5,
-
           borderColor: 0,
         },
         tabBarActiveTintColor: colors.primary,
@@ -168,6 +190,8 @@ const AppNavigator = () => {
           fontWeight: '500',
           marginBottom: 5,
         },
+        tabBarAccessibilityLabel: i18n.t('tab_bar_label'),
+        tabBarAccessibilityHint: i18n.t('tab_bar_hint'),
       }}
     >
       <Tab.Screen

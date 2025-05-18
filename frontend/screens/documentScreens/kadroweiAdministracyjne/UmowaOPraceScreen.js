@@ -424,23 +424,39 @@ export default function UmowaOPraceScreen({ route, navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      accessible={false}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         style={[styles.scrollView, { backgroundColor: colors.background }]}
+        accessible={false}
       >
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={document ? i18n.t('editDocument') : i18n.t('createContract')}
             titleStyle={[styles.header, { color: colors.text }]}
+            accessibilityLabel={
+              document ? i18n.t('editDocument') : i18n.t('createContract')
+            }
+            accessibilityRole="header"
           />
         </Card>
 
         {/* Employer Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('employerData')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('employerData')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -459,6 +475,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('companyName')}
+              accessibilityHint={i18n.t('companyName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('companyAddress')}
@@ -476,6 +494,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('companyAddress')}
+              accessibilityHint={i18n.t('companyAddress_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('nip')}
@@ -494,6 +514,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               }}
               keyboardType="numeric"
               accessibilityLabel={i18n.t('nip')}
+              accessibilityHint={i18n.t('nip_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('regon')}
@@ -512,6 +534,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               }}
               keyboardType="numeric"
               accessibilityLabel={i18n.t('regon')}
+              accessibilityHint={i18n.t('regon_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('representativeName')}
@@ -531,6 +555,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('representativeName')}
+              accessibilityHint={i18n.t('representativeName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('representativePosition')}
@@ -550,15 +576,22 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('representativePosition')}
+              accessibilityHint={i18n.t('representativePosition_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Employee Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('employeeData')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('employeeData')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -579,6 +612,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('employeeName')}
+              accessibilityHint={i18n.t('employeeName_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('employeeAddress')}
@@ -598,6 +633,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('employeeAddress')}
+              accessibilityHint={i18n.t('employeeAddress_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('pesel')}
@@ -618,15 +655,22 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               }}
               keyboardType="numeric"
               accessibilityLabel={i18n.t('pesel')}
+              accessibilityHint={i18n.t('pesel_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Logo and Signature */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('logoAndSignature')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('logoAndSignature')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <Button
@@ -640,6 +684,12 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               accessibilityLabel={
                 formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')
               }
+              accessibilityHint={
+                formData.logo
+                  ? i18n.t('changeLogo_hint')
+                  : i18n.t('uploadLogo_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.logo ? i18n.t('changeLogo') : i18n.t('uploadLogo')}
             </Button>
@@ -656,6 +706,12 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                   ? i18n.t('changeSignature')
                   : i18n.t('uploadSignature')
               }
+              accessibilityHint={
+                formData.podpis
+                  ? i18n.t('changeSignature_hint')
+                  : i18n.t('uploadSignature_hint')
+              }
+              accessibilityRole="button"
             >
               {formData.podpis
                 ? i18n.t('changeSignature')
@@ -665,10 +721,15 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         </Card>
 
         {/* Contract Details */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('contractDetails')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('contractDetails')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -687,6 +748,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('position')}
+              accessibilityHint={i18n.t('position_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('workHours')}
@@ -704,6 +767,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('workHours')}
+              accessibilityHint={i18n.t('workHours_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('workplace')}
@@ -721,6 +786,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('workplace')}
+              accessibilityHint={i18n.t('workplace_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('salary')}
@@ -739,6 +806,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('salary')}
+              accessibilityHint={i18n.t('salary_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('paymentTerm')}
@@ -759,6 +828,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('paymentTerm')}
+              accessibilityHint={i18n.t('paymentTerm_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('contractDuration')}
@@ -778,6 +849,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('contractDuration')}
+              accessibilityHint={i18n.t('contractDuration_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('startDate')}
@@ -797,6 +870,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('startDate')}
+              accessibilityHint={i18n.t('startDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('contractDate')}
@@ -814,6 +889,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('contractDate')}
+              accessibilityHint={i18n.t('contractDate_hint')}
+              accessibilityRole="edit"
             />
             <TextInput
               label={i18n.t('placeOfSigning')}
@@ -833,15 +910,22 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('placeOfSigning')}
+              accessibilityHint={i18n.t('placeOfSigning_hint')}
+              accessibilityRole="edit"
             />
           </Card.Content>
         </Card>
 
         {/* Employee Duties */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('employeeDuties')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('employeeDuties')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -860,6 +944,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('newDuty')}
+              accessibilityHint={i18n.t('newDuty_hint')}
+              accessibilityRole="edit"
             />
             <Button
               mode="outlined"
@@ -870,6 +956,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 <FontAwesome name="plus" size={16} color={colors.primary} />
               )}
               accessibilityLabel={i18n.t('addDuty')}
+              accessibilityHint={i18n.t('addDuty_hint')}
+              accessibilityRole="button"
             >
               {i18n.t('addDuty')}
             </Button>
@@ -877,9 +965,14 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               <Card
                 key={`obowiazek-${index}`}
                 style={[styles.itemCard, { backgroundColor: colors.accent }]}
+                accessible={false}
               >
                 <Card.Content style={styles.itemContent}>
-                  <Text style={[styles.itemText, { color: colors.text }]}>
+                  <Text
+                    style={[styles.itemText, { color: colors.text }]}
+                    accessibilityLabel={obowiazek}
+                    accessibilityRole="text"
+                  >
                     {obowiazek}
                   </Text>
                   <Button
@@ -895,6 +988,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                       />
                     )}
                     accessibilityLabel={i18n.t('remove')}
+                    accessibilityHint={i18n.t('remove_hint')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('remove')}
                   </Button>
@@ -905,10 +1000,15 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         </Card>
 
         {/* Other Provisions */}
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          accessible={false}
+        >
           <Card.Title
             title={i18n.t('otherProvisions')}
             titleStyle={[styles.sectionTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('otherProvisions')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <TextInput
@@ -927,6 +1027,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 },
               }}
               accessibilityLabel={i18n.t('newProvision')}
+              accessibilityHint={i18n.t('newProvision_hint')}
+              accessibilityRole="edit"
             />
             <Button
               mode="outlined"
@@ -937,6 +1039,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                 <FontAwesome name="plus" size={16} color={colors.primary} />
               )}
               accessibilityLabel={i18n.t('addProvision')}
+              accessibilityHint={i18n.t('addProvision_hint')}
+              accessibilityRole="button"
             >
               {i18n.t('addProvision')}
             </Button>
@@ -944,9 +1048,14 @@ export default function UmowaOPraceScreen({ route, navigation }) {
               <Card
                 key={`oferta-${index}`}
                 style={[styles.itemCard, { backgroundColor: colors.accent }]}
+                accessible={false}
               >
                 <Card.Content style={styles.itemContent}>
-                  <Text style={[styles.itemText, { color: colors.text }]}>
+                  <Text
+                    style={[styles.itemText, { color: colors.text }]}
+                    accessibilityLabel={oferta}
+                    accessibilityRole="text"
+                  >
                     {oferta}
                   </Text>
                   <Button
@@ -962,6 +1071,8 @@ export default function UmowaOPraceScreen({ route, navigation }) {
                       />
                     )}
                     accessibilityLabel={i18n.t('remove')}
+                    accessibilityHint={i18n.t('remove_hint')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('remove')}
                   </Button>
@@ -972,14 +1083,21 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         </Card>
 
         {/* Footer */}
-        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessible={false}
+        >
           <FontAwesome
             name="info-circle"
             size={20}
             color={colors.surface}
             style={styles.footerIcon}
+            accessible={false}
           />
-          <Text style={[styles.footerText, { color: colors.surface }]}>
+          <Text
+            style={[styles.footerText, { color: colors.surface }]}
+            accessible={false}
+          >
             © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
           </Text>
         </View>
@@ -992,8 +1110,14 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('save')}
         accessibilityHint={i18n.t('save_document_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="save" size={24} color={colors.surface} />
+        <FontAwesome
+          name="save"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Cancel Button */}
@@ -1003,18 +1127,37 @@ export default function UmowaOPraceScreen({ route, navigation }) {
         accessible
         accessibilityLabel={i18n.t('cancel')}
         accessibilityHint={i18n.t('cancel_hint')}
+        accessibilityRole="button"
       >
-        <FontAwesome name="times" size={24} color={colors.surface} />
+        <FontAwesome
+          name="times"
+          size={24}
+          color={colors.surface}
+          accessible={false}
+        />
       </TouchableOpacity>
 
       {/* Snackbar */}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
-        action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+        action={{
+          label: 'OK',
+          onPress: () => setSnackbarVisible(false),
+          accessibilityLabel: i18n.t('ok'),
+          accessibilityHint: i18n.t('dismiss_snackbar_hint'),
+          accessibilityRole: 'button',
+        }}
         style={{ backgroundColor: colors.surface }}
+        accessibilityLiveRegion="polite"
       >
-        <Text style={{ color: colors.text }}>{snackbarMessage}</Text>
+        <Text
+          style={{ color: colors.text }}
+          accessibilityLabel={snackbarMessage}
+          accessibilityRole="alert"
+        >
+          {snackbarMessage}
+        </Text>
       </Snackbar>
     </View>
   );
@@ -1043,7 +1186,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   header: {
-    fontSize: 24,
+    marginTop: 10,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
   },

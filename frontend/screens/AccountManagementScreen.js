@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   Switch,
-  Alert,
 } from 'react-native';
 import {
   Button,
@@ -179,7 +178,12 @@ export default function AccountManagementScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <View
+        style={[styles.center, { backgroundColor: colors.background }]}
+        accessibilityLabel={i18n.t('spinner_loading')}
+        accessibilityHint={i18n.t('spinner_loading_hint')}
+        accessibilityRole="alert"
+      >
         <FontAwesome name="spinner" size={32} color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.text }]}>
           {i18n.t('loading')}
@@ -199,13 +203,21 @@ export default function AccountManagementScreen({ navigation }) {
                 size={44}
                 label={profile.firstName?.charAt(0) || 'U'}
                 style={[styles.avatar, { backgroundColor: colors.primary }]}
+                accessibilityHint={i18n.t('user_avatar_hint')}
+                accessibilityRole="image"
               />
               <View style={styles.profileText}>
-                <Text style={[styles.profileName, { color: colors.text }]}>
+                <Text
+                  style={[styles.profileName, { color: colors.text }]}
+                  accessibilityLabel={i18n.t('profile_name_label')}
+                  accessibilityRole="label"
+                >
                   {`${profile.firstName} ${profile.lastName}` || 'User'}
                 </Text>
                 <Text
                   style={[styles.profileEmail, { color: colors.secondaryText }]}
+                  accessibilityLabel={i18n.t('profile_email_label')}
+                  accessibilityRole="label"
                 >
                   {profile.email || ''}
                 </Text>
@@ -225,6 +237,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholder={i18n.t('first_name')}
                   placeholderTextColor={colors.secondaryText}
                   accessibilityLabel={i18n.t('first_name')}
+                  accessibilityRole="textbox"
                 />
                 <TextInput
                   style={[
@@ -238,6 +251,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholder={i18n.t('last_name')}
                   placeholderTextColor={colors.secondaryText}
                   accessibilityLabel={i18n.t('last_name')}
+                  accessibilityRole="textbox"
                 />
                 <TextInput
                   style={[
@@ -252,6 +266,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   keyboardType="email-address"
                   accessibilityLabel={i18n.t('email')}
+                  accessibilityRole="textbox"
                 />
                 <View style={styles.actionButtons}>
                   <Button
@@ -260,6 +275,7 @@ export default function AccountManagementScreen({ navigation }) {
                     style={[styles.button, { backgroundColor: colors.primary }]}
                     labelStyle={[styles.buttonText, { color: colors.surface }]}
                     accessibilityLabel={i18n.t('save_profile')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('save')}
                   </Button>
@@ -269,6 +285,7 @@ export default function AccountManagementScreen({ navigation }) {
                     style={[styles.button, { borderColor: colors.primary }]}
                     labelStyle={[styles.buttonText, { color: colors.primary }]}
                     accessibilityLabel={i18n.t('cancel')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('cancel')}
                   </Button>
@@ -281,10 +298,44 @@ export default function AccountManagementScreen({ navigation }) {
                 style={[styles.button, { borderColor: colors.primary }]}
                 labelStyle={[styles.buttonText, { color: colors.primary }]}
                 accessibilityLabel={i18n.t('edit_profile')}
+                accessibilityRole="button"
               >
                 {i18n.t('edit_profile')}
               </Button>
             )}
+          </Card.Content>
+        </Card>
+
+        {/* Theme Settings Section */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Title
+            title={i18n.t('theme_settings')}
+            titleStyle={[styles.cardTitle, { color: colors.text }]}
+            accessibilityLabel={i18n.t('theme_settings')}
+            accessibilityRole="header"
+          />
+          <Card.Content>
+            <View style={styles.themeOption}>
+              <Text
+                style={[styles.optionText, { color: colors.text }]}
+                accessibilityLabel={i18n.t('dark_mode_switch_label')}
+                accessibilityRole="label"
+              >
+                {i18n.t('dark_mode_toggle')}
+              </Text>
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{
+                  false: colors.secondaryText,
+                  true: colors.accent,
+                }}
+                thumbColor={isDarkMode ? colors.primary : colors.surface}
+                accessibilityLabel={i18n.t('dark_mode_switch_label')}
+                accessibilityHint={i18n.t('darkModeHint')}
+                accessibilityRole="switch"
+              />
+            </View>
           </Card.Content>
         </Card>
 
@@ -294,6 +345,7 @@ export default function AccountManagementScreen({ navigation }) {
             title={i18n.t('change_password')}
             titleStyle={[styles.cardTitle, { color: colors.text }]}
             accessibilityLabel={i18n.t('change_password')}
+            accessibilityRole="header"
           />
           <Card.Content>
             {isChangingPassword ? (
@@ -311,6 +363,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('current_password')}
+                  accessibilityRole="textbox"
                 />
                 <TextInput
                   style={[
@@ -325,6 +378,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('new_password')}
+                  accessibilityRole="textbox"
                 />
                 <TextInput
                   style={[
@@ -339,6 +393,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('confirm_password')}
+                  accessibilityRole="textbox"
                 />
                 <View style={styles.actionButtons}>
                   <Button
@@ -347,6 +402,7 @@ export default function AccountManagementScreen({ navigation }) {
                     style={[styles.button, { backgroundColor: colors.primary }]}
                     labelStyle={[styles.buttonText, { color: colors.surface }]}
                     accessibilityLabel={i18n.t('save_password')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('save')}
                   </Button>
@@ -356,6 +412,7 @@ export default function AccountManagementScreen({ navigation }) {
                     style={[styles.button, { borderColor: colors.primary }]}
                     labelStyle={[styles.buttonText, { color: colors.primary }]}
                     accessibilityLabel={i18n.t('cancel')}
+                    accessibilityRole="button"
                   >
                     {i18n.t('cancel')}
                   </Button>
@@ -368,6 +425,7 @@ export default function AccountManagementScreen({ navigation }) {
                 style={[styles.button, { borderColor: colors.primary }]}
                 labelStyle={[styles.buttonText, { color: colors.primary }]}
                 accessibilityLabel={i18n.t('change_password')}
+                accessibilityRole="button"
               >
                 {i18n.t('change_password')}
               </Button>
@@ -381,6 +439,7 @@ export default function AccountManagementScreen({ navigation }) {
             title={i18n.t('account_actions')}
             titleStyle={[styles.cardTitle, { color: colors.text }]}
             accessibilityLabel={i18n.t('account_actions')}
+            accessibilityRole="header"
           />
           <Card.Content>
             <Button
@@ -393,6 +452,7 @@ export default function AccountManagementScreen({ navigation }) {
               ]}
               labelStyle={[styles.buttonText, { color: colors.surface }]}
               accessibilityLabel={i18n.t('delete_account')}
+              accessibilityRole="button"
             >
               {i18n.t('delete_account')}
             </Button>
@@ -400,12 +460,19 @@ export default function AccountManagementScreen({ navigation }) {
         </Card>
 
         {/* Footer */}
-        <View style={[styles.footer, { backgroundColor: colors.primary }]}>
+        <View
+          style={[styles.footer, { backgroundColor: colors.primary }]}
+          accessibilityLabel={i18n.t('footer_label')}
+          accessibilityHint={i18n.t('footer_hint')}
+          accessibilityRole="contentinfo"
+        >
           <FontAwesome
             name="info-circle"
             size={20}
             color={colors.surface}
             style={styles.footerIcon}
+            accessibilityLabel={i18n.t('footer_icon_label')}
+            accessibilityRole="image"
           />
           <Text style={[styles.footerText, { color: colors.surface }]}>
             © 2025 Automation of Bureaucratic Processes. Wersja 1.0.0
@@ -421,6 +488,8 @@ export default function AccountManagementScreen({ navigation }) {
           label: 'OK',
           onPress: () => setSnackbar({ ...snackbar, visible: false }),
         }}
+        accessibilityLabel={i18n.t('snackbar_message_label')}
+        accessibilityRole="alert"
       >
         {snackbar.message}
       </Snackbar>
@@ -506,7 +575,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
   },
-
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
