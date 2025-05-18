@@ -16,7 +16,7 @@ import { LanguageContext } from '../contexts/LanguageContext';
 
 export default function SettingsScreen({ navigation }) {
   const { setIsLoggedIn, user, loading, login } = useContext(AuthContext);
-  const { isDarkMode, toggleTheme, colorScheme, changeColorScheme } =
+  const { isDarkMode, toggleTheme, colorScheme, changeColorScheme, colors } =
     useTheme();
   const { i18n, locale, changeLanguage } = useContext(LanguageContext);
   const paperTheme = usePaperTheme();
@@ -47,7 +47,7 @@ export default function SettingsScreen({ navigation }) {
     console.log('SettingsScreen notificationsEnabled:', notificationsEnabled);
     console.log('SettingsScreen colorScheme:', colorScheme);
     console.log('SettingsScreen isDarkMode:', isDarkMode);
-    console.log('SettingsScreen paperTheme.colors:', paperTheme.colors);
+    console.log('SettingsScreen colors:', colors);
   }, [
     locale,
     i18n,
@@ -56,7 +56,7 @@ export default function SettingsScreen({ navigation }) {
     notificationsEnabled,
     colorScheme,
     isDarkMode,
-    paperTheme,
+    colors,
   ]);
 
   const handleLogout = async () => {
@@ -65,13 +65,12 @@ export default function SettingsScreen({ navigation }) {
       setIsLoggedIn(false);
     } catch (error) {
       console.error('Błąd wylogowania:', error);
-      //setSnackbarVisible(true);
+      setSnackbarVisible(true);
     }
   };
 
   const handleAccountManagement = () => {
     navigation.navigate('AccountManagement');
-    //setSnackbarVisible(true);
   };
 
   const toggleLanguage = () => {
@@ -92,14 +91,13 @@ export default function SettingsScreen({ navigation }) {
 
   const handleHelpSupport = () => {
     navigation.navigate('Help');
-    //setSnackbarVisible(true);
   };
 
   const retryFetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (token) {
-        await login(null, null, token); // Wywołanie login z tokenem do ponownego pobrania danych
+        await login(null, null, token);
       } else {
         setSnackbarVisible(true);
       }
@@ -114,22 +112,13 @@ export default function SettingsScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { backgroundColor: paperTheme.colors.background },
+          { backgroundColor: colors.background },
         ]}
-        style={[
-          styles.scrollView,
-          { backgroundColor: paperTheme.colors.background },
-        ]}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
       >
         {/* Sekcja danych użytkownika */}
         <Text
-          style={[
-            styles.header,
-            {
-              color: paperTheme.colors.text,
-              textAlign: 'center',
-            },
-          ]}
+          style={[styles.header, { color: colors.text, textAlign: 'center' }]}
         >
           {i18n.t('userInfo')}
         </Text>
@@ -137,12 +126,7 @@ export default function SettingsScreen({ navigation }) {
           {(() => {
             if (loading) {
               return (
-                <Text
-                  style={[
-                    styles.loadingText,
-                    { color: paperTheme.colors.text },
-                  ]}
-                >
+                <Text style={[styles.loadingText, { color: colors.text }]}>
                   {i18n.t('loading') || 'Loading...'}
                 </Text>
               );
@@ -156,32 +140,14 @@ export default function SettingsScreen({ navigation }) {
                       <FontAwesome
                         name="user"
                         size={20}
-                        color={paperTheme.colors.primary}
+                        color={colors.primary}
                         style={styles.icon}
                       />
-                      <Text
-                        style={[
-                          styles.userLabel,
-                          {
-                            color:
-                              paperTheme.colors.text ||
-                              paperTheme.colors.onSurface,
-                          },
-                        ]}
-                      >
+                      <Text style={[styles.userLabel, { color: colors.text }]}>
                         {i18n.t('fullName') || 'Full Name'}
                       </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.userValue,
-                        {
-                          color:
-                            paperTheme.colors.text ||
-                            paperTheme.colors.onSurface,
-                        },
-                      ]}
-                    >
+                    <Text style={[styles.userValue, { color: colors.text }]}>
                       {`${user.firstName} ${user.lastName}`}
                     </Text>
                   </View>
@@ -190,26 +156,17 @@ export default function SettingsScreen({ navigation }) {
                       <FontAwesome
                         name="envelope"
                         size={20}
-                        color={paperTheme.colors.primary}
+                        color={colors.primary}
                         style={styles.icon}
                       />
-                      <Text
-                        style={[
-                          styles.userLabel,
-                          {
-                            color:
-                              paperTheme.colors.text ||
-                              paperTheme.colors.onSurface,
-                          },
-                        ]}
-                      >
+                      <Text style={[styles.userLabel, { color: colors.text }]}>
                         {i18n.t('email') || 'Email'}
                       </Text>
                     </View>
                     <Text
                       style={[
                         styles.userValue,
-                        { color: paperTheme.colors.onSurfaceDisabled },
+                        { color: colors.secondaryText },
                       ]}
                     >
                       {user.email}
@@ -221,16 +178,14 @@ export default function SettingsScreen({ navigation }) {
 
             return (
               <View style={styles.errorContainer}>
-                <Text
-                  style={[styles.errorText, { color: paperTheme.colors.error }]}
-                >
+                <Text style={[styles.errorText, { color: colors.error }]}>
                   {i18n.t('userFetchError') || 'Failed to load user data'}
                 </Text>
                 <Button
                   mode="outlined"
                   onPress={retryFetchUser}
-                  style={styles.retryButton}
-                  labelStyle={{ color: paperTheme.colors.primary }}
+                  style={[styles.retryButton, { borderColor: colors.primary }]}
+                  labelStyle={{ color: colors.primary }}
                 >
                   {i18n.t('retry') || 'Try Again'}
                 </Button>
@@ -239,77 +194,125 @@ export default function SettingsScreen({ navigation }) {
           })()}
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider
+          style={[styles.divider, { backgroundColor: colors.secondaryText }]}
+        />
 
         {/* Sekcja ustawień */}
-        <Text style={[styles.header, { color: paperTheme.colors.text }]}>
+        <Text style={[styles.header, { color: colors.text }]}>
           {i18n.t('settings')}
         </Text>
 
         <View style={styles.settingItem}>
-          <Text style={[styles.label, { color: paperTheme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.text }]}>
             {i18n.t('darkMode')}
           </Text>
-          <Switch value={isDarkMode} onValueChange={toggleTheme} />
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleTheme}
+            trackColor={{ false: colors.secondaryText, true: colors.primary }}
+            thumbColor={colors.surface}
+          />
         </View>
 
         <View style={styles.settingItem}>
-          <Text style={[styles.label, { color: paperTheme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.text }]}>
             {i18n.t('language')}
           </Text>
           <Button
             mode="text"
             onPress={toggleLanguage}
-            textColor={paperTheme.colors.primary}
+            textColor={colors.primary}
           >
             {locale === 'en' ? 'PL' : 'EN'}
           </Button>
         </View>
 
         <View style={styles.settingItem}>
-          <Text style={[styles.label, { color: paperTheme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.text }]}>
             {i18n.t('notifications')}
           </Text>
           <Switch
             value={notificationsEnabled}
             onValueChange={toggleNotifications}
+            trackColor={{ false: colors.secondaryText, true: colors.primary }}
+            thumbColor={colors.surface}
           />
         </View>
 
         <View style={styles.colorSchemeContainer}>
-          <Text style={[styles.label, { color: paperTheme.colors.text }]}>
+          <Text style={[styles.label, { color: colors.text }]}>
             {i18n.t('colorScheme')}
           </Text>
           <View style={styles.colorSchemeButtons}>
             <Button
-              mode={colorScheme === 'blue' ? 'contained' : 'outlined'}
+              mode="outlined"
               onPress={() => changeColorScheme('blue')}
-              style={styles.colorButton}
+              style={[
+                styles.colorButton,
+                {
+                  backgroundColor:
+                    colorScheme === 'blue'
+                      ? colors.activeSchemeIndicator
+                      : colors.surface,
+                  borderColor: colors.primary,
+                },
+              ]}
               labelStyle={{
                 color:
-                  colorScheme === 'blue' ? '#fff' : paperTheme.colors.primary,
+                  colorScheme === 'blue'
+                    ? isDarkMode
+                      ? colors.background
+                      : colors.surface
+                    : colors.primary,
               }}
             >
               {i18n.t('blueTheme')}
             </Button>
             <Button
-              mode={colorScheme === 'green' ? 'contained' : 'outlined'}
-              onPress={() => changeColorScheme('green')}
-              style={styles.colorButton}
+              mode="outlined"
+              onPress={() => changeColorScheme('darkBlue')}
+              style={[
+                styles.colorButton,
+                {
+                  backgroundColor:
+                    colorScheme === 'darkBlue'
+                      ? colors.activeSchemeIndicator
+                      : colors.surface,
+                  borderColor: colors.primary,
+                },
+              ]}
               labelStyle={{
                 color:
-                  colorScheme === 'green' ? '#fff' : paperTheme.colors.primary,
+                  colorScheme === 'darkBlue'
+                    ? isDarkMode
+                      ? colors.background
+                      : colors.surface
+                    : colors.primary,
               }}
             >
-              {i18n.t('greenTheme')}
+              {i18n.t('darkBlueTheme')} // Zaktualizowano nazwę
             </Button>
             <Button
-              mode={colorScheme === 'grey' ? 'contained' : 'outlined'}
+              mode="outlined"
               onPress={() => changeColorScheme('grey')}
-              style={styles.colorButton}
+              style={[
+                styles.colorButton,
+                {
+                  backgroundColor:
+                    colorScheme === 'grey'
+                      ? colors.activeSchemeIndicator
+                      : colors.surface,
+                  borderColor: colors.primary,
+                },
+              ]}
               labelStyle={{
                 color:
-                  colorScheme === 'grey' ? '#fff' : paperTheme.colors.primary,
+                  colorScheme === 'grey'
+                    ? isDarkMode
+                      ? colors.background
+                      : colors.surface
+                    : colors.primary,
               }}
             >
               {i18n.t('greyTheme')}
@@ -317,14 +320,13 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider
+          style={[styles.divider, { backgroundColor: colors.secondaryText }]}
+        />
 
         {/* Statystyki użytkowania */}
         <Text
-          style={[
-            styles.header,
-            { textAlign: 'center', color: paperTheme.colors.text },
-          ]}
+          style={[styles.header, { textAlign: 'center', color: colors.text }]}
         >
           {i18n.t('stats')}
         </Text>
@@ -332,22 +334,23 @@ export default function SettingsScreen({ navigation }) {
           <Text
             style={[
               styles.statItem,
-              { textAlign: 'center', color: paperTheme.colors.text },
+              { textAlign: 'center', color: colors.text },
             ]}
           >
             {i18n.t('incomingsoon')}
           </Text>
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider
+          style={[styles.divider, { backgroundColor: colors.secondaryText }]}
+        />
 
         {/* Przyciski akcji */}
         <Button
           mode="outlined"
           onPress={handleAccountManagement}
-          style={styles.button}
-          labelStyle={{ color: paperTheme.colors.primary }}
-          theme={{ colors: { outline: paperTheme.colors.primary } }}
+          style={[styles.button, { borderColor: colors.primary }]}
+          labelStyle={{ color: colors.primary }}
         >
           {i18n.t('accountManagement')}
         </Button>
@@ -355,9 +358,8 @@ export default function SettingsScreen({ navigation }) {
         <Button
           mode="outlined"
           onPress={handleHelpSupport}
-          style={styles.button}
-          labelStyle={{ color: paperTheme.colors.primary }}
-          theme={{ colors: { outline: paperTheme.colors.primary } }}
+          style={[styles.button, { borderColor: colors.primary }]}
+          labelStyle={{ color: colors.primary }}
         >
           {i18n.t('helpSupport')}
         </Button>
@@ -365,24 +367,19 @@ export default function SettingsScreen({ navigation }) {
         <Button
           mode="contained"
           onPress={handleLogout}
-          style={styles.logoutButton}
-          theme={{ colors: { primary: paperTheme.colors.primary } }}
+          style={[styles.logoutButton, { backgroundColor: colors.primary }]}
+          labelStyle={{ color: colors.surface }}
         >
           {i18n.t('logout')}
         </Button>
 
-        <Text
-          style={{
-            ...styles.version,
-            color: paperTheme.colors.onSurfaceDisabled,
-          }}
-        >
+        <Text style={[styles.version, { color: colors.secondaryText }]}>
           {i18n.t('appVersion')}: {Constants?.manifest?.version || '1.0.0'}
         </Text>
 
         <Text
           style={{
-            color: paperTheme.colors.onSurfaceDisabled,
+            color: colors.secondaryText,
             textAlign: 'center',
             marginTop: 10,
           }}
@@ -394,8 +391,9 @@ export default function SettingsScreen({ navigation }) {
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
         action={{ label: 'OK', onPress: () => setSnackbarVisible(false) }}
+        style={{ backgroundColor: colors.error }}
       >
-        {i18n.t('underDev')}
+        <Text style={{ color: colors.surface }}>{i18n.t('underDev')}</Text>
       </Snackbar>
     </>
   );
@@ -461,6 +459,7 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 10,
+    borderWidth: 1,
   },
   settingItem: {
     flexDirection: 'row',
@@ -482,6 +481,7 @@ const styles = StyleSheet.create({
   colorButton: {
     marginBottom: 10,
     width: '100%',
+    borderWidth: 1,
   },
   stats: {
     marginTop: 5,
@@ -493,6 +493,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 20,
+    borderWidth: 1,
   },
   logoutButton: {
     marginTop: 10,
