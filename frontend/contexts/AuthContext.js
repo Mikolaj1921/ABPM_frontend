@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Pobieranie danych użytkownika z backendu
+  // pobieranie danych użytkownika z backendu
   const fetchUser = async (token) => {
     try {
       console.log(`Fetching user with token: ${token.substring(0, 10)}...`);
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Sprawdzanie tokenu przy starcie
+  // sprawdzanie tokenu przy starcie
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
           const result = await fetchUser(token);
           if (!result.success) {
             console.log('Initial fetch user failed:', result.message);
-            // Nie czyścimy usera, aby zachować dane z login
+            // nie czyścimy usera, aby zachować dane z login
           }
         } else {
           setIsLoggedIn(false);
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Funkcja logowania
+  // func logowania
   const login = async (email, password) => {
     try {
       console.log('Logging in with email:', email);
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
         'Saved token:',
         `${(await AsyncStorage.getItem('token')).substring(0, 10)}...`,
       );
-      // Ustawiamy dane użytkownika z odpowiedzi /auth/login
+      // ustal dane użytkownika z odpowiedzi /auth/login
       const fallbackUser = {
         id: loggedInUser.id,
         firstName: loggedInUser.first_name,
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user:', JSON.stringify(fallbackUser, null, 2));
       setUser(fallbackUser);
       setIsLoggedIn(true);
-      console.log('✅ Użytkownik został poprawnie zalogowany');
+      console.log('Użytkownik został poprawnie zalogowany');
       // Próbujemy pobrać dane z /auth/me
       const fetchResult = await fetchUser(token);
       if (!fetchResult.success) {
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Funkcja do ponownego pobierania danych użytkownika
+  // func do ponownego pobierania danych użytkownika
   const retryFetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem('token');

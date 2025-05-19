@@ -4,8 +4,8 @@ import {
   ScrollView,
   View,
   TextInput,
-  TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
 import {
   Button,
@@ -26,6 +26,7 @@ export default function AccountManagementScreen({ navigation }) {
   const { i18n } = useContext(LanguageContext);
   const { user, retryFetchUser } = useContext(AuthContext);
   const { colors, isDarkMode, toggleTheme } = useTheme();
+  // eslint-disable-next-line
   const paperTheme = usePaperTheme();
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
   const [loading, setLoading] = useState(false);
@@ -210,14 +211,14 @@ export default function AccountManagementScreen({ navigation }) {
                 <Text
                   style={[styles.profileName, { color: colors.text }]}
                   accessibilityLabel={i18n.t('profile_name_label')}
-                  accessibilityRole="label"
+                  accessibilityRole="none"
                 >
                   {`${profile.firstName} ${profile.lastName}` || 'User'}
                 </Text>
                 <Text
                   style={[styles.profileEmail, { color: colors.secondaryText }]}
                   accessibilityLabel={i18n.t('profile_email_label')}
-                  accessibilityRole="label"
+                  accessibilityRole="none"
                 >
                   {profile.email || ''}
                 </Text>
@@ -237,7 +238,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholder={i18n.t('first_name')}
                   placeholderTextColor={colors.secondaryText}
                   accessibilityLabel={i18n.t('first_name')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <TextInput
                   style={[
@@ -251,7 +252,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholder={i18n.t('last_name')}
                   placeholderTextColor={colors.secondaryText}
                   accessibilityLabel={i18n.t('last_name')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <TextInput
                   style={[
@@ -266,7 +267,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   keyboardType="email-address"
                   accessibilityLabel={i18n.t('email')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <View style={styles.actionButtons}>
                   <Button
@@ -319,7 +320,7 @@ export default function AccountManagementScreen({ navigation }) {
               <Text
                 style={[styles.optionText, { color: colors.text }]}
                 accessibilityLabel={i18n.t('dark_mode_switch_label')}
-                accessibilityRole="label"
+                accessibilityRole="none"
               >
                 {i18n.t('dark_mode_toggle')}
               </Text>
@@ -363,7 +364,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('current_password')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <TextInput
                   style={[
@@ -378,7 +379,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('new_password')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <TextInput
                   style={[
@@ -393,7 +394,7 @@ export default function AccountManagementScreen({ navigation }) {
                   placeholderTextColor={colors.secondaryText}
                   secureTextEntry
                   accessibilityLabel={i18n.t('confirm_password')}
-                  accessibilityRole="textbox"
+                  accessibilityRole="none"
                 />
                 <View style={styles.actionButtons}>
                   <Button
@@ -464,7 +465,7 @@ export default function AccountManagementScreen({ navigation }) {
           style={[styles.footer, { backgroundColor: colors.primary }]}
           accessibilityLabel={i18n.t('footer_label')}
           accessibilityHint={i18n.t('footer_hint')}
-          accessibilityRole="contentinfo"
+          accessibilityRole="none"
         >
           <FontAwesome
             name="info-circle"

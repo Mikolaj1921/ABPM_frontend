@@ -10,6 +10,8 @@ export default {
   email: 'Your email address:',
   password: 'Enter password',
   accessAccount: 'Access Account',
+  access_account: 'Access Account',
+  manage_docs: 'Management Documents',
   manageDocs: 'Manage your documents efficiently',
   documentCategories: 'Document Categories',
   managementDocuments: 'Management documents',
@@ -280,9 +282,9 @@ export default {
   addProvision: 'Add Provision',
   home: 'Home',
   documents: 'Documents',
-  settings: 'Settings',
+
   welcome: 'Welcome',
-  login: 'Log In',
+
   register: 'Register',
   fakturaVAT: 'VAT Invoice',
   notaKsiegowa: 'Accounting Note',
@@ -428,11 +430,15 @@ export default {
   login_button_hint: 'Press to log in',
   create_account_button_label: 'Create account button',
   create_account_button_hint: 'Navigate to the registration screen',
+  create_account: 'Create account',
   welcome_screen_label: 'Welcome screen',
   app_name_label: 'Application name',
   tagline_label: 'Tagline',
+  tagline: 'Document automation at your fingertrips',
+  app_name: 'Automation of Bureaucratic Processes',
   get_started_button_label: 'Get started button',
   get_started_button_hint: 'Navigate to the login screen',
+  get_started: 'Get Started',
   help_screen_label: 'Help screen',
   help_support_label: 'Help and support title',
   faq_section_label: 'FAQ section',
@@ -444,10 +450,10 @@ export default {
   server_error: 'Server error',
   register_screen_label: 'Registration screen',
   create_account_label: 'Create account title',
-  first_name: 'First Name',
+
   first_name_label: 'First name field',
   first_name_hint: 'Enter your first name',
-  last_name: 'Last Name',
+
   last_name_label: 'Last name field',
   last_name_hint: 'Enter your last name',
   date_of_birth: 'Date of Birth',
@@ -462,7 +468,7 @@ export default {
   phone_prefix_button_hint: 'Select a country phone prefix',
   phone_prefix_menu_label: 'Phone prefix menu',
   phone_prefix_item_label: 'Phone prefix for {country}: {code}',
-  confirm_password: 'Confirm Password',
+
   confirm_password_label: 'Confirm password field',
   confirm_password_hint: 'Re-enter your password',
   rodo_agree: 'I agree to the',
@@ -498,7 +504,7 @@ export default {
   invalid_email: 'Please enter a valid email address (e.g., user@example.com)',
   invalid_phone:
     'Phone number must contain 7 to 15 digits and no other characters',
-  password_too_short: 'Password must be at least 6 characters',
+
   passwords_mismatch: 'Passwords do not match',
   rodo_required: 'RODO consent is required',
   account_created: 'Account created',
@@ -539,29 +545,11 @@ export default {
   templates_icon: 'Templates icon',
   categories_icon: 'Categories icon',
   footer_icon: 'Footer information icon',
-  footer_label:
-    'Footer: Copyright 2025 Automation of Bureaucratic Processes, Version 1.0.0',
+
   modal_background: 'Modal background',
   select_template_modal_content: 'Select template dialog',
   create_new_document_icon: 'Create new document icon',
-  user_profile: 'Profil użytkownika',
-  profile_info: 'Informacje o profilu',
-  user_avatar: 'Awatar użytkownika dla {name}',
-  profile_name: 'Nazwa użytkownika: {name}',
-  profile_email: 'Email użytkownika: {email}',
-  app_logo_image: 'Obraz logo aplikacji',
-  pro_tips_section: 'Sekcja profesjonalnych wskazówek',
-  templates_icon: 'Ikona szablonów',
-  categories_icon: 'Ikona kategorii',
-  footer_icon: 'Ikona informacji w stopce',
-  footer_label:
-    'Stopka: Copyright 2025 Automatyzacja Procesów Biurokratycznych, Wersja 1.0.0',
-  modal_background: 'Tło modalne',
-  select_template_modal_content: 'Okno dialogowe wyboru szablonu',
-  create_new_document_icon: 'Ikona tworzenia nowego dokumentu',
-  documents_icon: 'Documents icon',
-  categories_icon: 'Categories icon',
-  hint_icon: 'Hint icon',
+
   search_icon: 'Search icon',
   sort_icon: 'Sort icon',
   document_icon: 'Document icon',
@@ -573,13 +561,112 @@ export default {
   logo_icon: 'Logo icon',
   signature_icon: 'Signature icon',
   delete_icon: 'Delete icon',
-  collapse_category: 'Collapse category',
-  expand_category: 'Expand category',
+
   sort_modal_content: 'Sort options dialog',
   logo_modal_content: 'Select logo dialog',
   signature_modal_content: 'Add signature dialog',
   sort_options_list: 'Sort options list',
   document_menu_content: 'Document options menu for {name}',
-  documents_count: 'Documents count: {count}',
+
   category_content: 'Content for {name} category',
+  register_screen: 'Register screen',
+
+  first_name_input: 'First name input',
+
+  last_name_input: 'Last name input',
+
+  date_of_birth_input: 'Date of birth input',
+
+  date_picker: 'Date picker',
+
+  phone_number_section: 'Phone number section',
+  phone_prefix_selector: 'Phone prefix selector',
+  phone_prefix_hint: 'Select a country phone prefix',
+  phone_prefix_option: 'Phone prefix option',
+  phone_prefix_option_hint: 'Select this country prefix',
+
+  phone_number_input: 'Phone number input',
+
+  email_input: 'Email input',
+
+  password_input: 'Password input',
+
+  confirm_password_input: 'Confirm password input',
+
+  rodo_section: 'RODO consent section',
+  rodo_checkbox: 'RODO consent checkbox',
+
+  rodo_consent_prefix: 'I agree to the',
+  rodo_consent_text: 'I agree to the RODO terms',
+  rodo_link: 'RODO terms link',
+
+  rodo_modal: 'RODO information modal',
+  rodo_modal_content: 'RODO information content',
+  rodo_modal_title: 'RODO Information',
+  rodo_modal_text_1:
+    'In accordance with the General Data Protection Regulation (GDPR), we inform you that your personal data will be processed for the purpose of creating and managing your account. Your data, including first name, last name, email, phone number, and date of birth, will be stored securely and used solely for the purposes of providing our services.',
+  rodo_modal_text_2:
+    'By agreeing to these terms, you consent to the processing of your personal data as described above. You have the right to access, rectify, or delete your data at any time by contacting our support team.',
+  rodo_modal_text_3:
+    'For more information, please refer to our Privacy Policy.',
+
+  cancel_button: 'Cancel button',
+  cancel_button_hint: 'Close the modal without agreeing',
+
+  agree_button: 'Agree button',
+  agree_button_hint: 'Agree to RODO terms and close the modal',
+
+  register_button: 'Register button',
+
+  login_prompt: 'Already have an account? Log In',
+  login_link: 'Log in link',
+
+  country_poland: 'Poland',
+  country_germany: 'Germany',
+  country_uk: 'UK',
+  country_usa: 'USA',
+  country_ukraine: 'Ukraine',
+  country_france: 'France',
+  error_title: 'Error',
+  error_all_fields_required: 'All fields are required',
+  error_invalid_email:
+    'Please enter a valid email address (e.g., user@example.com)',
+  error_invalid_phone:
+    'Phone number must contain 7 to 15 digits and no other characters',
+  error_password_too_short: 'Password must be at least 6 characters',
+  error_passwords_mismatch: 'Passwords do not match',
+  error_rodo_required: 'RODO consent is required',
+  success_title: 'Success',
+  success_account_created: 'Account created. You can now log in.',
+  error_server: 'Server error',
+  no_token_error: 'No token or user not logged in',
+  data_fetch_error: 'Error fetching data',
+  ok: 'OK',
+  signature: 'Signature',
+  logo: 'Logo',
+  template_list: 'Template list',
+  loading: 'Loading Page...',
+  noDocuments: 'No documents available',
+  selectSort: 'Select Sort Option',
+  selectLogo: 'Select Logo',
+  close: 'Close',
+  uploading: 'Uploading...',
+  noNetwork: 'No Network',
+  checkConnection: 'Please check your internet connection',
+  noFileSelected: 'No file selected',
+  confirmDelete: 'Confirm Delete',
+  success: 'Success',
+  shareTelegram: 'Share via Telegram',
+  sharingNotAvailable: 'Sharing not available',
+  addLogo: 'Add Logo',
+  noItems: 'No items available',
+  noDuties: 'No duties specified',
+  noProvisions: 'No provisions specified',
+  none: 'None',
+  products: 'Products',
+  duties: 'Duties',
+  provisions: 'Provisions',
+  shareMessage: 'Share document',
+  sort: 'Sort',
+  addSignature: 'Add Signature',
 };

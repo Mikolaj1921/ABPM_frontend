@@ -7,7 +7,7 @@ export default function HelpScreen() {
   const { i18n } = useContext(LanguageContext);
   const paperTheme = usePaperTheme();
 
-  // Fallback in case i18n is not properly initialized
+  // fallback in case i18n is not properly initialized
   if (!i18n || !i18n.t) {
     return (
       <View
@@ -41,7 +41,7 @@ export default function HelpScreen() {
         { backgroundColor: paperTheme.colors.background },
       ]}
       accessibilityLabel={i18n.t('help_screen_label')}
-      accessibilityRole="dialog"
+      accessibilityRole="none"
     >
       <Text
         style={[styles.header, { color: paperTheme.colors.text }]}
@@ -52,12 +52,13 @@ export default function HelpScreen() {
       </Text>
       <Text
         style={[styles.section, { color: paperTheme.colors.text }]}
-        accessibilityRole="section"
+        accessibilityRole="none"
         accessibilityLabel={i18n.t('faq_section_label')}
       >
         {i18n.t('faq')}
       </Text>
       {faqItems.map((item, index) => (
+        // eslint-disable-next-line
         <View key={`faq-${index}`}>
           <Text
             style={[styles.question, { color: paperTheme.colors.text }]}

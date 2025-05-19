@@ -26,7 +26,7 @@ const AnimatedTabIcon = ({
   name,
   color,
   size,
-  focused,
+
   accessibilityLabel,
   accessibilityHint,
 }) => {
@@ -46,51 +46,67 @@ const AnimatedTabIcon = ({
 
   return (
     <Animated.View
-      style={[animatedStyle]}
+      style={animatedStyle}
       onTouchStart={handlePressIn}
       onTouchEnd={handlePressOut}
+      accessible
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityRole="button"
+      accessibilityRole="tab"
     >
-      <FontAwesome name={name} size={size} color={color} />
+      <FontAwesome
+        name={name}
+        size={size}
+        color={color}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="image"
+      />
     </Animated.View>
   );
 };
 
-// Tab icon definitions
-const HomeIcon = ({ color, focused }) => (
-  <AnimatedTabIcon
-    name={focused ? 'home' : 'home'}
-    color={color}
-    size={24}
-    focused={focused}
-    accessibilityLabel={i18n.t('home_icon_label')}
-    accessibilityHint={i18n.t('home_icon_hint')}
-  />
-);
+// Tab icon components
+const HomeIcon = ({ color, focused }) => {
+  const { i18n } = useContext(LanguageContext);
+  return (
+    <AnimatedTabIcon
+      name={focused ? 'home' : 'home'}
+      color={color}
+      size={24}
+      focused={focused}
+      accessibilityLabel={i18n.t('home_icon_label')}
+      accessibilityHint={i18n.t('home_icon_hint')}
+    />
+  );
+};
 
-const DocumentsIcon = ({ color, focused }) => (
-  <AnimatedTabIcon
-    name={focused ? 'file' : 'file-o'}
-    color={color}
-    size={20}
-    focused={focused}
-    accessibilityLabel={i18n.t('documents_icon_label')}
-    accessibilityHint={i18n.t('documents_icon_hint')}
-  />
-);
+const DocumentsIcon = ({ color, focused }) => {
+  const { i18n } = useContext(LanguageContext);
+  return (
+    <AnimatedTabIcon
+      name={focused ? 'file' : 'file-o'}
+      color={color}
+      size={20}
+      focused={focused}
+      accessibilityLabel={i18n.t('documents_icon_label')}
+      accessibilityHint={i18n.t('documents_icon_hint')}
+    />
+  );
+};
 
-const SettingsIcon = ({ color, focused }) => (
-  <AnimatedTabIcon
-    name={focused ? 'cog' : 'cog'}
-    color={color}
-    size={24}
-    focused={focused}
-    accessibilityLabel={i18n.t('settings_icon_label')}
-    accessibilityHint={i18n.t('settings_icon_hint')}
-  />
-);
+const SettingsIcon = ({ color, focused }) => {
+  const { i18n } = useContext(LanguageContext);
+  return (
+    <AnimatedTabIcon
+      name={focused ? 'cog' : 'cog'}
+      color={color}
+      size={24}
+      focused={focused}
+      accessibilityLabel={i18n.t('settings_icon_label')}
+      accessibilityHint={i18n.t('settings_icon_hint')}
+    />
+  );
+};
 
 // Custom header title with logo
 const CustomHeaderTitle = ({ title }) => {
@@ -100,6 +116,7 @@ const CustomHeaderTitle = ({ title }) => {
   return (
     <View
       style={styles.headerTitleContainer}
+      accessible
       accessibilityLabel={`${i18n.t('header_logo_label')}, ${title}`}
       accessibilityRole="header"
     >
@@ -107,10 +124,12 @@ const CustomHeaderTitle = ({ title }) => {
         source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
         style={[styles.headerLogo, { tintColor: colors.primary }]}
         accessibilityLabel={i18n.t('header_logo_label')}
-        accessibilityHint={i18n.t('header_logo_hint')}
         accessibilityRole="image"
       />
-      <Text style={[styles.headerTitleText, { color: colors.text }]}>
+      <Text
+        style={[styles.headerTitleText, { color: colors.text }]}
+        accessibilityLabel={title}
+      >
         {title}
       </Text>
     </View>
@@ -151,18 +170,22 @@ const SettingsStackNavigator = () => {
         name="AccountManagement"
         component={AccountManagementScreen}
         options={{
+          // eslint-disable-next-line
           headerTitle: () => (
             <CustomHeaderTitle title={i18n.t('accountManagement')} />
           ),
+          accessibilityLabel: i18n.t('accountManagement_screen'),
         }}
       />
       <SettingsStack.Screen
         name="Help"
         component={HelpScreen}
         options={{
+          // eslint-disable-next-line
           headerTitle: () => (
             <CustomHeaderTitle title={i18n.t('helpSupport')} />
           ),
+          accessibilityLabel: i18n.t('helpSupport_screen'),
         }}
       />
     </SettingsStack.Navigator>
@@ -181,7 +204,7 @@ const AppNavigator = () => {
           backgroundColor: colors.surface,
           paddingBottom: 5,
           paddingTop: 5,
-          borderColor: 0,
+          borderWidth: 0,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.secondaryText,
@@ -190,9 +213,9 @@ const AppNavigator = () => {
           fontWeight: '500',
           marginBottom: 5,
         },
-        tabBarAccessibilityLabel: i18n.t('tab_bar_label'),
-        tabBarAccessibilityHint: i18n.t('tab_bar_hint'),
       }}
+      accessibilityLabel={i18n.t('tab_bar_label')}
+      accessibilityRole="tablist"
     >
       <Tab.Screen
         name="Home"
@@ -201,6 +224,8 @@ const AppNavigator = () => {
           tabBarLabel: i18n.t('home'),
           tabBarIcon: HomeIcon,
           tabBarAccessibilityLabel: i18n.t('home_tab'),
+          tabBarAccessibilityHint: i18n.t('home_tab_hint'),
+          accessibilityLabel: i18n.t('home_screen'),
         }}
       />
       <Tab.Screen
@@ -210,6 +235,8 @@ const AppNavigator = () => {
           tabBarLabel: i18n.t('documents'),
           tabBarIcon: DocumentsIcon,
           tabBarAccessibilityLabel: i18n.t('documents_tab'),
+          tabBarAccessibilityHint: i18n.t('documents_tab_hint'),
+          accessibilityLabel: i18n.t('documents_screen'),
         }}
       />
       <Tab.Screen
@@ -219,6 +246,8 @@ const AppNavigator = () => {
           tabBarLabel: i18n.t('settings'),
           tabBarIcon: SettingsIcon,
           tabBarAccessibilityLabel: i18n.t('settings_tab'),
+          tabBarAccessibilityHint: i18n.t('settings_tab_hint'),
+          accessibilityLabel: i18n.t('settings_screen'),
         }}
       />
     </Tab.Navigator>

@@ -10,6 +10,7 @@ export default {
   email: 'Twój adres e-mail:',
   password: 'Wprowadź hasło',
   accessAccount: 'Dostęp do konta',
+  access_account: 'Dostęp do konta',
   manageDocs: 'Zarządzaj dokumentami efektywnie',
   documentCategories: 'Kategorie dokumentów',
   managementDocuments: 'Zarządzanie dokumentami',
@@ -281,9 +282,9 @@ export default {
   addProvision: 'Dodaj Postanowienie',
   home: 'Strona główna',
   documents: 'Dokumenty',
-  settings: 'Ustawienia',
+
   welcome: 'Witaj',
-  login: 'Zaloguj się',
+
   register: 'Zarejestruj się',
   fakturaVAT: 'Faktura VAT',
   notaKsiegowa: 'Nota Księgowa',
@@ -418,6 +419,7 @@ export default {
   app_logo_hint: 'Logo Automatyzacji Procesów Biurokratycznych',
   access_account_label: 'Tytuł dostępu do konta',
   manage_docs_label: 'Podtytuł zarządzania dokumentami',
+  manage_docs: 'Zarządzaj Dokumentami',
   email_label: 'Pole email',
   email_hint: 'Wprowadź swój adres email',
   email_icon_label: 'Ikona email',
@@ -432,11 +434,15 @@ export default {
   login_button_hint: 'Naciśnij, aby się zalogować',
   create_account_button_label: 'Przycisk utwórz konto',
   create_account_button_hint: 'Przejdź do ekranu rejestracji',
+  create_account: 'Utwórz konto',
   welcome_screen_label: 'Ekran powitalny',
   app_name_label: 'Nazwa aplikacji',
   tagline_label: 'Hasło reklamowe',
+  tagline: 'Automatyzacja dokumentów na wyciągnięcie ręki',
+  app_name: 'Automation of Bureaucratic Processes',
   get_started_button_label: 'Przycisk rozpocznij',
   get_started_button_hint: 'Przejdź do ekranu logowania',
+  get_started: 'Rozpocznij',
   help_screen_label: 'Ekran pomocy',
   help_support_label: 'Tytuł pomocy i wsparcia',
   faq_section_label: 'Sekcja FAQ',
@@ -448,10 +454,10 @@ export default {
   server_error: 'Błąd serwera',
   register_screen_label: 'Ekran rejestracji',
   create_account_label: 'Tytuł utworzenia konta',
-  first_name: 'Imię',
+
   first_name_label: 'Pole imię',
   first_name_hint: 'Wprowadź swoje imię',
-  last_name: 'Nazwisko',
+
   last_name_label: 'Pole nazwisko',
   last_name_hint: 'Wprowadź swoje nazwisko',
   date_of_birth: 'Data urodzenia',
@@ -466,7 +472,7 @@ export default {
   phone_prefix_button_hint: 'Wybierz prefiks kraju',
   phone_prefix_menu_label: 'Menu prefiksu telefonu',
   phone_prefix_item_label: 'Prefiks telefonu dla {country}: {code}',
-  confirm_password: 'Potwierdź hasło',
+
   confirm_password_label: 'Pole potwierdź hasło',
   confirm_password_hint: 'Ponownie wprowadź swoje hasło',
   rodo_agree: 'Zgadzam się na',
@@ -504,7 +510,7 @@ export default {
     'Proszę wprowadzić poprawny adres email (np. user@example.com)',
   invalid_phone:
     'Numer telefonu musi zawierać od 7 do 15 cyfr i żadnych innych znaków',
-  password_too_short: 'Hasło musi mieć co najmniej 6 znaków',
+
   passwords_mismatch: 'Hasła nie są zgodne',
   rodo_required: 'Zgoda RODO jest wymagana',
   account_created: 'Konto utworzone',
@@ -535,9 +541,9 @@ export default {
   tip_1_icon: 'Ikona zegara',
   tip_3_icon: 'Ikona znacznika wyboru',
   hint_icon: 'Ikona wskazówki',
-  documents_icon: 'Ikona dokumentów',
+
   categories_icon: 'Ikona kategorii',
-  hint_icon: 'Ikona wskazówki',
+
   search_icon: 'Ikona wyszukiwania',
   sort_icon: 'Ikona sortowania',
   document_icon: 'Ikona dokumentu',
@@ -549,13 +555,112 @@ export default {
   logo_icon: 'Ikona logo',
   signature_icon: 'Ikona podpisu',
   delete_icon: 'Ikona usuwania',
-  collapse_category: 'Zwiń kategorię',
-  expand_category: 'Rozwiń kategorię',
+
   sort_modal_content: 'Okno dialogowe opcji sortowania',
   logo_modal_content: 'Okno dialogowe wyboru logo',
   signature_modal_content: 'Okno dialogowe dodawania podpisu',
   sort_options_list: 'Lista opcji sortowania',
   document_menu_content: 'Menu opcji dokumentu dla {name}',
-  documents_count: 'Liczba dokumentów: {count}',
+
   category_content: 'Zawartość kategorii {name}',
+  register_screen: 'Ekran rejestracji',
+
+  first_name_input: 'Pole imienia',
+
+  last_name_input: 'Pole nazwiska',
+
+  date_of_birth_input: 'Pole daty urodzenia',
+
+  date_picker: 'Wybór daty',
+
+  phone_number_section: 'Sekcja numeru telefonu',
+  phone_prefix_selector: 'Selektor prefiksu telefonu',
+  phone_prefix_hint: 'Wybierz prefiks kraju',
+  phone_prefix_option: 'Opcja prefiksu telefonu',
+  phone_prefix_option_hint: 'Wybierz ten prefiks kraju',
+
+  phone_number_input: 'Pole numeru telefonu',
+
+  email_input: 'Pole email',
+
+  password_input: 'Pole hasła',
+
+  confirm_password_input: 'Pole potwierdzenia hasła',
+
+  rodo_section: 'Sekcja zgody RODO',
+  rodo_checkbox: 'Checkbox zgody RODO',
+
+  rodo_consent_prefix: 'Zgadzam się na',
+  rodo_consent_text: 'Zgadzam się na warunki RODO',
+  rodo_link: 'Link do warunków RODO',
+
+  rodo_modal: 'Modal informacji RODO',
+  rodo_modal_content: 'Treść informacji RODO',
+  rodo_modal_title: 'Informacje RODO',
+  rodo_modal_text_1:
+    'Zgodnie z Rozporządzeniem o Ochronie Danych Osobowych (RODO), informujemy, że Twoje dane osobowe będą przetwarzane w celu założenia i zarządzania Twoim kontem. Twoje dane, w tym imię, nazwisko, email, numer telefonu oraz data urodzenia, będą przechowywane bezpiecznie i używane wyłącznie w celu świadczenia naszych usług.',
+  rodo_modal_text_2:
+    'Wyrażając zgodę na te warunki, wyrażasz zgodę na przetwarzanie Twoich danych osobowych zgodnie z powyższym opisem. Masz prawo do dostępu, poprawiania lub usunięcia swoich danych w dowolnym momencie, kontaktując się z naszym zespołem wsparcia.',
+  rodo_modal_text_3:
+    'Więcej informacji znajdziesz w naszej Polityce Prywatności.',
+
+  cancel_button: 'Przycisk anuluj',
+  cancel_button_hint: 'Zamknij modal bez zgody',
+
+  agree_button: 'Przycisk zgoda',
+  agree_button_hint: 'Zaakceptuj warunki RODO i zamknij modal',
+
+  register_button: 'Przycisk rejestracji',
+
+  login_prompt: 'Masz już konto? Zaloguj się',
+  login_link: 'Link do logowania',
+
+  country_poland: 'Polska',
+  country_germany: 'Niemcy',
+  country_uk: 'Wielka Brytania',
+  country_usa: 'USA',
+  country_ukraine: 'Ukraina',
+  country_france: 'Francja',
+  error_title: 'Błąd',
+  error_all_fields_required: 'Wszystkie pola są wymagane',
+  error_invalid_email:
+    'Proszę podać prawidłowy adres email (np. user@example.com)',
+  error_invalid_phone:
+    'Numer telefonu musi zawierać od 7 do 15 cyfr i żadnych innych znaków',
+  error_password_too_short: 'Hasło musi mieć co najmniej 6 znaków',
+  error_passwords_mismatch: 'Hasła nie pasują do siebie',
+  error_rodo_required: 'Zgoda RODO jest wymagana',
+  success_title: 'Sukces',
+  success_account_created: 'Konto utworzone. Możesz się teraz zalogować.',
+  error_server: 'Błąd serwera',
+  no_token_error: 'Brak tokena lub użytkownik nie jest zalogowany',
+  data_fetch_error: 'Błąd podczas pobierania danych',
+  ok: 'OK',
+  signature: 'Podpis',
+  logo: 'Logo',
+  template_list: 'Lista szablonów',
+  loading: 'Ładowanie strony...',
+  noDocuments: 'Brak dostępnych dokumentów',
+  selectSort: 'Wybierz opcję sortowania',
+  selectLogo: 'Wybierz logo',
+  close: 'Zamknij',
+  uploading: 'Przesyłanie...',
+  noNetwork: 'Brak sieci',
+  checkConnection: 'Proszę sprawdzić połączenie internetowe',
+  noFileSelected: 'Nie wybrano pliku',
+  confirmDelete: 'Potwierdź usunięcie',
+  success: 'Sukces',
+  shareTelegram: 'Udostępnij przez Telegram',
+  sharingNotAvailable: 'Udostępnianie niedostępne',
+  addLogo: 'Dodaj logo',
+  noItems: 'Brak dostępnych pozycji',
+  noDuties: 'Brak określonych obowiązków',
+  noProvisions: 'Brak określonych postanowień',
+  none: 'Brak',
+  products: 'Produkty',
+  duties: 'Obowiązki',
+  provisions: 'Postanowienia',
+  shareMessage: 'Udostępnij dokument',
+  sort: 'Sortuj',
+  addSignature: 'Dodaj podpis',
 };

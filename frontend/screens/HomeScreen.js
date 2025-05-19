@@ -57,6 +57,7 @@ const documentCategories = [
   },
 ];
 
+// eslint-disable-next-line
 const HomeScreen = ({ navigation, route }) => {
   const [expanded, setExpanded] = useState(null);
   const [templates, setTemplates] = useState({});
@@ -68,6 +69,7 @@ const HomeScreen = ({ navigation, route }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  // eslint-disable-next-line
   const paperTheme = usePaperTheme();
   const { i18n } = useContext(LanguageContext);
   const { isLoggedIn, user, retryFetchUser } = useContext(AuthContext);
@@ -87,9 +89,10 @@ const HomeScreen = ({ navigation, route }) => {
   ];
 
   const fetchData = useCallback(
+    // eslint-disable-next-line
     async (source = 'initial') => {
       try {
-        //console.log(`Rozpoczęto pobieranie danych (${source})`);
+        // console.log(`Rozpoczęto pobieranie danych (${source})`);
         setLoading(true);
         setError('');
         setDocuments({});
@@ -144,10 +147,10 @@ const HomeScreen = ({ navigation, route }) => {
 
         setTemplates(templatesData);
         setDocuments(documentsData);
-        /*console.log(
+        /* console.log(
           'Pobrano dokumenty:',
           JSON.stringify(documentsData, null, 2),
-        );*/
+        ); */
       } catch (fetchError) {
         console.error('Błąd podczas pobierania danych:', fetchError);
         setError(i18n.t('data_fetch_error'));
@@ -169,16 +172,17 @@ const HomeScreen = ({ navigation, route }) => {
     const uniqueDocs = [...new Set(allDocs.map((doc) => doc.id))].map((id) =>
       allDocs.find((doc) => doc.id === id),
     );
+    // eslint-disable-next-line
     const totalDocs = uniqueDocs.filter((doc) => doc && doc.id).length;
-    /*console.log(
+    /* console.log(
       'Aktualny stan dokumentów:',
       JSON.stringify(documents, null, 2),
-    );*/ /*
-    console.log(
+    ); */
+    /* console.log(
       'Unikalne dokumenty:',
       uniqueDocs.map((doc) => ({ id: doc.id, name: doc.name })),
-    );*/
-    //console.log('Liczba dokumentów:', totalDocs);
+    ); */
+    // console.log('Liczba dokumentów:', totalDocs);
   }, [documents]);
 
   const handleAccordionPress = (id) => {
@@ -215,12 +219,13 @@ const HomeScreen = ({ navigation, route }) => {
     setModalVisible(true);
   };
 
+  // eslint-disable-next-line
   const handleViewAllDocuments = (category) => {
     navigation.navigate('DocumentList', { category: category.category });
   };
 
   const handleLogoPress = () => {
-    //console.log('Kliknięto logo, wyświetlanie nazwy aplikacji');
+    // console.log('Kliknięto logo, wyświetlanie nazwy aplikacji');
     Alert.alert(i18n.t('app_title'), 'Automation of Bureaucratic Processes', [
       { text: i18n.t('ok'), style: 'default' },
     ]);
@@ -253,7 +258,6 @@ const HomeScreen = ({ navigation, route }) => {
         style={[styles.center, { backgroundColor: colors.background }]}
         accessible
         accessibilityLabel={i18n.t('loading')}
-        accessibilityRole="alert"
       >
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.text }]}>
@@ -308,6 +312,7 @@ const HomeScreen = ({ navigation, route }) => {
       >
         {selectedCategory &&
           selectedTemplate &&
+          // eslint-disable-next-line
           (selectedCategory.category === 'Kadrowe' ? (
             <UmowaOPraceScreen
               route={{
@@ -319,7 +324,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                //console.log('Zapisano nowy dokument:', newDocument);
+                // console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -335,10 +340,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  /*console.log(
+                  /* console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );*/
+                  ); */
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -356,7 +361,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                //console.log('Zapisano nowy dokument:', newDocument);
+                // console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -372,10 +377,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  /*console.log(
+                  /* console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );*/
+                  ); */
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -393,7 +398,7 @@ const HomeScreen = ({ navigation, route }) => {
               }}
               navigation={{ navigate: handleCloseModal }}
               onSave={(newDocument) => {
-                //console.log('Zapisano nowy dokument:', newDocument);
+                // console.log('Zapisano nowy dokument:', newDocument);
                 setDocuments((prev) => {
                   const category = newDocument.category || 'Handlowe';
                   const existingDocs = prev[category] || [];
@@ -409,10 +414,10 @@ const HomeScreen = ({ navigation, route }) => {
                     ...prev,
                     [category]: [newDocument, ...existingDocs],
                   };
-                  /*console.log(
+                  /* console.log(
                     'Zaktualizowany stan dokumentów:',
                     JSON.stringify(updatedDocs, null, 2),
-                  );*/
+                  ); */
                   return updatedDocs;
                 });
                 handleCloseModal();
@@ -423,12 +428,12 @@ const HomeScreen = ({ navigation, route }) => {
       </Modal>
       <Modal
         animationType="fade"
-        transparent={true}
+        transparent
         visible={templateModalVisible}
         onRequestClose={handleCloseTemplateModal}
         accessibilityLabel={i18n.t('select_template_modal')}
         accessibilityHint={i18n.t('select_template_modal_hint')}
-        accessibilityViewIsModal={true}
+        accessibilityViewIsModal
       >
         <View
           style={[
@@ -443,7 +448,7 @@ const HomeScreen = ({ navigation, route }) => {
             style={[styles.modalContent, { backgroundColor: colors.surface }]}
             accessible
             accessibilityLabel={i18n.t('select_template_modal_content')}
-            accessibilityRole="dialog"
+            accessibilityRole="none"
           >
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {i18n.t('select_template')}
@@ -516,7 +521,7 @@ const HomeScreen = ({ navigation, route }) => {
           style={[styles.profileContainer, { backgroundColor: colors.surface }]}
           accessible
           accessibilityLabel={i18n.t('user_profile')}
-          accessibilityRole="group"
+          accessibilityRole="none"
         >
           <View
             style={styles.profileInfo}
@@ -573,7 +578,7 @@ const HomeScreen = ({ navigation, route }) => {
           style={styles.tipsContainer}
           accessible
           accessibilityLabel={i18n.t('pro_tips_section')}
-          accessibilityRole="group"
+          accessibilityRole="none"
         >
           <Text
             style={[styles.tipsTitle, { color: colors.text }]}
@@ -638,7 +643,7 @@ const HomeScreen = ({ navigation, route }) => {
               style={styles.categoryContainer}
               accessible
               accessibilityLabel={i18n.t(`${category.nameKey}_category`)}
-              accessibilityRole="group"
+              accessibilityRole="none"
             >
               <List.Accordion
                 title={
@@ -689,6 +694,7 @@ const HomeScreen = ({ navigation, route }) => {
                     </View>
                   </View>
                 }
+                // eslint-disable-next-line
                 right={(props) => (
                   <FontAwesome
                     name={props.isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -719,9 +725,10 @@ const HomeScreen = ({ navigation, route }) => {
                     count: docCount,
                     total: templateCount,
                   })}
-                  accessibilityRole="progressbar"
+                  accessibilityRole="none"
                 />
                 {(templates[category.category] || []).map((template) => {
+                  // eslint-disable-next-line
                   const isTemplateUsed = (
                     documents[category.category] || []
                   ).some((doc) => doc.templateId === template.id);
@@ -734,7 +741,7 @@ const HomeScreen = ({ navigation, route }) => {
                       ]}
                       accessible
                       accessibilityLabel={`${i18n.t('template')}: ${template.name}`}
-                      accessibilityRole="listitem"
+                      accessibilityRole="none"
                     >
                       <Card.Title
                         title={template.name}
@@ -830,7 +837,7 @@ const HomeScreen = ({ navigation, route }) => {
           ]}
           accessible
           accessibilityLabel={i18n.t('quick_stats')}
-          accessibilityRole="group"
+          accessibilityRole="none"
         >
           <Card.Title
             title={i18n.t('quick_stats')}
@@ -935,7 +942,7 @@ const HomeScreen = ({ navigation, route }) => {
           style={[styles.footer, { backgroundColor: colors.primary }]}
           accessible
           accessibilityLabel={i18n.t('footer_label')}
-          accessibilityRole="contentinfo"
+          accessibilityRole="none"
         >
           <FontAwesome
             name="info-circle"
@@ -1032,13 +1039,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
   },
-  logoText: {
-    fontSize: 18,
-    fontFamily: 'Roboto',
-    fontWeight: '600',
-    marginTop: 10,
-    textAlign: 'center',
-  },
+
   headerContainer: {
     flexDirection: 'row',
 

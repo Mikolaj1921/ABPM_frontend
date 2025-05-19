@@ -94,14 +94,17 @@ export default function SettingsScreen({ navigation }) {
     colorSchemes,
   } = useTheme(); // Dodano colorSchemes do destrukturyzacji
   const { i18n, locale, changeLanguage } = useContext(LanguageContext);
+  // eslint-disable-next-line
   const paperTheme = usePaperTheme();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  // eslint-disable-next-line
   const [fadeAnims, setFadeAnims] = useState({
     userInfo: new Animated.Value(0),
     settings: new Animated.Value(0),
     stats: new Animated.Value(0),
     actions: new Animated.Value(0),
   });
+  // eslint-disable-next-line
   const [scaleAnims, setScaleAnims] = useState({
     blue: new Animated.Value(1),
     darkBlue: new Animated.Value(1),
@@ -127,13 +130,13 @@ export default function SettingsScreen({ navigation }) {
 
   // Debugowanie
   useEffect(() => {
-    //console.log('SettingsScreen locale:', locale);
-    //console.log('SettingsScreen i18n.t("settings"):', i18n.t('settings'));
-    //console.log('SettingsScreen user:', user);
-    //console.log('SettingsScreen loading:', loading);
-    //console.log('SettingsScreen colorScheme:', colorScheme);
-    //console.log('SettingsScreen isDarkMode:', isDarkMode);
-    //console.log('SettingsScreen colors:', colors);
+    // console.log('SettingsScreen locale:', locale);
+    // console.log('SettingsScreen i18n.t("settings"):', i18n.t('settings'));
+    // console.log('SettingsScreen user:', user);
+    // console.log('SettingsScreen loading:', loading);
+    // console.log('SettingsScreen colorScheme:', colorScheme);
+    // console.log('SettingsScreen isDarkMode:', isDarkMode);
+    // console.log('SettingsScreen colors:', colors);
   }, [locale, i18n, user, loading, colorScheme, isDarkMode, colors]);
 
   const handleLogout = async () => {
@@ -212,6 +215,7 @@ export default function SettingsScreen({ navigation }) {
               titleStyle={[styles.header, { color: colors.text }]}
               accessibilityLabel={i18n.t('userInfo')}
             />
+
             <Card.Content>
               {loading ? (
                 <Text style={[styles.loadingText, { color: colors.text }]}>

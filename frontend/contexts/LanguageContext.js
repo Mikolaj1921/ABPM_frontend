@@ -11,7 +11,7 @@ const LanguageProvider = ({ children }) => {
     Localization.locale?.split('-')[0] || 'en',
   );
 
-  // Ładowanie języka z AsyncStorage
+  // ladowanie języka z AsyncStorage
   useEffect(() => {
     const loadLanguage = async () => {
       try {
@@ -26,7 +26,7 @@ const LanguageProvider = ({ children }) => {
     loadLanguage();
   }, []);
 
-  // Tworzymy instancję i18n z aktualnym locale
+  // tworzenie instancję i18n z aktualnym locale
   const i18n = useMemo(() => {
     const i18nInstance = new I18n(translations);
     i18nInstance.locale = locale;

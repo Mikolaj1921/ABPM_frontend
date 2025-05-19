@@ -28,7 +28,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     setLoading(true);
-    // Usuwanie spacji przed wysłaniem
+    // usuwanie spacji przed wysłaniem
     const cleanedEmail = email.trim();
     const cleanedPassword = password.trim();
 
@@ -40,7 +40,7 @@ export default function LoginScreen() {
 
       await storeToken(response.data.token);
       setIsLoggedIn(true);
-      console.log('✅ Użytkownik został poprawnie zalogowany');
+      console.log('Użytkownik został poprawnie zalogowany');
     } catch (err) {
       console.error(err);
       Alert.alert(
@@ -58,7 +58,7 @@ export default function LoginScreen() {
         style={styles.container}
         accessible
         accessibilityLabel={i18n.t('login_screen_label')}
-        accessibilityRole="form"
+        accessibilityRole="none"
       >
         <Image
           source={require('../assets/images/automation-of-beruaucratic-processes-logo.png')}
