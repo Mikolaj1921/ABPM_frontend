@@ -8,7 +8,7 @@ Aplikacja ma na celu:
 - Automatyzację procesów związanych z tworzeniem, podpisywaniem i wysyłaniem dokumentów.
 - Minimalizację błędów ludzkich poprzez wykorzystanie predefiniowanych szablonów i automatycznego wypełniania danych.
 - Oszczędność czasu dzięki intuicyjnemu interfejsowi.
-- Zapewnienie zgodności z przepisami prawa, w tym RODO.F
+- Zapewnienie zgodności z przepisami prawa, w tym RODO.
 
 ## Główne funkcje
 
